@@ -2,12 +2,12 @@ size: 16x16
 ---
 ccccbbcdccdbccdc
 cccbcccccccccdbc
-ccccccbbccccccbc
+ccccccbbccccccbb
 cbccccbcccccdccc
-ccbbbcccccccbbcc
+ccbbbcccccccbbbc
 cdbccccccccbcccc
-cbdccccdcccccdcc
-ccccccbcbccccccb
+cbdccccdcdcccdcc
+ccccccbcbbbbcccb
 bcccccccccbccbcc
 ccccccdbcccccccc
 ccbcccccccccbccb

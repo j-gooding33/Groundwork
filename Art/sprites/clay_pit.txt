@@ -1,19 +1,20 @@
 size: 16x16
 variants: 3
+recolor: l=m,m=F
 ---
 ...........jvutj
 ............juj.
-............juj.
-.jjjjjjjjjjjjuj.
-jmmmmmmmmmmmmumj
-jmllllllllllzzzj
-jmlnnnnnnnnnzzyj
-jmlnnnnnnnnnnlkj
-jmlnooooooopnlkj
-jmlnoopoooopnlkj
-jmlnooooonopnlkj
-jmlnppppppppnlkj
-jmlnnnnnnnnnnlkj
-jmllllllllllllkj
-jmkkkkkkkkkkkkkj
-.jjjjjjjjjjjjjj.
+.jjj........juj.
+jppojjjjjjj.juj.
+ooooommmmmljjuj.
+joonmmmmllllzzzj
+jmmmmmnnnullzzyj
+jmmmnnnnnuvullj.
+jmmnnnnnnuoullj.
+mllnnnnoouvukkkj
+jllnnopoououkkj.
+jlloooooonpukkj.
+jllloooppppkkkj.
+.jllllpppkkkkj..
+..jjkkkkkkkjj...
+....jjjjjjj.....

@@ -64,6 +64,24 @@ class ArtCheckTests(unittest.TestCase):
         self.assertEqual(sorted(names), ["cottage", "cottage_night", "cottage_v1", "cottage_v1_night"])
         self.assertTrue(all(ch == "D" for row in names["cottage_night"] for ch in row))
 
+    def test_stage_names_take_their_buildings_size(self):
+        self.assertEqual(M.expected_size("foundation_2", self.buildings), (32, 32))
+        self.assertEqual(M.expected_size("cottage_scaffold", self.buildings), (32, 32))
+        self.assertEqual(M.expected_size("clay_pit", self.buildings), (16, 16))
+        self.assertEqual(M.expected_size("person_side_0", self.buildings), (8, 12))
+
+    def test_recolor_variants(self):
+        sprite = self.sprite("person_front_0", ["sC"] * 2, recolor="s=f | s=c,C=x", flaws="no")
+        names = dict(M.expand(sprite, self.palette))
+        self.assertEqual(names["person_front_0_v1"], ["fC", "fC"])
+        self.assertEqual(names["person_front_0_v2"], ["cx", "cx"])
+
+    def test_swap_frames_animate_every_version(self):
+        sprite = self.sprite("brick_kiln", ["ED"] * 32, recolor="q=n", frames="swap E=D,D=E 2")
+        names = dict(M.expand(sprite, self.palette))
+        self.assertIn("brick_kiln_v1_f1", names)
+        self.assertEqual(names["brick_kiln_f1"][0], "DE")
+
     def test_png_round_trip(self):
         tmp = Path(tempfile.mkdtemp())
         try:

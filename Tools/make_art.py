@@ -28,7 +28,7 @@ SPRITES = ART / "sprites"
 MANUAL = ART / "manual"
 OUT = ART / "generated"
 TILE = 16
-ATLAS_WIDTH = 512
+ATLAS_WIDTH = 1024
 PADDING = 2
 
 
@@ -110,9 +110,21 @@ def load_palette(problems):
     return palette
 
 
+def building_for(name, buildings):
+    """The building a sprite belongs to: its name, or the longest building id it
+    starts with (foundation_2, cottage_scaffold)."""
+    parts = name.split("_")
+    for n in range(len(parts), 0, -1):
+        prefix = "_".join(parts[:n])
+        if prefix in buildings:
+            return prefix
+    return None
+
+
 def expected_size(name, buildings):
-    if name in buildings:
-        w, h = buildings[name]["size"]
+    owner = building_for(name, buildings)
+    if owner:
+        w, h = buildings[owner]["size"]
         return (w * TILE, h * TILE)
     if name.startswith(("item_", "fx_smoke_")):
         return (8, 8)
@@ -152,7 +164,7 @@ def check_sprite(sprite, palette, buildings, problems):
         for x, ch in enumerate(row):
             if ch != clear and ch not in palette["colors"]:
                 problems.append(f"{name}: off-palette pixel '{ch}' at ({x}, {y})")
-    if name in buildings and int(header.get("variants", "1")) < 2:
+    if name in buildings and variant_count(header) < 2:
         problems.append(f"{name}: buildings need 2 to 3 variants (add 'variants: 3' to the header)")
 
 
@@ -169,6 +181,15 @@ def ramp_of(palette):
         for i, key in enumerate(ramp):
             lookup[key] = (ramp, i)
     return lookup
+
+
+def variant_count(header):
+    recolors = [r for r in header.get("recolor", "").split("|") if r.strip()]
+    return max(int(header.get("variants", "1")), 1 + len(recolors))
+
+
+def parse_mapping(text):
+    return dict(pair.strip().split("=") for pair in text.split(",") if pair.strip())
 
 
 def variant(grid, seed, palette):
@@ -202,21 +223,55 @@ def roll(grid, axis, step):
     return grid[-step:] + grid[:-step]
 
 
+def sway(grid, rows, step):
+    """Shifts the top `rows` rows sideways, for trees moving in the wind."""
+    out = []
+    for y, row in enumerate(grid):
+        if y < rows:
+            shift = step if y < rows // 2 else (step + 1) // 2 if step > 0 else 0
+            row = ("." * shift + row)[:len(row)] if shift > 0 else row
+        out.append(row)
+    return out
+
+
 def expand(sprite, palette):
-    """Returns [(name, grid)] for the sprite and everything generated from it."""
+    """Returns [(name, grid)] for the sprite and everything generated from it.
+
+    Header options:
+      variants: N        N versions, each extra one with a seeded flaw pixel or two
+      recolor: A=B,C=D | E=F   extra versions with colours swapped (plus a flaw pixel)
+      flaws: no          skip the flaw pixels (people, where one pixel matters)
+      night: A=B         a _night copy of every version with colours swapped (lit windows)
+      frames: roll-x STEP N | roll-y STEP N | swap A=B,C=D N | sway ROWS N
+                         animation frames _f1.._f(N-1) for every version above
+    """
     name, grid, header = sprite["name"], sprite["grid"], sprite["header"]
     out = [(name, grid)]
-    count = int(header.get("variants", "1"))
-    for v in range(1, count):
-        out.append((f"{name}_v{v}", variant(grid, zlib.crc32(name.encode()) + v, palette)))
+    recolors = [parse_mapping(r) for r in header.get("recolor", "").split("|") if r.strip()]
+    for v in range(1, variant_count(header)):
+        base = recolour(grid, recolors[v - 1]) if v - 1 < len(recolors) else grid
+        if header.get("flaws") != "no":
+            base = variant(base, zlib.crc32(name.encode()) + v, palette)
+        out.append((f"{name}_v{v}", base))
     if "night" in header:
-        mapping = dict(pair.split("=") for pair in header["night"].split(","))
+        mapping = parse_mapping(header["night"])
         out += [(f"{n}_night", recolour(g, mapping)) for n, g in list(out)]
     if "frames" in header:
-        kind, step, frames = header["frames"].split()
-        axis = kind.split("-")[1]
-        for f in range(1, int(frames)):
-            out.append((f"{name}_f{f}", roll(grid, axis, int(step) * f)))
+        parts = header["frames"].split()
+        kind, count = parts[0], int(parts[-1])
+        animated = []
+        for n, g in out:
+            for f in range(1, count):
+                if kind in ("roll-x", "roll-y"):
+                    frame = roll(g, kind[-1], int(parts[1]) * f)
+                elif kind == "swap":
+                    frame = recolour(g, parse_mapping(parts[1])) if f % 2 == 1 else g
+                elif kind == "sway":
+                    frame = sway(g, int(parts[1]), 1 if f % 2 == 1 else 0)
+                else:
+                    raise ValueError(f"{name}: unknown frames kind '{kind}'")
+                animated.append((f"{n}_f{f}", frame))
+        out += animated
     return out
 
 
@@ -312,8 +367,7 @@ def main(argv):
         except ValueError as error:
             problems.append(f"manual/{path.name}: {error}")
             continue
-        base = path.stem.split("_v")[0].replace("_night", "")
-        ew, eh = expected_size(base, buildings)
+        ew, eh = expected_size(path.stem, buildings)
         if (w, h) != (ew, eh):
             problems.append(f"manual/{path.name}: is {w}x{h}, expected {ew}x{eh}")
         for y, row in enumerate(rows):
@@ -340,8 +394,12 @@ def main(argv):
         for dy, row in enumerate(images[name]):
             atlas[y + dy][x:x + w] = row
     write_png(OUT / "atlas.png", ATLAS_WIDTH, height, atlas)
+    # Raw RGBA for tools that cannot decode PNG (the Swift preview renderer). Not committed.
+    (OUT / "atlas.rgba").write_bytes(bytes(v for row in atlas for px in row for v in px))
     manifest = {
         "atlas": "atlas.png",
+        "width": ATLAS_WIDTH,
+        "height": height,
         "tileSize": TILE,
         "filtering": "nearest",
         "sprites": {name: {"x": x, "y": y, "w": w, "h": h} for name, (x, y, w, h) in sorted(placed.items())},

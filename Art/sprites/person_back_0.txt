@@ -1,0 +1,16 @@
+size: 8x12
+recolor: j=m,s=f,C=t,p=w | j=K,s=c,C=x,p=l | j=u,s=D,C=B,p=k | j=A,s=v,C=u,p=w | j=t,s=h,C=j,p=p
+flaws: no
+---
+..jjjj..
+.jjjjjj.
+.jjjjjj.
+.jjjjjj.
+..jppj..
+..ssss..
+.ssssss.
+p.ssss.p
+..CCCC..
+..C..C..
+..C..C..
+..K..K..

@@ -5,6 +5,6 @@ size: 8x8
 .qqqqqq.
 qssssssq
 qsrrrrrq
-qsrrrrrq
-.qqqqqq.
+qsrrrqrq
+.qqqq.q.
 ........

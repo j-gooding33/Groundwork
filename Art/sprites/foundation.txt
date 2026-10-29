@@ -2,7 +2,7 @@ size: 32x32
 variants: 2
 ---
 .j............................j.
-juj.j.j.j.j.j.j.j.j.j.j.j.j..juj
+jvj.j.j.j.j.j.j.j.j.j.j.j.j..jvj
 jujjFjFjFjFjFjFjFjFjFjFjFjFj.juj
 jujjjjjjjjjjjjjjjjjjjjjjjjjjjjuj
 .jzyzAzzzAzzzAzzzAzzzAzzzAzzyxj.
@@ -30,6 +30,6 @@ jujjjjjjjjjjjjjjjjjjjjjjjjjjjjuj
 .jzykkkkkkkkkkkkkkkkkkkkkkkkyxj.
 .jzykklkkkkkkkkkkkkkkklkkkkkyxj.
 .jzyyyyyyyyyyyyyyyyyyyyyyyyyyxj.
-juzyxxxxxxxxxxxxxxxxxxxxxxxxyxuj
+jvzyxxxxxxxxxxxxxxxxxxxxxxxxyxvj
 jujjjjjjjjjjjjjjjjjjjjjjjjjjjjuj
 juj..........................juj

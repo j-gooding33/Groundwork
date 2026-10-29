@@ -1,13 +1,14 @@
 size: 16x16
+frames: roll-x 2 3
 ---
-ffffffefefffffff
+ffffffefefefffff
 ffiffeffffffffff
 fhhhffffffffffff
 ffffffffefffffff
-ffffffffffifffef
+ffffffefffifffef
 ffeffffffhhhffff
 ffffffffffefffff
-fffeffffffffffff
+fffeffffffffeeff
 feeffiefffffffff
 ffffhhhfeffffeff
 ffffffffffffffff

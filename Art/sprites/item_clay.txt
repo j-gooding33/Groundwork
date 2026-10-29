@@ -5,6 +5,6 @@ size: 8x8
 .noooon.
 noppooon
 noooooon
-noooooon
+noooonon
 .noooon.
 ..nnnn..
