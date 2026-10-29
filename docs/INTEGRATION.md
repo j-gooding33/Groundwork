@@ -1,165 +1,78 @@
-# Plugging the iOS app into GroundworkCore
+# Running Groundwork on a Mac
 
-This is the hand-over for the Mac session (master prompt phases 6 to 11). The simulation, Trace, belts, levels and the art atlas are done and tested on Linux. The app's job is to **draw what `GameSession` says exists and send it the player's taps**. The app never changes the world any other way.
+The game code is written: the simulation (`GroundworkCore`), everything the app decides (`GroundworkView`), and the iPhone app itself (`App/Groundwork`, SwiftUI and SpriteKit). The first two are tested on Linux. The app layer has only been checked with stand-ins for Apple's frameworks, so **expect a short round of compile fixes the first time you build it in Xcode**. Paste any errors to Claude Code and it will fix them.
 
-## 1. Project setup (once, in Xcode)
+Screenshots of what the app should look like, rendered from the real code: `docs/screenshots/`.
 
-1. Clone the repo and create the iOS app inside it: iOS App, Swift, SwiftUI, named Groundwork, landscape only (Landscape Left and Right), iOS 17.
-2. **File → Add Package Dependencies → Add Local…** and pick `GroundworkCore/`. Link the `GroundworkCore` library to the app target.
-3. Drag `Data/` and `Art/generated/` into the app as **folder references** (blue folders), so the files keep their paths inside the bundle.
-4. Open `GroundworkCore/Package.swift` in Xcode and run its tests (Cmd+U). They should pass on macOS exactly as on Linux. Do this before writing any app code.
+## 1. Set up the Xcode project (once)
 
-```swift
-import GroundworkCore
+1. Install Xcode, open it once, and let it install the iOS simulator.
+2. Clone the repo, then in Xcode: **File → New → Project → iOS → App**.
+   - Product name `Groundwork`, interface **SwiftUI**, language **Swift**, no tests or storage.
+   - Save it inside the cloned repo folder.
+3. Delete the two files Xcode made for you, `ContentView.swift` and `GroundworkApp.swift` (Move to Trash). `App/Groundwork/` has its own.
+4. Drag the `App/Groundwork` folder from Finder into the project navigator. Untick "Copy items if needed" and tick the Groundwork target.
+5. **File → Add Package Dependencies → Add Local…**, choose the `GroundworkCore` folder, and add **both** libraries, `GroundworkCore` and `GroundworkView`, to the Groundwork target.
+6. Drag `Data/` and `Art/generated/` into the project as **folder references** (blue folders), ticking the Groundwork target. The app looks for `Data/...` and `generated/atlas.png` / `generated/atlas.json` inside the bundle.
+7. In the target's **General** tab:
+   - Minimum deployment **iOS 17.0**.
+   - Device orientation: **Landscape Left** and **Landscape Right** only.
+   - Tick **Requires full screen**.
+8. Choose an iPhone simulator and press **Run** (Cmd+R). If anything fails to compile, copy the errors to Claude Code.
+9. Optional: open `GroundworkCore/Package.swift` in Xcode and run its tests (Cmd+U). They should pass on macOS exactly as on Linux.
 
-let dataURL = Bundle.main.url(forResource: "Data", withExtension: nil)!
-let content = try ContentDatabase.load(from: dataURL)   // throws a readable list of problems if data is broken
-let session = try GameSession(content: content, level: "level1")
-```
+To play on your own iPhone, sign in under **Settings → Accounts** with a free Apple ID, pick your team under **Signing & Capabilities**, plug in the phone and Run.
 
-`GameSession` is not thread-safe. Keep it on the main thread; SpriteKit's `update(_:)` already runs there.
+## 2. How it fits together
 
-## 2. The frame loop
+| Layer | Where | What it does | Tested |
+| --- | --- | --- | --- |
+| Simulation | `GroundworkCore` | World, ticks, production, belts, Trace, levels, saving | Linux, 98 tests |
+| Presentation | `GroundworkView` | Which sprites to draw and where, terrain edges, belt pieces, item gliding, villagers, day and night, camera, touch gestures, tools, effects, HUD contents, autosave timing | Linux, 29 tests and the screenshots |
+| App | `App/Groundwork` | Puts those sprites on screen with SpriteKit, the HUD with SwiftUI, plays haptics and sound | Stand-in type-check only, until Xcode |
 
-```swift
-final class WorldScene: SKScene {
-    var session: GameSession!
-    var clock = TickClock()          // speed 1; set clock.speed = 2 or 4 for fast-forward, 0 to pause
-    private var last: TimeInterval?
+The rule that keeps this working: **the app only reads `GameSession` and sends it commands, and makes no decisions of its own.** If something needs deciding (what a tap does, what to draw), it goes in `GroundworkView` with a test.
 
-    override func update(_ now: TimeInterval) {
-        defer { last = now }
-        guard let last else { return }
-        session.advance(ticks: clock.ticks(forElapsed: now - last))
-        for event in session.drainEvents() { react(to: event) }   // sounds, haptics, effects
-        sync(with: session.world, fraction: clock.fraction)        // move nodes to match the world
-    }
-}
-```
+### App files
 
-- The simulation runs at exactly 10 ticks per second whatever the frame rate. Fast-forward means more ticks, never longer ones.
-- `clock.fraction` (0 to 1) is how far the next tick has progressed. Use it to glide belt items between slots. It is for drawing only.
-- While the first tutorial step shows, `advance` does nothing (`session.isPausedByTutorial`). That's deliberate.
+- `GroundworkApp.swift`: entry point; saves whenever the app leaves the foreground.
+- `GameStore.swift`: owns the `GameSession`, the camera and input state. Runs the frame loop: ticks, effects, HUD refresh, autosave every 30 seconds. Turns touches into gestures and commands, and saves to Application Support.
+- `TitleView.swift`: the blank-paper opening, Continue, New game (level select) and Settings (sound, haptics).
+- `GameView.swift`: the world fills the screen, with controls at the edges:
+  - build palette on the left;
+  - goal bar and clock on top;
+  - selected building on the right (status, rates, "runs out in", Pick up, Trace);
+  - mode tabs at the bottom (Build, Trace, Undo to start; Demolish and speed after the tutorial);
+  - tutorial bubble, toasts, the goal card and the pause menu.
+- `WorldScene.swift`: an `SKScene` at 480×270, scaled up with nearest-neighbour filtering. It matches one node per sprite id to `SceneBuilder`'s output each frame, moves the camera, applies the day/night tint, and plays bounces, squashes, dust, floating "+1"s and the goal light sweep.
+- `Atlas.swift`: textures from `atlas.png`, nearest filtering.
+- `Feel.swift`: haptics, plus placeholder sound generated in code: a machine hum that follows throughput, every sound cue, and a soft music pad that gains layers with each milestone.
+- `Theme.swift`: colours from the palette and atlas icons for SwiftUI.
 
-## 3. Drawing the world
+### Controls
 
-**Coordinates.** `GridPoint(x, y)` has y growing *south*, with (0, 0) in the north-west corner. SpriteKit's y grows up. For a sprite of `w × h` tiles at `origin`:
+- **Tap a building with no tool:** pick up what it has made, or drop what you're carrying. Its panel opens either way.
+- **Build palette:** tap a building, then tap the map; 2×2 buildings centre under your finger. Tap the selected button again to put the tool down.
+- **Belt:** choose it in the palette, then drag from a building to where the belt should go. A ghost shows the route before you let go.
+- **Trace tab:** tap a building to see its chain. Gold dots flow along working links, and a red marker bobs over the step to fix.
+- **Long press:** open a building's panel. **One finger:** pan. **Pinch:** zoom.
 
-```swift
-let tile: CGFloat = 16
-func position(_ origin: GridPoint, w: Int, h: Int, mapHeight: Int) -> CGPoint {
-    CGPoint(x: (CGFloat(origin.x) + CGFloat(w) / 2) * tile,
-            y: (CGFloat(mapHeight - origin.y) - CGFloat(h) / 2) * tile)
-}
-```
+## 3. Day-to-day commands
 
-**Low resolution.** Make the scene 480×270 points of world (`scaleMode = .aspectFill`), put the camera on an `SKCameraNode`, and set `filteringMode = .nearest` on every texture so pixels stay crisp.
-
-**Atlas.** `Art/generated/atlas.png` plus `atlas.json` (`sprites[name] = {x, y, w, h}`, top-left origin, in pixels). Cut sub-textures with `SKTexture(rect:in:)`. SpriteKit's rect is normalised and bottom-left based, so flip y: `rect.y = 1 - (y + h) / atlasHeight`.
-
-| What | Sprite name |
+| Task | Command |
 | --- | --- |
-| Terrain `grass`, `grassLight`, `grassDark` | `terrain_grass_1`, `terrain_grass_2`, `terrain_grass_3` |
-| `water`, `shore`, `dirt`, `clayGround` | `terrain_water`, `terrain_shore`, `terrain_dirt`, `terrain_clay_ground` |
-| `forest` / `rock` tile | grass underneath, then `nature_tree` (variants `_v1`, `_v2`) / `nature_rock` on top |
-| Clay deposit tiles | `terrain_clay_ground`, with `nature_clay_marker` on some |
-| Unexplored edge | `terrain_paper_fog` |
-| Building of type `T` | `T`, or `T_v1`, `T_v2` (pick by `id % variants`); cottage at night: `cottage_night` |
-| Belt flowing east or south | `belt_h` / `belt_v`, animated with `_f1`, `_f2`, `_f3`. For west use `belt_h` with `xScale = -1`; for north use `belt_v` with `yScale = -1`, so the chevrons point the way items move |
-| Belt corner | `belt_ne`, `belt_nw`, `belt_se`, `belt_sw` (named by the two edges it joins: its own exit edge and the edge it is fed from) |
-| Items on belts and in hands | `item_clay`, `item_log`, `item_brick`, `item_plank` (8×8) |
-| Effects | `fx_pop_1…3` (placing), `fx_smoke_1…3` (chimneys, 8×8) |
-| UI | `icon_build`, `icon_trace`, `icon_undo`, `icon_demolish`, `icon_play_pause`, `icon_cancel`, `icon_bricks`, `icon_goal` |
+| Simulation and view tests | `cd GroundworkCore && swift test` |
+| Rebuild the sprite atlas after editing art | `python3 Tools/make_art.py` |
+| Render screenshots of the real game | `bash Tools/preview.sh`, writes `docs/screenshots/` |
+| Check app code without a Mac | `bash Tools/check_app.sh` |
+| Performance check | `cd GroundworkCore && swift run -c release GroundworkBench` |
 
-Skip drawing a tree or marker under a building's footprint.
+Edit sprites as text grids in `Art/sprites/`, or hand-paint PNGs into `Art/manual/` (they always win). Rebuild the atlas afterwards; the app picks up `Art/generated/` on the next build.
 
-**Belts.** `world.belts` is an array of `BeltTile { point, direction, slots, pullsFrom }`. A tile is a corner when the belt feeding it (the one whose `next` is this tile, from behind or the side) comes in at a right angle to its `direction`. Slot `s` of `n` sits `(s + 0.5) / n` of the way across the tile in `direction`. Glide it forward by `fraction / beltTicksPerSlot` of a slot, but only if the slot ahead is empty.
+## 4. Known gaps
 
-**Buildings.** `world.buildings`: `type`, `origin`, `status`, `input`, `output`, `progress`, `buildRemaining`. Size comes from `content.building(type)!.size`. Status drives the look:
-
-| `status` | Look and sound |
-| --- | --- |
-| `.running` | Normal, machine hum layer on |
-| `.blocked(_)` | Dim, amber pulse, hum off. The icon above shows what's missing (`reason.text(content)`) |
-| `.idle` | Normal, quiet |
-| `.constructing` | Scaffold or partial alpha |
-| `.complete` | Normal; a full foundation gets a sparkle |
-
-**Day and night** are a rendering choice: derive time of day from `world.tick` (for example a 10-minute day) and tint the scene. Swap `cottage` for `cottage_night` after dusk. Never store the time of day back into the world.
-
-## 4. Player input → commands
-
-Every command returns `CommandResult`: `.ok`, or `.rejected(error)` with `error.message`, a short sentence for a toast ("The Clay Pit needs a clay deposit", "This belt needs 7 tiles and you have 3").
-
-| Gesture | Call |
-| --- | --- |
-| Tap a tile with a build tool | `session.place(type, at: tile)` |
-| Drag from a building or tile with the belt tool | while dragging: `session.previewBelt(from: start, to: current)` returns the ghost path (or nil); on release: `session.layBelt(from: start, to: end)` |
-| Tap a building with empty hands | `session.pickUp(from: id)` |
-| Tap a building with full hands | `session.drop(into: id)` |
-| Demolish | `session.remove(id)` / `session.removeBelt(at: tile)` |
-| Undo button | `session.undo()`, enabled when `session.canUndo` |
-| Long press | inspect card: `session.rates(of: id)` (made, used and received per minute, plus `runsOutInSeconds` when an input is running short, for "Logs run out in 20 s") and `session.trace(.building(id))` |
-
-Starting a belt **on** a building takes items from it. Ending a belt on a building, or on the side of another belt, feeds into it. Routing avoids obstacles by itself and prefers straight runs.
-
-## 5. Trace
-
-```swift
-let result = session.trace(.building(id))   // or .item("brick")
-result.root          // TraceNode tree: label, state (.running .slow .blocked .notBuilt), reason, children
-result.brokenPath    // root → first broken step (empty when everything runs)
-result.firstBroken   // the step to fix; for .missingBuilding(type) show "Build a …"
-result.jumpTarget    // EntityID to centre the camera on
-```
-
-Draw lines along the tree between the buildings it names (`node.entity`). Use gold for running, amber for slow and red for blocked, plus the design's shape and icon cues for colour-blind players. Trace is a pure function: call it as often as you like.
-
-## 6. Events → feel
-
-| Event | Effect |
-| --- | --- |
-| `buildingPlaced` | small bounce, `fx_pop` frames, light haptic, place sound |
-| `itemProduced` | squash on the new item; floating "+1" only for the first few of each item |
-| `itemDelivered(_, _, via: .hand)` | pickup and drop sound |
-| `statusChanged(id, .blocked)` | start the amber pulse; hum fades out |
-| `statusChanged(id, .running)` | hum back on; pitch up with throughput (`rates(of:)`) |
-| `homeStarted` / `homeCompleted` | scaffold, then chimney smoke |
-| `sourceDepleted` | gentle warning on that tile |
-| `tutorialStep(id)` | show `session.tutorialStep!.text` (two short lines) and pulse its `highlight` (tile, building type or UI control) |
-| `goalReached` | double haptic, warm light sweep, new music layer, colour spreading across the map |
-
-## 7. The SwiftUI overlay
-
-- **Left: build palette** from `world.unlocked`, with names from `content.building(type)!.name`. Show remaining belt tiles from `world.beltsAvailable`.
-- **Top:** `session.goal` (`text`, `current` / `target`) and the clock.
-- **Right:** context panel for the selection (status text, rates, Trace button, demolish).
-- **Bottom:** mode tabs. Level 1 starts with only Build, Trace and Undo.
-
-## 8. Fun-test overlay
-
-The design's fun test needs time to first belt, time to first bottleneck fixed, and session length. `session.funTest` has the first two, recorded and saved by the core: `secondsToFirstBelt`, `secondsToFirstFix`, `bottlenecksFixed`, `commands`. Times are game seconds. Log wall-clock session length in the app, because game time stops while the first tutorial step waits. A debug overlay only has to show these numbers.
-
-## 9. Saving
-
-```swift
-let data = try session.save()                       // deterministic JSON
-try data.write(to: saveURL, options: .atomic)       // Application Support/save.json
-let session = try GameSession.load(data, content: content)
-```
-
-Save every 30 seconds and when `scenePhase` becomes `.background`. A loaded world continues exactly as if it had never stopped (tested). The undo history is not saved.
-
-## 10. Rules that keep it working
-
-- Never change the world except through `GameSession` commands and `advance`. The renderer only reads.
-- No randomness in the app may affect the world. Visual-only randomness (tree jitter, smoke wobble) is fine; seed it from the tile position so it doesn't flicker.
-- New items, buildings, recipes and levels are JSON in `Data/`. If loading fails, `ContentError` lists every problem.
-- After changing sprites: `python3 Tools/make_art.py` rebuilds the atlas. Put hand-edited PNGs in `Art/manual/` (same name); they always win.
-
-## 11. Known gaps for the renderer
-
-- **Terrain transitions:** water, sand, clay and dirt currently meet in hard squares. Add edge or corner tiles chosen from neighbours.
-- **Trees** sit one per tile in a grid. Jitter them a few pixels from a hash of the point.
-- **Sound** is hooks only. Generate placeholder tones until real audio exists.
-- **Balance numbers** in `Data/` are placeholders. The scripted test player finishes Level 1 in about 63 seconds of game time; real players will be slower. Play-test and tune.
+- **Not yet built against Apple's SDK.** The stand-ins match the real API as closely as I know it, but expect a few compile fixes.
+- **Performance on a device is unmeasured.** The static layer (terrain, edges, trees) is about 5,000 sprite nodes drawn from one texture. If it's slow on an older iPhone, render that layer to a single texture once with `SKView.texture(from:)`.
+- **Sound is generated placeholder tones.** Replace the buffers in `Feel.swift` with real audio when it exists.
+- **Text uses the system monospaced font,** not a pixel font.
+- **The balance numbers in `Data/` are placeholders.** Play it and tune.
