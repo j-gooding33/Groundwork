@@ -95,6 +95,25 @@ public struct TileMap: Codable, Equatable, Sendable {
         depositIndex(at: point).map { deposits[$0] }
     }
 
+    /// Takes from the deposit at a point. Returns false if there is not enough.
+    mutating func take(_ count: Int, at point: GridPoint) -> Bool {
+        guard let i = depositIndex(at: point) else { return false }
+        guard let remaining = deposits[i].remaining else { return true }
+        guard remaining >= count else { return false }
+        deposits[i].remaining = remaining - count
+        return true
+    }
+
+    /// Adds one unit back to every depleted-but-renewable deposit of a source, up to its starting amount.
+    mutating func regrow(_ source: SourceDef) {
+        guard let cap = source.startingAmount else { return }
+        for i in deposits.indices where deposits[i].source == source.id {
+            if let remaining = deposits[i].remaining, remaining < cap {
+                deposits[i].remaining = remaining + 1
+            }
+        }
+    }
+
     /// Binary search over the sorted deposits.
     func depositIndex(at point: GridPoint) -> Int? {
         var low = 0

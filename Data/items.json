@@ -1,6 +1,6 @@
 [
-  { "id": "clay",  "name": "Clay",  "tier": "raw" },
-  { "id": "log",   "name": "Log",   "tier": "raw" },
-  { "id": "brick", "name": "Brick", "tier": "processed" },
-  { "id": "plank", "name": "Plank", "tier": "processed" }
+  {"id": "clay", "name": "Clay", "tier": "raw", "plural": "clay"},
+  {"id": "log", "name": "Log", "tier": "raw", "plural": "logs"},
+  {"id": "brick", "name": "Brick", "tier": "processed", "plural": "bricks"},
+  {"id": "plank", "name": "Plank", "tier": "processed", "plural": "planks"}
 ]

@@ -8,6 +8,8 @@ public enum ItemTier: String, Codable, Sendable {
 public struct ItemDef: Codable, Equatable, Sendable {
     public var id: ItemID
     public var name: String
+    /// Used in sentences such as "Waiting for logs".
+    public var plural: String
     public var tier: ItemTier
 }
 
@@ -79,6 +81,9 @@ public struct BuildingDef: Codable, Equatable, Sendable {
     public var accepts: [ItemID]
     public var level: Int
     public var placeOn: PlacementRule
+    /// For a yard: the building it constructs, and how long each one takes.
+    public var builds: BuildingTypeID?
+    public var buildTicks: Int?
 
     public var width: Int { size.first ?? 1 }
     public var height: Int { size.count > 1 ? size[1] : 1 }

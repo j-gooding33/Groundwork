@@ -1,0 +1,8 @@
+{
+  "handCapacity": 10,
+  "beltSlotsPerTile": 4,
+  "beltTicksPerSlot": 2,
+  "rateBucketTicks": 60,
+  "rateBuckets": 10,
+  "blockGraceTicks": 20
+}

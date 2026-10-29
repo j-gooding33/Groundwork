@@ -13,7 +13,7 @@ final class TileMapTests: XCTestCase {
         let map = try TestSupport.level1Map(try TestSupport.content())
         let clay = map.deposits.filter { $0.source == "clay_deposit" }
         XCTAssertFalse(clay.isEmpty)
-        XCTAssertTrue(clay.allSatisfy { $0.remaining == 40 })
+        XCTAssertTrue(clay.allSatisfy { $0.remaining == 200 })
         let besideWater = clay.contains { deposit in
             deposit.point.neighbours.contains { map.terrain(at: $0) == .water }
         }

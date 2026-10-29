@@ -22,8 +22,10 @@ enum TestSupport {
 
     // MARK: Fixture content, small enough to read in a test
 
-    static let clayItem = ItemDef(id: "clay", name: "Clay", tier: .raw)
-    static let brickItem = ItemDef(id: "brick", name: "Brick", tier: .processed)
+    static let clayItem = ItemDef(id: "clay", name: "Clay", plural: "clay", tier: .raw)
+    static let brickItem = ItemDef(id: "brick", name: "Brick", plural: "bricks", tier: .processed)
+    static let rules = GameRules(handCapacity: 10, beltSlotsPerTile: 4, beltTicksPerSlot: 2,
+                                 rateBucketTicks: 60, rateBuckets: 10, blockGraceTicks: 20)
     static let claySource = SourceDef(id: "clay_deposit", name: "Clay deposit", item: "clay",
                                       startingAmount: 40, regrowPerMinute: 0)
     static let gatherClay = RecipeDef(id: "gather_clay", building: "clay_pit", source: "clay_deposit",
@@ -52,9 +54,39 @@ enum TestSupport {
         buildings: [BuildingDef] = [building("clay_pit", recipes: ["gather_clay"], placeOn: .source),
                                     building("kiln", recipes: ["brick"])],
         recipes: [RecipeDef] = [gatherClay, fireBrick],
+        rules: GameRules = rules,
         legend: [String: LegendEntry] = legend
     ) throws -> ContentDatabase {
-        try ContentDatabase(items: items, sources: sources, buildings: buildings, recipes: recipes, legend: legend)
+        try ContentDatabase(items: items, sources: sources, buildings: buildings, recipes: recipes,
+                            rules: rules, legend: legend)
+    }
+
+    // MARK: Small worlds on the real content
+
+    /// A session on a small text map using the real content and legend.
+    static func session(_ rows: [String], seed: UInt64 = 1) throws -> GameSession {
+        let content = try content()
+        return GameSession(content: content, map: try TileMap.parse(rows.joined(separator: "\n"), content: content),
+                           seed: seed)
+    }
+
+    /// The id of the building whose footprint covers a point.
+    static func id(at point: GridPoint, in session: GameSession) throws -> EntityID {
+        try XCTUnwrap(session.world.building(at: point)?.id, "No building at \(point)")
+    }
+
+    /// Places a building and returns its id, failing the test if it is refused.
+    @discardableResult
+    static func place(_ type: BuildingTypeID, at point: GridPoint, in session: GameSession,
+                      file: StaticString = #filePath, line: UInt = #line) throws -> EntityID {
+        let result = session.place(type, at: point)
+        XCTAssertEqual(result, .ok, "Placing \(type) at \(point)", file: file, line: line)
+        return try id(at: point, in: session)
+    }
+
+    static func layBelt(from: GridPoint, to: GridPoint, in session: GameSession,
+                        file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertEqual(session.layBelt(from: from, to: to), .ok, "Belt \(from) to \(to)", file: file, line: line)
     }
 }
 

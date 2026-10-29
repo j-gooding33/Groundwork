@@ -12,7 +12,7 @@ public enum ContentError: Error, Equatable, CustomStringConvertible {
     }
 }
 
-/// All game content: items, sources, buildings, recipes and the map legend.
+/// All game content: items, sources, buildings, recipes, rules and the map legend.
 ///
 /// Every list is kept sorted by ID, so anything that walks the content walks it
 /// in the same order on every run.
@@ -21,6 +21,7 @@ public struct ContentDatabase: Sendable {
     public let sources: [SourceDef]
     public let buildings: [BuildingDef]
     public let recipes: [RecipeDef]
+    public let rules: GameRules
     /// Map characters, keyed by a one-character string.
     public let legend: [String: LegendEntry]
 
@@ -31,11 +32,12 @@ public struct ContentDatabase: Sendable {
 
     /// Builds a database and validates it. Throws `ContentError.invalid` listing every problem.
     public init(items: [ItemDef], sources: [SourceDef], buildings: [BuildingDef],
-                recipes: [RecipeDef], legend: [String: LegendEntry]) throws {
+                recipes: [RecipeDef], rules: GameRules, legend: [String: LegendEntry]) throws {
         self.items = items.sorted { $0.id < $1.id }
         self.sources = sources.sorted { $0.id < $1.id }
         self.buildings = buildings.sorted { $0.id < $1.id }
         self.recipes = recipes.sorted { $0.id < $1.id }
+        self.rules = rules
         self.legend = legend
         itemIndex = Self.index(self.items.map(\.id))
         sourceIndex = Self.index(self.sources.map(\.id))
@@ -46,13 +48,14 @@ public struct ContentDatabase: Sendable {
         if !problems.isEmpty { throw ContentError.invalid(problems) }
     }
 
-    /// Loads items.json, sources.json, buildings.json, recipes.json and maps/legend.json.
+    /// Loads items.json, sources.json, buildings.json, recipes.json, rules.json and maps/legend.json.
     public static func load(from dataDirectory: URL) throws -> ContentDatabase {
         try ContentDatabase(
             items: decode("items.json", in: dataDirectory),
             sources: decode("sources.json", in: dataDirectory),
             buildings: decode("buildings.json", in: dataDirectory),
             recipes: decode("recipes.json", in: dataDirectory),
+            rules: decode("rules.json", in: dataDirectory),
             legend: decode("maps/legend.json", in: dataDirectory)
         )
     }
@@ -63,6 +66,10 @@ public struct ContentDatabase: Sendable {
     public func source(_ id: SourceID) -> SourceDef? { sourceIndex[id].map { sources[$0] } }
     public func building(_ id: BuildingTypeID) -> BuildingDef? { buildingIndex[id].map { buildings[$0] } }
     public func recipe(_ id: RecipeID) -> RecipeDef? { recipeIndex[id].map { recipes[$0] } }
+
+    /// "Waiting for logs" reads better than "Waiting for log".
+    public func plural(_ id: ItemID) -> String { item(id)?.plural ?? id.rawValue }
+    public func name(_ id: BuildingTypeID) -> String { building(id)?.name ?? id.rawValue }
 
     /// Recipes that output the item, in ID order.
     public func recipes(producing item: ItemID) -> [RecipeDef] {
@@ -152,6 +159,14 @@ public struct ContentDatabase: Sendable {
             for accepted in building.accepts where item(accepted) == nil {
                 problems.append("\(name) accepts unknown item '\(accepted)'")
             }
+            if let built = building.builds {
+                if self.building(built) == nil {
+                    problems.append("\(name) builds unknown building '\(built)'")
+                }
+                if (building.buildTicks ?? 0) <= 0 {
+                    problems.append("\(name) builds '\(built)' so it needs buildTicks above 0")
+                }
+            }
             if building.placeOn == .source && !building.recipes.contains(where: { recipe($0)?.source != nil }) {
                 problems.append("\(name) must be placed on a source but has no gathering recipe")
             }
@@ -167,6 +182,7 @@ public struct ContentDatabase: Sendable {
             }
         }
 
+        problems += rules.problems()
         problems += traceRuleProblems()
         return problems
     }

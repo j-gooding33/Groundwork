@@ -21,15 +21,15 @@ final class ContentValidationTests: XCTestCase {
     }
 
     func testItemWithNoRecipeBreaksTheTraceRule() {
-        let orphan = ItemDef(id: "glass", name: "Glass", tier: .processed)
+        let orphan = ItemDef(id: "glass", name: "Glass", plural: "glass", tier: .processed)
         XCTAssertContentProblem("Item 'glass' cannot be traced back to a natural source") {
             try TestSupport.fixture(items: [TestSupport.clayItem, TestSupport.brickItem, orphan])
         }
     }
 
     func testCycleWithNoSourceBreaksTheTraceRule() {
-        let a = ItemDef(id: "a", name: "A", tier: .processed)
-        let b = ItemDef(id: "b", name: "B", tier: .processed)
+        let a = ItemDef(id: "a", name: "A", plural: "a", tier: .processed)
+        let b = ItemDef(id: "b", name: "B", plural: "b", tier: .processed)
         let aToB = RecipeDef(id: "a_to_b", building: "kiln", source: nil, durationTicks: 10, power: 0, level: 1,
                              inputs: [RecipeInput(item: "a", count: 1, role: .material)],
                              outputs: [ItemStack(item: "b", count: 1)])
