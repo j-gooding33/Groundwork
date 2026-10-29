@@ -27,22 +27,17 @@ enum Production {
         let tick = world.tick
         let rules = content.rules
 
-        if world.buildings[i].progress > 0 {
+        // Ticks of work count from the tick a craft starts. A craft that starts
+        // on the tick the previous one finished gets no work that tick, so a
+        // fed machine makes exactly one batch per recipe duration.
+        var justFinished = false
+        if world.buildings[i].crafting {
             world.buildings[i].progress += 1
-            if world.buildings[i].progress >= recipe.durationTicks {
-                world.buildings[i].progress = 0
-                for out in recipe.outputs {
-                    world.buildings[i].output.add(out.item, out.count)
-                    world.buildings[i].rates.record(.made, out.item, out.count, tick: tick, rules: rules)
-                    events.append(.itemProduced(world.buildings[i].id, out.item, count: out.count))
-                }
-            } else {
-                return
-            }
+            guard world.buildings[i].progress >= recipe.durationTicks else { return }
+            finish(&world, i, recipe: recipe, content: content, events: &events)
+            justFinished = true
         }
 
-        // Idle (or just finished): try to start the next craft this same tick,
-        // so a fed machine makes exactly one batch per recipe duration.
         if let reason = blockReason(world.buildings[i], recipe: recipe, def: def, world: world) {
             if world.buildings[i].waitReason != reason {
                 world.buildings[i].waitReason = reason
@@ -64,15 +59,22 @@ enum Production {
         }
         world.buildings[i].waitReason = nil
         world.buildings[i].waitingTicks = 0
-        world.buildings[i].progress = 1
-        if recipe.durationTicks <= 1 {
-            // A one-tick recipe finishes on the tick it starts.
-            world.buildings[i].progress = 0
-            for out in recipe.outputs {
-                world.buildings[i].output.add(out.item, out.count)
-                world.buildings[i].rates.record(.made, out.item, out.count, tick: tick, rules: rules)
-                events.append(.itemProduced(world.buildings[i].id, out.item, count: out.count))
-            }
+        world.buildings[i].crafting = true
+        world.buildings[i].progress = justFinished ? 0 : 1
+        if world.buildings[i].progress >= recipe.durationTicks {
+            // A one-tick recipe started fresh finishes on the tick it starts.
+            finish(&world, i, recipe: recipe, content: content, events: &events)
+        }
+    }
+
+    private static func finish(_ world: inout World, _ i: Int, recipe: RecipeDef, content: ContentDatabase,
+                               events: inout [GameEvent]) {
+        world.buildings[i].crafting = false
+        world.buildings[i].progress = 0
+        for out in recipe.outputs {
+            world.buildings[i].output.add(out.item, out.count)
+            world.buildings[i].rates.record(.made, out.item, out.count, tick: world.tick, rules: content.rules)
+            events.append(.itemProduced(world.buildings[i].id, out.item, count: out.count))
         }
     }
 

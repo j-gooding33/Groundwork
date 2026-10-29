@@ -29,7 +29,7 @@ public enum Simulation {
             var status = building.status
             switch def.kind {
             case .gatherer, .processor:
-                if building.progress > 0 {
+                if building.crafting {
                     status = .running
                 } else if let reason = building.waitReason, building.waitingTicks >= content.rules.blockGraceTicks {
                     status = .blocked(reason)

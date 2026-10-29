@@ -46,7 +46,9 @@ public struct Building: Codable, Equatable, Sendable {
     public let placedAtTick: UInt64
     public internal(set) var input = Inventory()
     public internal(set) var output = Inventory()
-    /// Ticks into the current craft; 0 means not crafting.
+    /// True while a batch is being made.
+    public internal(set) var crafting = false
+    /// Ticks of work on the current batch.
     public internal(set) var progress = 0
     public internal(set) var status = MachineStatus.idle
     /// Why it could not start the last time it tried, and for how many ticks.

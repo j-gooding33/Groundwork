@@ -86,7 +86,7 @@ final class BeltTests: XCTestCase {
             let pitBuilding = try XCTUnwrap(world.building(pit))
             let onBelts = world.belts.reduce(0) { $0 + $1.items.count }
             let inCrate = world.building(crate)?.input.count(of: "clay") ?? 0
-            let crafting = pitBuilding.progress > 0 ? 1 : 0
+            let crafting = pitBuilding.crafting ? 1 : 0
             let accounted = pitBuilding.output.count(of: "clay") + onBelts + inCrate + crafting
             if taken != accounted {
                 return XCTFail("Tick \(tick): took \(taken) clay from the ground but can find \(accounted)")

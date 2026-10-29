@@ -21,6 +21,18 @@ final class ProductionTests: XCTestCase {
         XCTAssertEqual(session.world.map.deposit(at: GridPoint(1, 1))?.remaining, 190)
     }
 
+    func testAFedMachineMakesOneBatchPerDuration() throws {
+        let session = try TestSupport.session(field)
+        let kiln = try TestSupport.place("brick_kiln", at: GridPoint(6, 1), in: session)
+        session.stock(kiln, with: "clay", count: 10)
+        session.stock(kiln, with: "log", count: 5)
+        // 50 ticks per brick: the 5th brick appears on tick 250, not before.
+        session.advance(ticks: 249)
+        XCTAssertEqual(session.world.building(kiln)?.output.count(of: "brick"), 4)
+        session.advance(ticks: 1)
+        XCTAssertEqual(session.world.building(kiln)?.output.count(of: "brick"), 5)
+    }
+
     func testFullOutputBlocksTheMachine() throws {
         let session = try TestSupport.session(field)
         let pit = try TestSupport.place("clay_pit", at: GridPoint(1, 1), in: session)
