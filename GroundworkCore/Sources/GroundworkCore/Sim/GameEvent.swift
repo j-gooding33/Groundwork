@@ -15,4 +15,8 @@ public enum GameEvent: Equatable, Sendable {
     case homeStarted(EntityID, by: EntityID)
     case homeCompleted(EntityID)
     case sourceDepleted(GridPoint, SourceID)
+    /// A tutorial step began.
+    case tutorialStep(String)
+    case tutorialFinished(LevelID)
+    case goalReached(LevelID)
 }

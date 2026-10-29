@@ -22,6 +22,11 @@ public struct ContentDatabase: Sendable {
     public let buildings: [BuildingDef]
     public let recipes: [RecipeDef]
     public let rules: GameRules
+    public let levels: [LevelDef]
+    /// Guided steps, keyed by the name a level refers to.
+    public let tutorials: [String: [TutorialStep]]
+    /// Map texts, keyed by file name relative to Data/.
+    public let maps: [String: String]
     /// Map characters, keyed by a one-character string.
     public let legend: [String: LegendEntry]
 
@@ -32,13 +37,18 @@ public struct ContentDatabase: Sendable {
 
     /// Builds a database and validates it. Throws `ContentError.invalid` listing every problem.
     public init(items: [ItemDef], sources: [SourceDef], buildings: [BuildingDef],
-                recipes: [RecipeDef], rules: GameRules, legend: [String: LegendEntry]) throws {
+                recipes: [RecipeDef], rules: GameRules, legend: [String: LegendEntry],
+                levels: [LevelDef] = [], tutorials: [String: [TutorialStep]] = [:],
+                maps: [String: String] = [:]) throws {
         self.items = items.sorted { $0.id < $1.id }
         self.sources = sources.sorted { $0.id < $1.id }
         self.buildings = buildings.sorted { $0.id < $1.id }
         self.recipes = recipes.sorted { $0.id < $1.id }
         self.rules = rules
         self.legend = legend
+        self.levels = levels
+        self.tutorials = tutorials
+        self.maps = maps
         itemIndex = Self.index(self.items.map(\.id))
         sourceIndex = Self.index(self.sources.map(\.id))
         buildingIndex = Self.index(self.buildings.map(\.id))
@@ -48,15 +58,28 @@ public struct ContentDatabase: Sendable {
         if !problems.isEmpty { throw ContentError.invalid(problems) }
     }
 
-    /// Loads items.json, sources.json, buildings.json, recipes.json, rules.json and maps/legend.json.
+    /// Loads items, sources, buildings, recipes, rules, the map legend, levels,
+    /// tutorials and every map a level uses, all from Data/.
     public static func load(from dataDirectory: URL) throws -> ContentDatabase {
-        try ContentDatabase(
+        let levels: [LevelDef] = try decode("levels.json", in: dataDirectory)
+        var maps: [String: String] = [:]
+        for file in Set(levels.map(\.map)).sorted() {
+            do {
+                maps[file] = try String(contentsOf: dataDirectory.appendingPathComponent(file), encoding: .utf8)
+            } catch {
+                throw ContentError.unreadable(file: file, reason: String(describing: error))
+            }
+        }
+        return try ContentDatabase(
             items: decode("items.json", in: dataDirectory),
             sources: decode("sources.json", in: dataDirectory),
             buildings: decode("buildings.json", in: dataDirectory),
             recipes: decode("recipes.json", in: dataDirectory),
             rules: decode("rules.json", in: dataDirectory),
-            legend: decode("maps/legend.json", in: dataDirectory)
+            legend: decode("maps/legend.json", in: dataDirectory),
+            levels: levels,
+            tutorials: decode("tutorial.json", in: dataDirectory),
+            maps: maps
         )
     }
 
@@ -66,6 +89,15 @@ public struct ContentDatabase: Sendable {
     public func source(_ id: SourceID) -> SourceDef? { sourceIndex[id].map { sources[$0] } }
     public func building(_ id: BuildingTypeID) -> BuildingDef? { buildingIndex[id].map { buildings[$0] } }
     public func recipe(_ id: RecipeID) -> RecipeDef? { recipeIndex[id].map { recipes[$0] } }
+    public func level(_ id: LevelID) -> LevelDef? { levels.first { $0.id == id } }
+
+    /// The parsed map for a level.
+    public func map(for level: LevelDef) throws -> TileMap {
+        guard let text = maps[level.map] else {
+            throw ContentError.unreadable(file: level.map, reason: "not loaded")
+        }
+        return try TileMap.parse(text, content: self)
+    }
 
     /// "Waiting for logs" reads better than "Waiting for log".
     public func plural(_ id: ItemID) -> String { item(id)?.plural ?? id.rawValue }
@@ -184,6 +216,8 @@ public struct ContentDatabase: Sendable {
 
         problems += rules.problems()
         problems += traceRuleProblems()
+        problems += Self.duplicates(levels.map(\.id), kind: "level")
+        for level in levels { problems += levelProblems(level) }
         return problems
     }
 
@@ -210,6 +244,90 @@ public struct ContentDatabase: Sendable {
             .filter { !reachable.contains($0.id) }
             .map { "Item '\($0.id)' cannot be traced back to a natural source" }
     }
+
+    private func levelProblems(_ level: LevelDef) -> [String] {
+        let name = "Level '\(level.id)'"
+        var problems: [String] = []
+        for type in level.unlocked where building(type) == nil {
+            problems.append("\(name) unlocks unknown building '\(type)'")
+        }
+        for stock in level.firstPlacementStock {
+            if building(stock.building) == nil { problems.append("\(name) stocks unknown building '\(stock.building)'") }
+            if item(stock.item) == nil { problems.append("\(name) stocks unknown item '\(stock.item)'") }
+        }
+        let goal = level.goal
+        if goal.count <= 0 { problems.append("\(name) goal needs a count above 0") }
+        switch goal.kind {
+        case .deliver:
+            if goal.item.flatMap(item) == nil { problems.append("\(name) goal delivers an unknown item") }
+            if goal.to.flatMap(building) == nil { problems.append("\(name) goal delivers to an unknown building") }
+        case .build:
+            if goal.building.flatMap(building) == nil { problems.append("\(name) goal builds an unknown building") }
+        }
+
+        if let key = level.tutorial {
+            if let steps = tutorials[key] {
+                for step in steps { problems += stepProblems(step, in: name) }
+            } else {
+                problems.append("\(name) uses unknown tutorial '\(key)'")
+            }
+        }
+
+        let map: TileMap
+        do {
+            map = try self.map(for: level)
+        } catch {
+            problems.append("\(name) map: \(error)")
+            return problems
+        }
+        if !map.contains(level.focus) { problems.append("\(name) camera focus is off the map") }
+        var world = World(map: map, seed: 0)
+        for item in level.preplaced {
+            guard let def = building(item.building) else {
+                problems.append("\(name) preplaces unknown building '\(item.building)'")
+                continue
+            }
+            if let problem = Commands.placementProblem(def, at: item.at, world: world, content: self) {
+                problems.append("\(name) cannot preplace \(def.name) at \(item.at): \(problem.message)")
+            } else {
+                Commands.insertBuilding(item.building, at: item.at, facing: .south, world: &world, content: self)
+            }
+        }
+        return problems
+    }
+
+    /// Tutorial text is at most two short lines, and every condition must make sense.
+    private func stepProblems(_ step: TutorialStep, in levelName: String) -> [String] {
+        let name = "\(levelName) step '\(step.id)'"
+        var problems: [String] = []
+        let lines = step.text.split(separator: "\n", omittingEmptySubsequences: false)
+        if lines.count > 2 || lines.contains(where: { $0.count > Self.maxTutorialLineLength }) {
+            problems.append("\(name) text must be at most 2 lines of \(Self.maxTutorialLineLength) characters")
+        }
+        guard let condition = TutorialCondition(step.when) else {
+            return problems + ["\(name) has an unreadable condition '\(step.when)'"]
+        }
+        switch condition {
+        case let .placed(type):
+            if building(type) == nil { problems.append("\(name) waits for unknown building '\(type)'") }
+        case let .produced(id), let .waiting(id):
+            if item(id) == nil { problems.append("\(name) waits for unknown item '\(id)'") }
+        case let .delivered(id, qualifier):
+            if item(id) == nil { problems.append("\(name) waits for unknown item '\(id)'") }
+            if let qualifier, qualifier != "hand", qualifier != "belt",
+               building(BuildingTypeID(rawValue: qualifier)) == nil {
+                problems.append("\(name) has an unknown delivery qualifier '\(qualifier)'")
+            }
+        case .goal:
+            break
+        }
+        for type in step.grant?.unlock ?? [] where building(type) == nil {
+            problems.append("\(name) unlocks unknown building '\(type)'")
+        }
+        return problems
+    }
+
+    public static let maxTutorialLineLength = 48
 
     // MARK: Helpers
 

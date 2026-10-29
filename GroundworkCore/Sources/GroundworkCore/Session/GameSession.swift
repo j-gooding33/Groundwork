@@ -37,6 +37,16 @@ public final class GameSession {
         world.index = WorldIndex(world: world, content: content)
     }
 
+    /// Starts a level: its map, preplaced buildings, unlocks, belt stock and tutorial.
+    public convenience init(content: ContentDatabase, level id: LevelID, seed: UInt64 = 1) throws {
+        guard let level = content.level(id) else {
+            throw ContentError.invalid(["Unknown level '\(id)'"])
+        }
+        self.init(content: content, map: try content.map(for: level), seed: seed)
+        LevelRunner.start(level, world: &world, content: content, events: &events)
+        runLevel(since: 0)
+    }
+
     private init(content: ContentDatabase, world: World) {
         self.content = content
         self.world = world
@@ -46,17 +56,41 @@ public final class GameSession {
     // MARK: Time
 
     /// Runs whole ticks. Fast-forward calls this with more ticks per frame.
+    /// While a tutorial step asks for a pause, time waits for the player.
     public func advance(ticks: Int) {
         precondition(ticks >= 0, "Cannot advance by a negative number of ticks")
         for _ in 0..<ticks {
+            if isPausedByTutorial { return }
+            let mark = events.count
             Simulation.step(&world, content: content, events: &events)
+            runLevel(since: mark)
         }
+    }
+
+    public var isPausedByTutorial: Bool { tutorialStep?.pauseSim == true }
+
+    private func runLevel(since mark: Int) {
+        guard world.level != nil else { return }
+        let fresh = events[mark...]
+        LevelRunner.update(&world, content: content, newEvents: fresh, events: &events)
+    }
+
+    /// Runs a command, then lets the level react to what it did.
+    private func command(_ body: () -> CommandResult) -> CommandResult {
+        let mark = events.count
+        let result = body()
+        runLevel(since: mark)
+        return result
     }
 
     // MARK: Commands
 
     @discardableResult
     public func place(_ type: BuildingTypeID, at origin: GridPoint, facing: Direction = .south) -> CommandResult {
+        command { placeNow(type, at: origin, facing: facing) }
+    }
+
+    private func placeNow(_ type: BuildingTypeID, at origin: GridPoint, facing: Direction) -> CommandResult {
         switch Commands.place(type, at: origin, facing: facing, world: &world, content: content) {
         case let .success(id):
             undoStack.append(.placed(id))
@@ -70,6 +104,10 @@ public final class GameSession {
     /// Removes a building. Anything it was holding is lost (undo brings it back).
     @discardableResult
     public func remove(_ id: EntityID) -> CommandResult {
+        command { removeNow(id) }
+    }
+
+    private func removeNow(_ id: EntityID) -> CommandResult {
         switch Commands.remove(id, world: &world, content: content) {
         case let .success(building):
             undoStack.append(.removed(building))
@@ -89,6 +127,10 @@ public final class GameSession {
     /// building or belt feeds into it. The route avoids obstacles by itself.
     @discardableResult
     public func layBelt(from: GridPoint, to: GridPoint) -> CommandResult {
+        command { layBeltNow(from: from, to: to) }
+    }
+
+    private func layBeltNow(from: GridPoint, to: GridPoint) -> CommandResult {
         switch Commands.layBelt(from: from, to: to, world: &world, content: content) {
         case let .success(points):
             undoStack.append(.beltLaid(points))
@@ -121,6 +163,10 @@ public final class GameSession {
     /// Drops as much of what the hands hold as the building will take.
     @discardableResult
     public func drop(into id: EntityID) -> CommandResult {
+        command { dropNow(into: id) }
+    }
+
+    private func dropNow(into id: EntityID) -> CommandResult {
         switch Commands.drop(into: id, world: &world, content: content) {
         case let .success(stack):
             events.append(.itemDelivered(id, stack.item, via: .hand))
@@ -133,11 +179,15 @@ public final class GameSession {
     /// Undoes the last place, remove or belt action. Hand-carrying is not undoable.
     @discardableResult
     public func undo() -> CommandResult {
+        command { undoNow() }
+    }
+
+    private func undoNow() -> CommandResult {
         guard let entry = undoStack.popLast() else { return .rejected(.nothingToUndo) }
         switch entry {
         case let .placed(id):
             guard case let .success(building) = Commands.remove(id, world: &world, content: content) else {
-                return undo()
+                return undoNow()
             }
             events.append(.buildingRemoved(id, building.type))
         case let .removed(building):
@@ -147,7 +197,7 @@ public final class GameSession {
             events.append(.buildingPlaced(building.id, building.type))
         case let .beltLaid(points):
             let removed = Commands.removeBelts(at: points, world: &world, content: content)
-            if removed.isEmpty { return undo() }
+            if removed.isEmpty { return undoNow() }
             events.append(.beltRemoved(removed.map(\.point)))
         case let .beltRemoved(tiles):
             if case let .failure(error) = Commands.restoreBelts(tiles, world: &world, content: content) {
@@ -159,6 +209,17 @@ public final class GameSession {
     }
 
     public var canUndo: Bool { !undoStack.isEmpty }
+
+    // MARK: Level
+
+    public var level: LevelDef? { world.level.flatMap { content.level($0.level) } }
+
+    /// The guided step showing now, or nil when there is none or the tutorial is done.
+    public var tutorialStep: TutorialStep? { LevelRunner.currentStep(world: world, content: content) }
+
+    public var goal: GoalProgress? { LevelRunner.goalProgress(world: world, content: content) }
+
+    public var isGoalReached: Bool { world.level?.goalReached ?? false }
 
     // MARK: Queries
 

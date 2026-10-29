@@ -33,7 +33,7 @@ final class ContentLoadingTests: XCTestCase {
         let empty = FileManager.default.temporaryDirectory.appendingPathComponent("groundwork-missing-\(UUID())")
         XCTAssertThrowsError(try ContentDatabase.load(from: empty)) { error in
             guard case let ContentError.unreadable(file, _) = error else { return XCTFail("\(error)") }
-            XCTAssertEqual(file, "items.json")
+            XCTAssertEqual(file, "levels.json", "Levels load first, to find their maps")
         }
     }
 
