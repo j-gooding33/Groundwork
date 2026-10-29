@@ -9,6 +9,9 @@ let package = Package(
     ],
     targets: [
         .target(name: "GroundworkCore"),
+        // Timing check for big worlds: swift run -c release GroundworkBench
+        // Not part of the library product, so the app never links it.
+        .executableTarget(name: "GroundworkBench", dependencies: ["GroundworkCore"]),
         .testTarget(name: "GroundworkCoreTests", dependencies: ["GroundworkCore"]),
     ]
 )

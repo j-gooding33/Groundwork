@@ -99,7 +99,7 @@ Every command returns `CommandResult`: `.ok`, or `.rejected(error)` with `error.
 | Tap a building with full hands | `session.drop(into: id)` |
 | Demolish | `session.remove(id)` / `session.removeBelt(at: tile)` |
 | Undo button | `session.undo()`, enabled when `session.canUndo` |
-| Long press | inspect card: `session.rates(of: id)` (made, used and received per minute) and `session.trace(.building(id))` |
+| Long press | inspect card: `session.rates(of: id)` (made, used and received per minute, plus `runsOutInSeconds` when an input is running short, for "Logs run out in 20 s") and `session.trace(.building(id))` |
 
 Starting a belt **on** a building takes items from it. Ending a belt on a building, or on the side of another belt, feeds into it. Routing avoids obstacles by itself and prefers straight runs.
 
@@ -136,7 +136,11 @@ Draw lines along the tree between the buildings it names (`node.entity`). Use go
 - **Right:** context panel for the selection (status text, rates, Trace button, demolish).
 - **Bottom:** mode tabs. Level 1 starts with only Build, Trace and Undo.
 
-## 8. Saving
+## 8. Fun-test overlay
+
+The design's fun test needs time to first belt, time to first bottleneck fixed, and session length. `session.funTest` has the first two, recorded and saved by the core: `secondsToFirstBelt`, `secondsToFirstFix`, `bottlenecksFixed`, `commands`. Times are game seconds. Log wall-clock session length in the app, because game time stops while the first tutorial step waits. A debug overlay only has to show these numbers.
+
+## 9. Saving
 
 ```swift
 let data = try session.save()                       // deterministic JSON
@@ -146,14 +150,14 @@ let session = try GameSession.load(data, content: content)
 
 Save every 30 seconds and when `scenePhase` becomes `.background`. A loaded world continues exactly as if it had never stopped (tested). The undo history is not saved.
 
-## 9. Rules that keep it working
+## 10. Rules that keep it working
 
 - Never change the world except through `GameSession` commands and `advance`. The renderer only reads.
 - No randomness in the app may affect the world. Visual-only randomness (tree jitter, smoke wobble) is fine; seed it from the tile position so it doesn't flicker.
 - New items, buildings, recipes and levels are JSON in `Data/`. If loading fails, `ContentError` lists every problem.
 - After changing sprites: `python3 Tools/make_art.py` rebuilds the atlas. Put hand-edited PNGs in `Art/manual/` (same name); they always win.
 
-## 10. Known gaps for the renderer
+## 11. Known gaps for the renderer
 
 - **Terrain transitions:** water, sand, clay and dirt currently meet in hard squares. Add edge or corner tiles chosen from neighbours.
 - **Trees** sit one per tile in a grid. Jitter them a few pixels from a hash of the point.

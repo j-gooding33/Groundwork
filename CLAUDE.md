@@ -26,6 +26,7 @@ Scope is Prototype 1 only: clay pit, lumber camp, brick kiln, sawmill, storage c
 ## Commands
 - Install Swift (once per new cloud container): `bash Tools/install_swift_linux.sh`, then `export PATH=/opt/swift-image/usr/bin:$PATH`
 - Test: `cd GroundworkCore && swift test`
+- Performance check: `cd GroundworkCore && swift run -c release GroundworkBench`
 - Art: `python3 Tools/make_art.py` (checks sprites, builds Art/generated/atlas.png, atlas.json and Art/contact_sheet.png); `--check` only validates
 - New sprites: draw them as text grids in Art/sprites, or add them to Tools/draw_sprites.py (it never overwrites existing grids)
 - Art tests: `cd Tools && python3 -m unittest test_make_art`

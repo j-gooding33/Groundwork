@@ -138,3 +138,22 @@ The starter rules from the design, adapted for Linux: GroundworkCore uses only F
 
 ## Verification for Phase 0
 - `swift --version` prints 6.2.x and a scratch XCTest package passes `swift test`.
+
+## What's left (updated 2026-10-29)
+
+### Done without a Mac
+Simulation core, Trace, production, hand carry, belts with auto-routing, the cottage demand rule, Level 1 and Level 3 as data with the tutorial runner, saving, fun-test metrics (`GameSession.funTest`), predicted shortages (`ItemRate.runsOutInSeconds`), the art pipeline with 43 placeholder sprites, and docs/INTEGRATION.md.
+
+Performance (Linux, release build, `swift run -c release GroundworkBench`): 8,000 items on 2,020 belt tiles cost 0.35 ms per tick, which is about 2,800 ticks per second where the game needs 10. Trace takes 0.05 ms and a command 0.03 ms. That oversized world saves to 237 KB in about 60 ms. An iPhone will be slower, but the headroom is large.
+
+### Needs the Mac (master prompt phases 6 to 11)
+- Run GroundworkCore's tests on macOS once.
+- Rendering (with terrain edge transitions and tree jitter), interaction, Level 1 on screen, cottage visuals, autosave hooks, and the feel pass (bounce, dust, hum, haptics, sound, amber pulse).
+- Then: play on an iPhone, run the fun test with three new players, TestFlight.
+- Level 2 needs mechanical power (waterwheel), which is outside the current scope. Ask first.
+
+### Needs the owner
+- Confirm or change the calls in "Contradictions" above: kiln starting logs, yard-built cottages, placeholder numbers, side-loading instead of splitters.
+- The open questions and decisions at the end of DESIGN.md (name, pricing, map growth, map size, guide character, Walk Mode style).
+- Play-testing and balance: the scripted player finishes Level 1 in about 63 seconds of game time.
+- Hand-polished key sprites in Art/manual.
