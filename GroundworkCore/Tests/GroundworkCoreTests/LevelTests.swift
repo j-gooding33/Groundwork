@@ -3,12 +3,13 @@ import XCTest
 
 final class LevelTests: XCTestCase {
     private func level1() throws -> GameSession {
-        try GameSession(content: try TestSupport.content(), level: "level1")
+        try GameSession(content: try TestSupport.content())
     }
 
     func testLevel1StartsWithOneBuildingAndNoBelts() throws {
         let session = try level1()
-        XCTAssertEqual(session.level?.name, "Bare Ground")
+        XCTAssertEqual(session.chapter?.name, "Bare Ground")
+        XCTAssertEqual(session.chapterIndex, 0)
         XCTAssertEqual(session.world.unlocked, ["clay_pit"])
         XCTAssertEqual(session.world.beltsAvailable, 0)
         XCTAssertEqual(session.world.buildings.map(\.type), ["foundation"])

@@ -1,9 +1,9 @@
 import XCTest
 @testable import GroundworkCore
 
-/// A headless player that completes Level 1 using only GameSession, reading
-/// where to act from the tutorial's highlights, the way a person follows the
-/// pulsing outline.
+/// A headless player that plays the whole world, chapter after chapter, using
+/// only GameSession and reading where to act from the tutorial's highlights,
+/// the way a person follows the pulsing outline.
 final class ScriptedPlayerTests: XCTestCase {
     private var session: GameSession!
 
@@ -26,8 +26,8 @@ final class ScriptedPlayerTests: XCTestCase {
         try XCTUnwrap(session.world.buildings.first { $0.type == type }, "No \(type)")
     }
 
-    func testScriptedPlayerCompletesLevel1() throws {
-        session = try GameSession(content: try TestSupport.content(), level: "level1")
+    func testScriptedPlayerCompletesEveryChapter() throws {
+        session = try GameSession(content: try TestSupport.content())
         var firstBeltTick: UInt64?
 
         // 0:20 Place the clay pit on the highlighted deposit.
@@ -85,7 +85,9 @@ final class ScriptedPlayerTests: XCTestCase {
         waitUntil { self.session.isGoalReached }
         XCTAssertNil(session.tutorialStep, "Tutorial finished")
         XCTAssertEqual(session.goal?.current, 8)
-        XCTAssertTrue(session.drainEvents().contains(.goalReached("level1")))
+        let events = session.drainEvents()
+        XCTAssertTrue(events.contains(.goalReached("world")))
+        XCTAssertTrue(events.contains(.chapterComplete(0)))
 
         // Timing: a quick player has the first belt running well inside two minutes.
         let beltTick = try XCTUnwrap(firstBeltTick)
@@ -95,8 +97,95 @@ final class ScriptedPlayerTests: XCTestCase {
         XCTAssertLessThan(try XCTUnwrap(log.secondsToFirstBelt), 120, "Fun test: first belt running inside 2 minutes")
         XCTAssertGreaterThanOrEqual(log.bottlenecksFixed, 1, "Fun test: the log shortage was found and fixed")
         XCTAssertNotNil(log.secondsToFirstFix)
-        print("Scripted Level 1: first belt at tick \(beltTick), goal at tick \(session.world.tick), "
+        print("Scripted chapter 1: first belt at tick \(beltTick), goal at tick \(session.world.tick), "
               + "fun test \(log.secondsToFirstBelt ?? -1) s to first belt, \(log.bottlenecksFixed) fixes, "
               + "\(log.commands) commands")
+
+        try playChapter2()
+        try playChapter3()
+
+        // Free build: the whole map, every building, no goal.
+        XCTAssertTrue(session.beginNextChapter())
+        XCTAssertEqual(session.chapter?.id, "free_build")
+        XCTAssertNil(session.world.unlocked)
+        XCTAssertNil(session.world.beltsAvailable)
+        XCTAssertNil(session.world.revealed)
+        XCTAssertNil(session.goal)
+        XCTAssertNil(session.nextChapter)
+        XCTAssertFalse(session.beginNextChapter(), "Free build is the last chapter")
+        print("Scripted campaign done at tick \(session.world.tick) with \(session.world.buildings.count) buildings")
+    }
+
+    private func playChapter2() throws {
+        let before = session.world.buildings.count
+        let kiln = try building("brick_kiln")
+        XCTAssertFalse(session.isRevealed(GridPoint(37 + 15, 29)), "Chapter 1 land is small")
+        XCTAssertEqual(session.nextChapter?.name, "First Belts")
+        XCTAssertTrue(session.beginNextChapter())
+        XCTAssertFalse(session.beginNextChapter(), "Chapter 2 must be finished first")
+        XCTAssertEqual(session.chapterIndex, 1)
+        XCTAssertTrue(session.isRevealed(GridPoint(37 + 15, 29)), "More land is drawn")
+        XCTAssertEqual(session.world.buildings.count, before + 1, "Everything stays, and the crate appears")
+        XCTAssertEqual(session.goal?.current, 0)
+
+        // Belt bricks into the crate that appeared.
+        XCTAssertEqual(session.tutorialStep?.id, "c2_crate")
+        let crate = try building("storage_crate")
+        XCTAssertEqual(session.layBelt(from: kiln.origin, to: crate.origin), .ok)
+        waitUntil { self.session.tutorialStep?.id == "c2_trace" }
+        XCTAssertTrue(session.isPausedByTutorial)
+        session.trace(.building(kiln.id))
+
+        // A second pit, merged into the first belt.
+        XCTAssertEqual(session.tutorialStep?.id, "c2_second")
+        let second = try highlightedTile()
+        XCTAssertEqual(session.place("clay_pit", at: second), .ok)
+        let firstPit = try building("clay_pit").id
+        let firstBelt = try XCTUnwrap(session.world.belts.first { $0.pullsFrom == firstPit })
+        XCTAssertEqual(session.layBelt(from: second, to: firstBelt.next), .ok)
+        waitUntil(12000) { self.session.isGoalReached }
+        XCTAssertNil(session.tutorialStep)
+        XCTAssertTrue(session.drainEvents().contains(.chapterComplete(1)))
+    }
+
+    private func playChapter3() throws {
+        XCTAssertTrue(session.beginNextChapter())
+        XCTAssertEqual(session.chapter?.name, "Stone to Roof")
+        XCTAssertTrue(session.world.unlocked?.contains("sawmill") ?? false)
+        waitUntil { self.session.tutorialStep?.id == "c3_sawmill" }
+        let sawmillAt = try highlightedTile()
+        XCTAssertEqual(session.place("sawmill", at: sawmillAt), .ok)
+        XCTAssertEqual(session.tutorialStep?.id, "c3_saw_logs")
+        let forest = try highlightedTile()
+        XCTAssertEqual(session.place("lumber_camp", at: forest), .ok)
+        XCTAssertEqual(session.layBelt(from: forest, to: sawmillAt), .ok)
+        waitUntil { self.session.tutorialStep?.id == "c3_yard" }
+        let yardAt = try highlightedTile()
+        XCTAssertEqual(session.place("builders_yard", at: yardAt), .ok)
+        XCTAssertEqual(session.layBelt(from: try building("brick_kiln").origin, to: yardAt), .ok)
+        XCTAssertEqual(session.layBelt(from: sawmillAt, to: yardAt), .ok)
+        waitUntil(12000) { self.session.tutorialStep?.id == "c3_trace" }
+        session.trace(.building(try building("cottage").id))
+        waitUntil(30000) { self.session.isGoalReached }
+        XCTAssertNil(session.tutorialStep)
+    }
+
+    func testCannotBuildOnUndrawnLand() throws {
+        session = try GameSession(content: try TestSupport.content())
+        let far = GridPoint(37, 50)
+        XCTAssertFalse(session.isRevealed(far))
+        XCTAssertEqual(session.place("clay_pit", at: far), .rejected(.blocked("That land isn't drawn yet")))
+    }
+
+    func testStartingAtALaterChapterGivesWhatCameBefore() throws {
+        session = try GameSession(content: try TestSupport.content(), chapter: 2)
+        XCTAssertEqual(session.chapter?.id, "stone_to_roof")
+        XCTAssertEqual(session.world.revealed?.radius, 24)
+        XCTAssertTrue(Set(session.world.unlocked ?? []).isSuperset(of: ["clay_pit", "lumber_camp", "brick_kiln",
+                                                                         "sawmill", "builders_yard"]))
+        XCTAssertTrue(session.world.buildings.contains { $0.type == "storage_crate" }, "Chapter 2's crate")
+        let loaded = try GameSession.load(try session.save(), content: session.content)
+        XCTAssertEqual(loaded.chapterIndex, 2, "The chapter is saved with the world")
+        XCTAssertEqual(loaded.world.revealed, session.world.revealed)
     }
 }

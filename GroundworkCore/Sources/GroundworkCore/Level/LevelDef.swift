@@ -3,7 +3,8 @@ public struct LevelID: StringID {
     public init(rawValue: String) { self.rawValue = rawValue }
 }
 
-/// One level, from Data/levels.json.
+/// The world the game is played in, from Data/levels.json: one map, played
+/// through in chapters. Buildings carry over from chapter to chapter.
 public struct LevelDef: Codable, Equatable, Sendable {
     public struct Preplaced: Codable, Equatable, Sendable {
         public var building: BuildingTypeID
@@ -18,21 +19,53 @@ public struct LevelDef: Codable, Equatable, Sendable {
         public var count: Int
     }
 
+    /// A name written on the map, such as "Clay" over the deposit.
+    public struct Landmark: Codable, Equatable, Sendable {
+        public var text: String
+        public var at: GridPoint
+        /// The label goes once a building of this type exists ("Clay" goes
+        /// when there is a Clay Pit).
+        public var hideWhenBuilt: BuildingTypeID?
+        /// The label goes once this chapter (0-based) begins.
+        public var untilChapter: Int?
+    }
+
     public var id: LevelID
     public var name: String
     /// Map file, relative to Data/.
     public var map: String
     /// Where the camera starts.
     public var focus: GridPoint
-    /// Buildings in the palette at the start; tutorial steps unlock more.
+    /// The middle of the drawn land; each chapter's reveal radius grows around it.
+    public var revealCenter: GridPoint
+    /// Buildings in the palette at the start; chapters and tutorial steps unlock more.
     public var unlocked: [BuildingTypeID]
     public var beltsAvailable: Int?
     public var preplaced: [Preplaced]
     public var firstPlacementStock: [PlacementStock]
     public var housingPlots: [GridPoint]
-    public var goal: GoalDef
-    /// Key into tutorial.json, or nil for no guided steps.
+    public var landmarks: [Landmark]
+    public var chapters: [ChapterDef]
+}
+
+/// One chapter of the world: a goal, its guided steps, and what it opens up.
+public struct ChapterDef: Codable, Equatable, Sendable {
+    public var id: String
+    public var name: String
+    /// Nil for free build, which has no goal.
+    public var goal: GoalDef?
+    /// Key into tutorial.json.
     public var tutorial: String?
+    public var unlock: [BuildingTypeID]?
+    /// Unlock every building.
+    public var unlockAll: Bool?
+    public var beltTiles: Int?
+    /// No more limit on belt tiles.
+    public var unlimitedBelts: Bool?
+    /// Buildings that appear when the chapter begins.
+    public var preplaced: [LevelDef.Preplaced]?
+    /// How far the drawn land reaches from the reveal centre. Nil means the whole map.
+    public var reveal: Int?
 }
 
 public struct GoalDef: Codable, Equatable, Sendable {
@@ -144,13 +177,16 @@ public enum TutorialCondition: Equatable, Sendable {
     }
 }
 
-/// Progress through the current level. Saved with the world.
+/// Progress through the world. Saved with it.
 public struct LevelState: Codable, Equatable, Sendable {
     public var level: LevelID
-    /// Index of the tutorial step showing now; equal to the step count when done.
+    /// The chapter being played, 0-based.
+    public internal(set) var chapter: Int
+    /// Index of the chapter's tutorial step showing now; equal to the step count when done.
     public internal(set) var step: Int
-    /// Everything that has happened this level, as condition keys, sorted.
+    /// Everything that has happened this chapter, as condition keys, sorted.
     public internal(set) var seen: [String]
+    /// The current chapter's goal is met.
     public internal(set) var goalReached: Bool
     /// Building types that already got their first-placement stock.
     public internal(set) var stocked: [BuildingTypeID]
@@ -159,6 +195,7 @@ public struct LevelState: Codable, Equatable, Sendable {
 
     init(level: LevelID) {
         self.level = level
+        chapter = 0
         step = 0
         seen = []
         goalReached = false

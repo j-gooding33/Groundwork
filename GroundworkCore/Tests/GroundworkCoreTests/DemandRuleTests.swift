@@ -61,6 +61,20 @@ final class DemandRuleTests: XCTestCase {
         XCTAssertTrue(homes(session).isEmpty, "A pile delivered long ago is not a steady supply")
     }
 
+    func testAFullYardStillBuilds() throws {
+        // A yard full to capacity receives nothing more, so a "received this
+        // minute" check alone would wait forever while belts back up behind it.
+        let session = try TestSupport.session(field)
+        let yard = try TestSupport.place("builders_yard", at: GridPoint(10, 3), in: session)
+        let crate = try TestSupport.place("storage_crate", at: GridPoint(1, 1), in: session)
+        for _ in 0..<4 {
+            feed(session, yard: yard, crate: crate, bricks: 10, planks: 10)
+        }
+        XCTAssertEqual(session.world.building(yard)?.input.count(of: "brick"), 40)
+        session.advance(ticks: 2000)
+        XCTAssertFalse(homes(session).isEmpty, "A yard that is full has more than enough supply")
+    }
+
     func testOnlyOneHomeAtATime() throws {
         let session = try TestSupport.session(field)
         let yard = try TestSupport.place("builders_yard", at: GridPoint(10, 3), in: session)

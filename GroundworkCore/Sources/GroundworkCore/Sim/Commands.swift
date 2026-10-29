@@ -48,6 +48,7 @@ enum Commands {
                 guard let terrain = world.map.terrain(at: point) else {
                     return .blocked("Too close to the edge of the map")
                 }
+                if !world.isRevealed(point) { return .blocked("That land isn't drawn yet") }
                 if terrain.isWater { return .blocked("Cannot build on water") }
                 if world.index.occupant(at: point) != nil { return .blocked("Something is already here") }
             }

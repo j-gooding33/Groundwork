@@ -11,6 +11,8 @@ public struct ItemDef: Codable, Equatable, Sendable {
     /// Used in sentences such as "Waiting for logs".
     public var plural: String
     public var tier: ItemTier
+    /// One plain line for players: what it is and what it is for.
+    public var description: String
 }
 
 /// A natural source found in the world: a clay deposit, a forest, a lake.
@@ -21,6 +23,8 @@ public struct SourceDef: Codable, Equatable, Sendable {
     /// Amount held by each tile when the map loads. Nil means it never runs out.
     public var startingAmount: Int?
     public var regrowPerMinute: Int
+    /// One plain line for players: what it is and how to use it.
+    public var description: String
 }
 
 public struct ItemStack: Codable, Equatable, Hashable, Sendable {
@@ -69,6 +73,8 @@ public enum PlacementRule: String, Codable, Sendable {
 public struct BuildingDef: Codable, Equatable, Sendable {
     public var id: BuildingTypeID
     public var name: String
+    /// One plain line for players: what it does.
+    public var description: String
     public var kind: BuildingKind
     /// Footprint in tiles, as [width, height].
     public var size: [Int]

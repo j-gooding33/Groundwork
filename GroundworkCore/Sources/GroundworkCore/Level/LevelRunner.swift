@@ -1,9 +1,12 @@
-/// Runs level logic after every command and tick: records what happened,
-/// tracks the goal, and moves the tutorial on. Driven only by world state and
-/// events, so it is as deterministic as the simulation.
+/// Runs world logic after every command and tick: records what happened,
+/// tracks the chapter goal, moves the tutorial on, and opens chapters. Driven
+/// only by world state and events, so it is as deterministic as the simulation.
 enum LevelRunner {
-    /// Sets up a new world for a level.
-    static func start(_ level: LevelDef, world: inout World, content: ContentDatabase, events: inout [GameEvent]) {
+    /// Sets up a new world and begins a chapter. Starting later than chapter 0
+    /// gives everything the earlier chapters would have (unlocks, belts,
+    /// buildings, drawn land) without their tutorials.
+    static func start(_ level: LevelDef, chapter: Int, world: inout World, content: ContentDatabase,
+                      events: inout [GameEvent]) {
         world.unlocked = level.unlocked
         world.beltsAvailable = level.beltsAvailable
         world.housingPlots = level.housingPlots
@@ -11,24 +14,102 @@ enum LevelRunner {
             Commands.insertBuilding(item.building, at: item.at, facing: .south, world: &world, content: content)
         }
         world.level = LevelState(level: level.id)
-        if let step = steps(level, content).first {
+        let first = min(max(chapter, 0), level.chapters.count - 1)
+        for earlier in level.chapters.prefix(first) {
+            openUp(earlier, level: level, world: &world, content: content)
+            for step in steps(earlier, content) { applyGrant(step, world: &world) }
+        }
+        begin(first, level: level, world: &world, content: content, events: &events)
+    }
+
+    /// Gives what a chapter opens up: unlocks, belt tiles, buildings, drawn land.
+    private static func openUp(_ chapter: ChapterDef, level: LevelDef, world: inout World, content: ContentDatabase) {
+        if chapter.unlockAll == true {
+            world.unlocked = nil
+        } else if let unlock = chapter.unlock, var unlocked = world.unlocked {
+            for type in unlock where !unlocked.contains(type) { unlocked.append(type) }
+            world.unlocked = unlocked
+        }
+        if chapter.unlimitedBelts == true {
+            world.beltsAvailable = nil
+        } else if let tiles = chapter.beltTiles, let available = world.beltsAvailable {
+            world.beltsAvailable = available + tiles
+        }
+        world.revealed = chapter.reveal.map { Reveal(center: level.revealCenter, radius: $0) }
+        world.index = WorldIndex(world: world, content: content)
+        for item in chapter.preplaced ?? [] {
+            guard let def = content.building(item.building),
+                  let at = nearestFree(def, to: item.at, world: world, content: content) else { continue }
+            Commands.insertBuilding(item.building, at: at, facing: .south, world: &world, content: content)
+        }
+    }
+
+    /// The chapter's spot for a building, or the closest free one if the
+    /// player has built there already.
+    private static func nearestFree(_ def: BuildingDef, to point: GridPoint, world: World,
+                                    content: ContentDatabase) -> GridPoint? {
+        for ring in 0...4 {
+            for dy in -ring...ring {
+                for dx in -ring...ring where max(abs(dx), abs(dy)) == ring {
+                    let at = GridPoint(point.x + dx, point.y + dy)
+                    if Commands.placementProblem(def, at: at, world: world, content: content) == nil { return at }
+                }
+            }
+        }
+        return nil
+    }
+
+    /// Makes `index` the current chapter and shows its first step.
+    private static func begin(_ index: Int, level: LevelDef, world: inout World, content: ContentDatabase,
+                              events: inout [GameEvent]) {
+        let chapter = level.chapters[index]
+        openUp(chapter, level: level, world: &world, content: content)
+        world.level?.chapter = index
+        world.level?.step = 0
+        world.level?.seen = []
+        world.level?.goalReached = false
+        events.append(.chapterStarted(index))
+        if let step = steps(chapter, content).first {
             enter(step, world: &world, events: &events)
         }
     }
 
-    static func steps(_ level: LevelDef, _ content: ContentDatabase) -> [TutorialStep] {
-        level.tutorial.flatMap { content.tutorials[$0] } ?? []
+    /// Moves on to the next chapter once the current goal is met.
+    static func beginNextChapter(world: inout World, content: ContentDatabase, events: inout [GameEvent]) -> Bool {
+        guard let state = world.level, state.goalReached, let level = content.level(state.level),
+              state.chapter + 1 < level.chapters.count else { return false }
+        begin(state.chapter + 1, level: level, world: &world, content: content, events: &events)
+        return true
+    }
+
+    static func chapter(world: World, content: ContentDatabase) -> ChapterDef? {
+        guard let state = world.level, let level = content.level(state.level),
+              level.chapters.indices.contains(state.chapter) else { return nil }
+        return level.chapters[state.chapter]
+    }
+
+    static func nextChapter(world: World, content: ContentDatabase) -> ChapterDef? {
+        guard let state = world.level, let level = content.level(state.level),
+              level.chapters.indices.contains(state.chapter + 1) else { return nil }
+        return level.chapters[state.chapter + 1]
+    }
+
+    static func steps(_ chapter: ChapterDef, _ content: ContentDatabase) -> [TutorialStep] {
+        chapter.tutorial.flatMap { content.tutorials[$0] } ?? []
+    }
+
+    static func currentSteps(world: World, content: ContentDatabase) -> [TutorialStep] {
+        chapter(world: world, content: content).map { steps($0, content) } ?? []
     }
 
     static func currentStep(world: World, content: ContentDatabase) -> TutorialStep? {
-        guard let state = world.level, let level = content.level(state.level) else { return nil }
-        let all = steps(level, content)
+        guard let state = world.level else { return nil }
+        let all = currentSteps(world: world, content: content)
         return all.indices.contains(state.step) ? all[state.step] : nil
     }
 
     static func goalProgress(world: World, content: ContentDatabase) -> GoalProgress? {
-        guard let state = world.level, let level = content.level(state.level) else { return nil }
-        let goal = level.goal
+        guard let goal = chapter(world: world, content: content)?.goal else { return nil }
         var current = 0
         switch goal.kind {
         case .deliver:
@@ -78,16 +159,17 @@ enum LevelRunner {
             state.goalReached = true
             state.record(TutorialCondition.goal.key)
             events.append(.goalReached(level.id))
+            events.append(.chapterComplete(state.chapter))
         }
 
         world.level = state
-        advanceSteps(level, world: &world, content: content, events: &events)
+        advanceSteps(world: &world, content: content, events: &events)
     }
 
     /// Moves past every step whose condition holds and whose minimum time is up.
-    static func advanceSteps(_ level: LevelDef, world: inout World, content: ContentDatabase,
-                             events: inout [GameEvent]) {
-        let all = steps(level, content)
+    static func advanceSteps(world: inout World, content: ContentDatabase, events: inout [GameEvent]) {
+        guard let level = world.level.flatMap({ content.level($0.level) }) else { return }
+        let all = currentSteps(world: world, content: content)
         while let index = world.level?.step, all.indices.contains(index),
               isDone(all[index], world: world, content: content) {
             world.level?.step = index + 1
@@ -119,17 +201,17 @@ enum LevelRunner {
     /// Records something the player did outside the simulation (used Trace,
     /// panned the map) and lets the tutorial react.
     static func note(_ key: String, world: inout World, content: ContentDatabase, events: inout [GameEvent]) {
-        guard var state = world.level, !state.hasSeen(key), let level = content.level(state.level) else { return }
+        guard var state = world.level, !state.hasSeen(key) else { return }
         state.record(key)
         world.level = state
-        advanceSteps(level, world: &world, content: content, events: &events)
+        advanceSteps(world: &world, content: content, events: &events)
     }
 
-    /// Finishes every remaining step, giving their unlocks and belt tiles so
-    /// nothing is held back.
+    /// Finishes the chapter's remaining steps, giving their unlocks and belt
+    /// tiles so nothing is held back.
     static func skipTutorial(world: inout World, content: ContentDatabase, events: inout [GameEvent]) {
         guard let state = world.level, let level = content.level(state.level) else { return }
-        let all = steps(level, content)
+        let all = currentSteps(world: world, content: content)
         guard state.step < all.count else { return }
         for step in all[(state.step + 1)...] { applyGrant(step, world: &world) }
         world.level?.step = all.count
@@ -137,8 +219,8 @@ enum LevelRunner {
     }
 
     private static func applyGrant(_ step: TutorialStep, world: inout World) {
-        if let tiles = step.grant?.beltTiles {
-            world.beltsAvailable = (world.beltsAvailable ?? 0) + tiles
+        if let tiles = step.grant?.beltTiles, let available = world.beltsAvailable {
+            world.beltsAvailable = available + tiles
         }
         if let unlock = step.grant?.unlock, var unlocked = world.unlocked {
             for type in unlock where !unlocked.contains(type) { unlocked.append(type) }

@@ -13,6 +13,9 @@ public enum Effect: Equatable, Sendable {
     case squash(EntityID)
     /// "+1 brick" floating up, only for the first few of each item.
     case floatText(String, at: ScenePoint)
+    /// The first building of each type wears its name and what it does for
+    /// `nameTagSeconds`, so the player learns what they just placed.
+    case nameTag(EntityID, name: String, description: String, at: ScenePoint)
     case haptic(Haptic)
     case sound(SoundCue)
     /// A warm light sweep and colour spreading across the map.
@@ -28,6 +31,7 @@ public struct EffectPlanner: Sendable {
     private var floats: [ItemID: Int] = [:]
     public static let floatLimit = 5
     public private(set) var musicLayers = 1
+    public static let nameTagSeconds = 10.0
 
     public init() {}
 
@@ -45,8 +49,13 @@ public struct EffectPlanner: Sendable {
 
         for event in events {
             switch event {
-            case let .buildingPlaced(id, _):
-                if let c = center(id) { effects.append(.placed(id, at: c)) }
+            case let .buildingPlaced(id, type):
+                if let c = center(id) {
+                    effects.append(.placed(id, at: c))
+                    if world.buildings.filter({ $0.type == type }).count == 1, let def = session.content.building(type) {
+                        effects.append(.nameTag(id, name: def.name, description: def.description, at: c))
+                    }
+                }
                 sound(.place)
             case .buildingRemoved:
                 sound(.remove)
@@ -83,7 +92,7 @@ public struct EffectPlanner: Sendable {
                 break
             case .tutorialStep:
                 sound(.tutorial)
-            case .tutorialFinished:
+            case .tutorialFinished, .chapterStarted, .chapterComplete:
                 break
             case .goalReached:
                 effects.append(.haptic(.double))

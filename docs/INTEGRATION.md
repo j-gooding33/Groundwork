@@ -33,8 +33,8 @@ To play on your own iPhone, sign in under **Xcode → Settings → Accounts** wi
 
 | Layer | Where | What it does | Tested |
 | --- | --- | --- | --- |
-| Simulation | `GroundworkCore` | World, ticks, production, belts, Trace, levels, saving | Linux, 98 tests |
-| Presentation | `GroundworkView` | Which sprites to draw and where, terrain edges, belt pieces, item gliding, villagers, day and night, camera, touch gestures, tools, effects, HUD contents, autosave timing | Linux, 29 tests and the screenshots |
+| Simulation | `GroundworkCore` | World, ticks, production, belts, Trace, chapters, saving | Linux |
+| Presentation | `GroundworkView` | Which sprites to draw and where, terrain edges, belt pieces, item gliding, villagers, day and night, camera, touch gestures, tools, effects, HUD contents, autosave timing | Linux, plus the screenshots |
 | App | `App/Groundwork` | Puts those sprites on screen with SpriteKit, the HUD with SwiftUI, plays haptics and sound | Stand-in type-check only, until Xcode |
 
 The rule that keeps this working: **the app only reads `GameSession` and sends it commands, and makes no decisions of its own.** If something needs deciding (what a tap does, what to draw), it goes in `GroundworkView` with a test.
@@ -43,22 +43,33 @@ The rule that keeps this working: **the app only reads `GameSession` and sends i
 
 - `GroundworkApp.swift`: entry point; saves whenever the app leaves the foreground.
 - `GameStore.swift`: owns the `GameSession`, the camera and input state. Runs the frame loop: ticks, effects, HUD refresh, autosave every 30 seconds. Turns touches into gestures and commands, and saves to Application Support.
-- `TitleView.swift`: the blank-paper opening, Continue, New game (level select) and Settings (sound, haptics).
+- `TitleView.swift`: the blank-paper opening: Play (continues your world, or starts it), Start over (asks first) and Settings (sound, haptics). There is no level menu: everyone starts in the same place.
 - `GameView.swift`: the world fills the screen, with controls at the edges:
   - build palette on the left;
-  - goal bar and clock on top;
+  - chapter name, goal bar and clock on top;
   - selected building on the right (status, rates, "runs out in", Pick up, Trace);
   - mode tabs at the bottom (Build, Trace, Undo to start; Demolish and speed after the tutorial);
-  - tutorial bubble, toasts, the goal card and the pause menu.
+  - tutorial bubble, what the picked tool does, toasts, the chapter-complete card (Continue opens the next chapter) and the pause menu.
 - `WorldScene.swift`: an `SKScene` at 480×270, scaled up with nearest-neighbour filtering. It matches one node per sprite id to `SceneBuilder`'s output each frame, moves the camera, applies the day/night tint, and plays bounces, squashes, dust, floating "+1"s and the goal light sweep.
 - `Atlas.swift`: textures from `atlas.png`, nearest filtering.
 - `Feel.swift`: haptics, plus placeholder sound generated in code: a machine hum that follows throughput, every sound cue, and a soft music pad that gains layers with each milestone.
 - `Theme.swift`: colours from the palette and atlas icons for SwiftUI.
 
+### How a game goes
+
+One world, played in chapters. Buildings carry over from one chapter to the next, and each chapter draws more of the map (you can't build on blank paper yet).
+
+1. **Bare Ground:** dig clay, bake bricks, fill the foundation. Teaches carrying, belts and Trace.
+2. **First Belts:** a crate appears; fill it with 20 bricks by belt. Teaches a second pit and merging belts.
+3. **Stone to Roof:** sawmill and builder's yard; five cottages build themselves once supply is steady.
+4. **Free Build:** the whole map, everything unlocked, no goal.
+
+Landmarks are named on the map ("Clay", "Forest", "Lake") until you use them, and the first building of each type shows its name and what it does for ten seconds.
+
 ### Controls
 
 - **Tap a building with no tool:** pick up what it has made, or drop what you're carrying. Its panel opens either way.
-- **Build palette:** tap a building, then tap the map; 2×2 buildings centre under your finger. Tap the selected button again to put the tool down.
+- **Build palette:** tap a building (a line at the bottom says what it does), then tap the map; 2×2 buildings centre under your finger. Tap the selected button again to put the tool down.
 - **Belt:** choose it in the palette, then drag from a building to where the belt should go. A ghost shows the route before you let go.
 - **Trace tab:** tap a building to see its chain. Gold dots flow along working links, a red marker bobs over the step to fix, and the right-hand panel lists every step with its state and reason. Tap a row to jump the camera there.
 - **Status bubbles** appear over stuck machines without opening anything: the missing item's icon, an up-arrow for a full output, a slashed circle for a used-up source, an hourglass for running slow.

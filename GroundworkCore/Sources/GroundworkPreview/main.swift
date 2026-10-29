@@ -123,6 +123,15 @@ func drawLabels(_ labels: [RateLabel], camera: Camera, into image: inout Image) 
     }
 }
 
+func drawMapLabels(_ labels: [MapLabel], camera: Camera, into image: inout Image) {
+    let v = camera.visible
+    for label in labels {
+        let cx = Int(((label.x - v.minX) * camera.zoom).rounded())
+        let top = Int(((v.maxY - label.y) * camera.zoom).rounded()) - 2
+        text(label.text, centerX: cx, top: top, color: (255, 244, 214), into: &image)
+    }
+}
+
 func shot(_ name: String, session: GameSession, camera: Camera, input: InputController = InputController(),
           fraction: Double = 0.5, seconds: Double = 0.3) throws {
     let world = session.world
@@ -142,6 +151,7 @@ func shot(_ name: String, session: GameSession, camera: Camera, input: InputCont
     draw(dynamic.filter { $0.z >= Layer.tint }, camera: camera, seconds: seconds, into: &image)
     draw(builder.overlayLayer(world, input: input, hud: hud, time: time), camera: camera, seconds: seconds, into: &image)
     if input.showRates { drawLabels(builder.rateLabels(world), camera: camera, into: &image) }
+    drawMapLabels(builder.mapLabels(world), camera: camera, into: &image)
 
     var scaled = [UInt8](repeating: 0, count: viewW * scale * viewH * scale * 4)
     for y in 0..<(viewH * scale) {
@@ -172,7 +182,7 @@ func check(_ feedback: Feedback, _ what: String) {
 
 // MARK: Level 1, played through the input controller
 
-let level1 = try GameSession(content: content, level: "level1")
+let level1 = try GameSession(content: content)
 var input = InputController()
 var camera = Camera(mapWidth: level1.world.map.width, mapHeight: level1.world.map.height,
                     focus: level1.level?.focus, zoom: 1)
@@ -218,11 +228,17 @@ check(input.dragEnded(kiln.origin, session: level1), "belt logs to kiln")
 input.cancel()
 waitUntil(level1) { level1.isGoalReached }
 level1.advance(ticks: 40)
-try shot("06_level1_complete", session: level1, camera: camera, input: input)
+try shot("06_chapter1_complete", session: level1, camera: camera, input: input)
 
-// MARK: Level 3, a small town building itself
+// Continue: the next chapter draws more of the map and a crate appears.
+level1.beginNextChapter()
+let wide = Camera(mapWidth: level1.world.map.width, mapHeight: level1.world.map.height,
+                  focus: level1.level?.revealCenter, zoom: 1)
+try shot("06b_chapter2_more_land", session: level1, camera: wide, input: InputController())
 
-let town = try GameSession(content: content, level: "level3", seed: 3)
+// MARK: Chapter 3, a small town building itself
+
+let town = try GameSession(content: content, seed: 3, chapter: 2)
 var townInput = InputController()
 func place(_ type: BuildingTypeID, _ x: Int, _ y: Int) {
     townInput.use(.build(type))

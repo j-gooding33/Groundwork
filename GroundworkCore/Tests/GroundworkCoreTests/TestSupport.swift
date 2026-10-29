@@ -22,12 +22,12 @@ enum TestSupport {
 
     // MARK: Fixture content, small enough to read in a test
 
-    static let clayItem = ItemDef(id: "clay", name: "Clay", plural: "clay", tier: .raw)
-    static let brickItem = ItemDef(id: "brick", name: "Brick", plural: "bricks", tier: .processed)
+    static let clayItem = ItemDef(id: "clay", name: "Clay", plural: "clay", tier: .raw, description: "An item.")
+    static let brickItem = ItemDef(id: "brick", name: "Brick", plural: "bricks", tier: .processed, description: "An item.")
     static let rules = GameRules(handCapacity: 10, beltSlotsPerTile: 4, beltTicksPerSlot: 2,
                                  rateBucketTicks: 60, rateBuckets: 10, blockGraceTicks: 20)
     static let claySource = SourceDef(id: "clay_deposit", name: "Clay deposit", item: "clay",
-                                      startingAmount: 40, regrowPerMinute: 0)
+                                      startingAmount: 40, regrowPerMinute: 0, description: "A source.")
     static let gatherClay = RecipeDef(id: "gather_clay", building: "clay_pit", source: "clay_deposit",
                                       durationTicks: 30, power: 0, level: 1, inputs: [],
                                       outputs: [ItemStack(item: "clay", count: 1)])
@@ -37,7 +37,7 @@ enum TestSupport {
                                      outputs: [ItemStack(item: "brick", count: 1)])
 
     static func building(_ id: BuildingTypeID, recipes: [RecipeID], placeOn: PlacementRule = .land) -> BuildingDef {
-        BuildingDef(id: id, name: id.rawValue, kind: .processor, size: [1, 1], recipes: recipes,
+        BuildingDef(id: id, name: id.rawValue, description: "A building.", kind: .processor, size: [1, 1], recipes: recipes,
                     inputCapacity: 10, outputCapacity: 10, cost: [], accepts: [], level: 1, placeOn: placeOn)
     }
 

@@ -5,7 +5,7 @@ import GroundworkCore
 final class SceneBuilderTests: XCTestCase {
     func testEverySpriteTheSceneUsesExistsInTheAtlas() throws {
         let builder = try ViewTestSupport.builder()
-        let level1 = try GameSession(content: builder.content, level: "level1")
+        let level1 = try GameSession(content: builder.content)
         let town = try ViewTestSupport.town(ticks: 7000)
         for session in [level1, town] {
             for ticks in [0, 1800, 2100] {                     // day, then into the night
@@ -86,7 +86,7 @@ final class SceneBuilderTests: XCTestCase {
 
     func testBuildingStagesAndNight() throws {
         let builder = try ViewTestSupport.builder()
-        let session = try GameSession(content: builder.content, level: "level1")
+        let session = try GameSession(content: builder.content)
         let foundation = try XCTUnwrap(session.world.buildings.first { $0.type == "foundation" })
         XCTAssertEqual(builder.spriteName(for: foundation, night: false), "foundation" + (foundation.id % 2 == 1 ? "_v1" : ""))
         session.stock(foundation.id, with: "brick", count: 4)
@@ -135,5 +135,26 @@ final class SceneBuilderTests: XCTestCase {
         XCTAssertEqual(sprite.frame(at: 0), "a")
         XCTAssertEqual(sprite.frame(at: 0.6), "b")
         XCTAssertEqual(sprite.frame(at: 1.6), "a")
+    }
+
+    func testUndrawnLandIsBlankPaper() throws {
+        let builder = try ViewTestSupport.builder()
+        let session = try GameSession(content: builder.content)
+        let sprites = builder.staticLayer(session.world)
+        func base(_ x: Int, _ y: Int) -> String? { sprites.first { $0.id == "t:\(x),\(y)" }?.name }
+        XCTAssertEqual(base(37, 29), "terrain_clay_ground", "The starting clay is drawn")
+        XCTAssertEqual(base(37, 50), "terrain_paper_fog", "Far land waits for a later chapter")
+        XCTAssertFalse(sprites.contains { $0.id == "d:50,10" }, "No trees on blank paper")
+        XCTAssertTrue(sprites.contains { $0.name.hasPrefix("edge_fog") }, "The drawn land fades softly into paper")
+    }
+
+    func testLandmarksAreNamedUntilUsed() throws {
+        let builder = try ViewTestSupport.builder()
+        let session = try GameSession(content: builder.content)
+        XCTAssertEqual(builder.mapLabels(session.world).map(\.text), ["Clay", "Forest", "Lake", "Foundation"])
+        session.place("clay_pit", at: GridPoint(37, 29))
+        XCTAssertFalse(builder.mapLabels(session.world).map(\.text).contains("Clay"), "Gone once a pit is dug")
+        let later = try GameSession(content: builder.content, chapter: 1)
+        XCTAssertFalse(builder.mapLabels(later.world).map(\.text).contains("Lake"), "Some names are for chapter 1 only")
     }
 }

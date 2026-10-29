@@ -2,8 +2,8 @@
 /// by itself once its brick and plank supply is steady.
 ///
 /// Steady means: the yard has existed for a full rate window, it received at
-/// least one home's worth of each material during that window, and it holds a
-/// home's worth now.
+/// least one home's worth of each material during that window (or is full of
+/// it, so supply is backing up), and it holds a home's worth now.
 enum DemandRule {
     static func step(_ world: inout World, content: ContentDatabase, events: inout [GameEvent]) {
         let rules = content.rules
@@ -15,7 +15,8 @@ enum DemandRule {
                 if let home = world.building(job), !home.isBuilt { continue }
                 world.buildings[i].job = nil
             }
-            guard isSupplySteady(world.buildings[i], cost: homeDef.cost, tick: world.tick, rules: rules),
+            guard isSupplySteady(world.buildings[i], cost: homeDef.cost, capacity: def.inputCapacity,
+                                 tick: world.tick, rules: rules),
                   let origin = siteForHome(homeDef, near: world.buildings[i], yardDef: def,
                                            world: world, content: content) else { continue }
 
@@ -35,11 +36,14 @@ enum DemandRule {
         }
     }
 
-    static func isSupplySteady(_ yard: Building, cost: [ItemStack], tick: UInt64, rules: GameRules) -> Bool {
+    static func isSupplySteady(_ yard: Building, cost: [ItemStack], capacity: Int, tick: UInt64,
+                               rules: GameRules) -> Bool {
         guard !cost.isEmpty, tick >= yard.placedAtTick + UInt64(rules.rateWindowTicks) else { return false }
         return cost.allSatisfy { stack in
-            yard.input.count(of: stack.item) >= stack.count
-                && yard.rates.countInWindow(.received, stack.item, tick: tick, rules: rules) >= stack.count
+            let held = yard.input.count(of: stack.item)
+            // A full yard receives nothing, which must not read as a dry supply.
+            return held >= stack.count
+                && (held >= capacity || yard.rates.countInWindow(.received, stack.item, tick: tick, rules: rules) >= stack.count)
         }
     }
 

@@ -24,7 +24,7 @@ final class GameStore {
     var menuOpen = false
     /// The tutorial bubble the player tucked away; "?" brings it back.
     var collapsedStep: String?
-    /// The player closed the goal card to keep building.
+    /// The player closed the chapter card to keep building first.
     private(set) var completeDismissed = false
     private(set) var speed = 1
     private(set) var hasSave = false
@@ -83,25 +83,35 @@ final class GameStore {
 
     // MARK: Starting and stopping
 
-    /// Levels in the order the title screen lists them.
-    var levels: [LevelDef] { content.levels }
-
-    func newGame(_ level: LevelID) {
+    /// Continues the saved world, or starts it at Chapter 1.
+    func play() {
+        guard hasSave else { return startFresh() }
         do {
-            start(try GameSession(content: content, level: level))
+            let data = try Data(contentsOf: Self.saveURL)
+            let session = try GameSession.load(data, content: content)
+            guard session.chapter != nil else {
+                show("That save is from an older version, so a new world began")
+                return startFresh()
+            }
+            start(session)
         } catch {
-            show("Could not start \(level): \(error)")
+            show("The save could not be read, so a new world began")
+            startFresh()
         }
     }
 
-    func continueGame() {
+    /// Throws the saved world away and begins again at Chapter 1.
+    func startOver() {
+        try? FileManager.default.removeItem(at: Self.saveURL)
+        hasSave = false
+        startFresh()
+    }
+
+    private func startFresh() {
         do {
-            let data = try Data(contentsOf: Self.saveURL)
-            start(try GameSession.load(data, content: content))
+            start(try GameSession(content: content))
         } catch {
-            hasSave = false
-            show("The save could not be read, so a new game began")
-            newGame("level1")
+            show("Could not start the world: \(error)")
         }
     }
 
@@ -148,13 +158,6 @@ final class GameStore {
         return base.appendingPathComponent("Groundwork/save.json")
     }
 
-    /// The next level after the current one, for the level-complete card.
-    var nextLevel: LevelDef? {
-        guard let id = session?.level?.id, let i = levels.firstIndex(where: { $0.id == id }),
-              i + 1 < levels.count else { return nil }
-        return levels[i + 1]
-    }
-
     // MARK: The frame loop
 
     /// Called by the scene every frame with SpriteKit's clock.
@@ -193,7 +196,7 @@ final class GameStore {
 
     private static func changesStructure(_ event: GameEvent) -> Bool {
         switch event {
-        case .buildingPlaced, .buildingRemoved, .beltLaid, .beltRemoved: return true
+        case .buildingPlaced, .buildingRemoved, .beltLaid, .beltRemoved, .chapterStarted: return true
         default: return false
         }
     }
@@ -296,6 +299,16 @@ final class GameStore {
     }
 
     func closeCompleteCard() { completeDismissed = true }
+
+    /// Opens the next chapter from the chapter-complete card: more land, new
+    /// buildings and the next goal.
+    func continueChapter() {
+        guard let session, session.beginNextChapter() else { return }
+        completeDismissed = false
+        input.cancel()
+        refreshHUD()
+        saveNow()
+    }
 
     func toggleRates() {
         input.toggleRates()

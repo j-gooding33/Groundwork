@@ -16,6 +16,8 @@ final class WorldScene: SKScene {
     private let tintNode = SKSpriteNode(color: .white, size: CGSize(width: 2000, height: 1200))
     private var pools: [ObjectIdentifier: [String: SKSpriteNode]] = [:]
     private var labels: [String: SKLabelNode] = [:]
+    private var mapLabels: [String: SKLabelNode] = [:]
+    private var mapLabelShadows: [String: SKLabelNode] = [:]
     private var playing: [String: [String]] = [:]
 
     override init(size: CGSize) {
@@ -72,6 +74,7 @@ final class WorldScene: SKScene {
         }
 
         applyRateLabels(store.input.showRates ? store.builder.rateLabels(world) : [])
+        applyMapLabels(store.builder.mapLabels(world))
 
         cameraNode.position = CGPoint(x: store.camera.center.x, y: store.camera.center.y)
         cameraNode.setScale(CGFloat(1 / store.camera.zoom))
@@ -167,6 +170,43 @@ final class WorldScene: SKScene {
         }
     }
 
+    /// Landmark names written on the map, light text over a dark shadow so
+    /// they read on grass and water alike.
+    private func applyMapLabels(_ items: [MapLabel]) {
+        var seen = Set<String>()
+        for item in items {
+            seen.insert(item.id)
+            let node: SKLabelNode
+            if let existing = mapLabels[item.id] {
+                node = existing
+            } else {
+                node = SKLabelNode(fontNamed: "Menlo-Bold")
+                node.fontSize = 7
+                node.verticalAlignmentMode = .center
+                node.fontColor = UIColor(red: 1.0, green: 0.957, blue: 0.839, alpha: 1)
+                node.zPosition = CGFloat(Layer.overlay)
+                let shadow = SKLabelNode(fontNamed: "Menlo-Bold")
+                shadow.fontSize = 7
+                shadow.verticalAlignmentMode = .center
+                shadow.fontColor = UIColor(red: 0.102, green: 0.110, blue: 0.173, alpha: 0.8)
+                shadow.position = CGPoint(x: 1, y: -1)
+                shadow.zPosition = -1
+                node.addChild(shadow)
+                overlayLayer.addChild(node)
+                mapLabels[item.id] = node
+                mapLabelShadows[item.id] = shadow
+            }
+            node.text = item.text
+            mapLabelShadows[item.id]?.text = item.text
+            node.position = CGPoint(x: item.x, y: item.y)
+        }
+        for (id, node) in mapLabels where !seen.contains(id) {
+            node.run(.sequence([.fadeOut(withDuration: 0.4), .removeFromParent()]))
+            mapLabels[id] = nil
+            mapLabelShadows[id] = nil
+        }
+    }
+
     // MARK: Effects
 
     private func node(for id: EntityID) -> SKSpriteNode? {
@@ -200,6 +240,18 @@ final class WorldScene: SKScene {
             overlayLayer.addChild(label)
             label.run(.sequence([.group([.moveBy(x: 0, y: 14, duration: 0.9), .fadeOut(withDuration: 0.9)]),
                                  .removeFromParent()]))
+        case let .nameTag(_, name, description, at):
+            let tag = SKLabelNode(fontNamed: "Menlo-Bold")
+            tag.text = name + "\n" + description
+            tag.numberOfLines = 0
+            tag.fontSize = 6
+            tag.verticalAlignmentMode = .bottom
+            tag.fontColor = UIColor(red: 1.0, green: 0.957, blue: 0.839, alpha: 1)
+            tag.position = CGPoint(x: at.x, y: at.y + 18)
+            tag.zPosition = CGFloat(Layer.effects + 1)
+            overlayLayer.addChild(tag)
+            tag.run(.sequence([.wait(forDuration: EffectPlanner.nameTagSeconds - 1), .fadeOut(withDuration: 1),
+                               .removeFromParent()]))
         case .celebrate:
             // A warm light sweep across the view.
             let flash = SKSpriteNode(color: UIColor(red: 1.0, green: 0.85, blue: 0.5, alpha: 1),

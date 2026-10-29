@@ -1,11 +1,11 @@
 import SwiftUI
 import GroundworkCore
 
-/// The blank-paper opening: the game's name, Continue, New game with level
-/// select, and settings.
+/// The blank-paper opening: the game's name, Play (one world, picked up where
+/// it was left), Start over, and settings.
 struct TitleView: View {
     @Environment(GameStore.self) private var store
-    @State private var choosingLevel = false
+    @State private var confirmingStartOver = false
     @State private var settings = false
 
     var body: some View {
@@ -39,21 +39,20 @@ struct TitleView: View {
                     .font(.pixel(14))
                     .foregroundStyle(Palette.ink.opacity(0.7))
                 VStack(spacing: 10) {
+                    TitleButton(title: "Play") { store.play() }
                     if store.hasSave {
-                        TitleButton(title: "Continue") { store.continueGame() }
+                        TitleButton(title: "Start over") { confirmingStartOver = true }
                     }
-                    TitleButton(title: "New game") { choosingLevel = true }
                     TitleButton(title: "Settings") { settings = true }
                 }
                 .padding(.top, 8)
             }
         }
-        .sheet(isPresented: $choosingLevel) {
-            LevelPicker { level in
-                choosingLevel = false
-                store.newGame(level)
-            }
-            .presentationDetents([.medium])
+        .confirmationDialog("Start over?", isPresented: $confirmingStartOver, titleVisibility: .visible) {
+            Button("Start over", role: .destructive) { store.startOver() }
+            Button("Keep my world", role: .cancel) {}
+        } message: {
+            Text("Your world and everything built in it will be gone.")
         }
         .sheet(isPresented: $settings) {
             SettingsView().presentationDetents([.medium])
@@ -74,31 +73,6 @@ struct TitleButton: View {
                 .paperCard()
         }
         .buttonStyle(.plain)
-    }
-}
-
-struct LevelPicker: View {
-    @Environment(GameStore.self) private var store
-    let start: (LevelID) -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Choose a level").font(.pixel(18))
-            ForEach(store.levels, id: \.id) { level in
-                Button { start(level.id) } label: {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(level.name).font(.pixel(16))
-                        Text(level.goal.text).font(.pixel(12)).foregroundStyle(Palette.ink.opacity(0.7))
-                    }
-                    .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-                    .paperCard()
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(20)
-        .foregroundStyle(Palette.ink)
-        .background(Palette.paper)
     }
 }
 

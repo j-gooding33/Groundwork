@@ -26,6 +26,9 @@ public struct World: Codable, Equatable, Sendable {
     public internal(set) var level: LevelState?
     /// Fun-test numbers: time to first belt, bottlenecks fixed.
     public internal(set) var funTest = FunTestLog()
+    /// The land drawn so far; nil means the whole map. Nothing can be built
+    /// on paper that has not been drawn yet.
+    public internal(set) var revealed: Reveal?
 
     /// Tile lookups, rebuilt from the fields above. Never saved.
     var index = WorldIndex()
@@ -38,7 +41,7 @@ public struct World: Codable, Equatable, Sendable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case tick, rng, map, nextEntityID, buildings, belts, hand, beltsAvailable, unlocked, housingPlots, level, funTest
+        case tick, rng, map, nextEntityID, buildings, belts, hand, beltsAvailable, unlocked, housingPlots, level, funTest, revealed
     }
 
     public init(from decoder: Decoder) throws {
@@ -55,6 +58,7 @@ public struct World: Codable, Equatable, Sendable {
         housingPlots = try c.decode([GridPoint].self, forKey: .housingPlots)
         level = try c.decodeIfPresent(LevelState.self, forKey: .level)
         funTest = try c.decodeIfPresent(FunTestLog.self, forKey: .funTest) ?? FunTestLog()
+        revealed = try c.decodeIfPresent(Reveal.self, forKey: .revealed)
         // The index needs building sizes from content, so the session rebuilds it after loading.
     }
 
@@ -72,6 +76,7 @@ public struct World: Codable, Equatable, Sendable {
         try c.encode(housingPlots, forKey: .housingPlots)
         try c.encode(level, forKey: .level)
         try c.encode(funTest, forKey: .funTest)
+        try c.encode(revealed, forKey: .revealed)
     }
 
     public static func == (lhs: World, rhs: World) -> Bool {
@@ -79,7 +84,7 @@ public struct World: Codable, Equatable, Sendable {
             && lhs.nextEntityID == rhs.nextEntityID && lhs.buildings == rhs.buildings
             && lhs.belts == rhs.belts && lhs.hand == rhs.hand && lhs.beltsAvailable == rhs.beltsAvailable
             && lhs.unlocked == rhs.unlocked && lhs.housingPlots == rhs.housingPlots && lhs.level == rhs.level
-            && lhs.funTest == rhs.funTest
+            && lhs.funTest == rhs.funTest && lhs.revealed == rhs.revealed
     }
 
     // MARK: Lookups
@@ -98,8 +103,12 @@ public struct World: Codable, Equatable, Sendable {
         return nil
     }
 
+    public func isRevealed(_ point: GridPoint) -> Bool {
+        revealed?.contains(point) ?? true
+    }
+
     public func isFree(_ point: GridPoint) -> Bool {
-        guard let terrain = map.terrain(at: point), !terrain.isWater else { return false }
+        guard let terrain = map.terrain(at: point), !terrain.isWater, isRevealed(point) else { return false }
         return index.occupant(at: point) == nil
     }
 
@@ -117,6 +126,17 @@ public struct World: Codable, Equatable, Sendable {
     func beltIndex(at point: GridPoint) -> Int? {
         if case let .belt(i) = index.occupant(at: point) { return i }
         return nil
+    }
+}
+
+/// A circle of drawn land. Integer maths, so it is the same on every device.
+public struct Reveal: Codable, Equatable, Sendable {
+    public var center: GridPoint
+    public var radius: Int
+
+    public func contains(_ p: GridPoint) -> Bool {
+        let dx = p.x - center.x, dy = p.y - center.y
+        return dx * dx + dy * dy <= radius * radius
     }
 }
 

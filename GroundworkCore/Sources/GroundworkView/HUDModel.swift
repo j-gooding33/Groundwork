@@ -6,6 +6,8 @@ public struct PaletteEntry: Equatable, Sendable {
     public var title: String
     /// Atlas sprite to show on the button.
     public var sprite: String
+    /// One plain line: what it does.
+    public var description: String
     public var isSelected: Bool
     /// Belt tiles left, shown on the belt button.
     public var badge: String?
@@ -26,6 +28,8 @@ public struct TutorialBubble: Equatable, Sendable {
 public struct SelectionPanel: Equatable, Sendable {
     public var id: EntityID
     public var title: String
+    /// What the building does, in one line.
+    public var description: String
     public var status: String
     public var isBlocked: Bool
     public var lines: [String]
@@ -56,10 +60,24 @@ public struct TraceRow: Equatable, Sendable {
     public var isBroken: Bool
 }
 
+/// The card shown when a chapter's goal is met.
+public struct ChapterCard: Equatable, Sendable {
+    /// "Chapter 1 complete"
+    public var heading: String
+    /// The finished chapter's name.
+    public var name: String
+    /// "Next: First Belts", or nil after the last chapter with a goal.
+    public var next: String?
+}
+
 /// Everything the SwiftUI overlay shows, worked out from the session in one place.
 public struct HUDModel: Equatable, Sendable {
+    /// "Chapter 1 · Bare Ground", above the goal.
+    public var chapterTitle: String?
     public var goal: GoalProgress?
     public var goalFraction: Double
+    /// What the picked tool places, so the player knows before tapping the map.
+    public var toolHint: String?
     public var clock: String
     public var palette: [PaletteEntry]
     public var tabs: [ModeTab]
@@ -74,7 +92,8 @@ public struct HUDModel: Equatable, Sendable {
     public var tracePanel: [TraceRow]
     /// Above the top of the building Trace says to fix (or nearest to it).
     public var traceMarker: ScenePoint?
-    public var levelComplete: Bool
+    /// Set once the chapter's goal is met, until the player continues.
+    public var chapterCard: ChapterCard?
     public var canUndo: Bool
     public var paused: Bool
 
@@ -84,7 +103,12 @@ public struct HUDModel: Equatable, Sendable {
         goal = session.goal
         goalFraction = goal.map { Double($0.current) / Double(max($0.target, 1)) } ?? 0
         clock = DayNight(tick: world.tick).clockText
-        levelComplete = session.isGoalReached
+        let number = session.chapterIndex + 1
+        chapterTitle = session.chapter.map { "Chapter \(number) · \($0.name)" }
+        if session.isGoalReached, let chapter = session.chapter {
+            chapterCard = ChapterCard(heading: "Chapter \(number) complete", name: chapter.name,
+                                      next: session.nextChapter.map { "Next: \($0.name)" })
+        }
         canUndo = session.canUndo
         paused = session.isPausedByTutorial
 
@@ -97,11 +121,14 @@ public struct HUDModel: Equatable, Sendable {
             .filter { unlocked?.contains($0.id) ?? true }
             .sorted { ($0.level, $0.name) < ($1.level, $1.name) }
             .map { PaletteEntry(tool: .build($0.id), title: $0.name, sprite: $0.id.rawValue,
-                                isSelected: input.tool == .build($0.id), badge: nil) }
+                                description: $0.description, isSelected: input.tool == .build($0.id), badge: nil) }
         if world.beltsAvailable.map({ $0 > 0 }) ?? true || !world.belts.isEmpty {
             palette.append(PaletteEntry(tool: .belt, title: "Belt", sprite: "icon_belt",
-                                        isSelected: input.tool == .belt,
+                                        description: Self.beltDescription, isSelected: input.tool == .belt,
                                         badge: world.beltsAvailable.map(String.init)))
+        }
+        if let picked = palette.first(where: \.isSelected) {
+            toolHint = "\(picked.title): \(picked.description)"
         }
 
         // Three buttons to start; more once the tutorial is done.
@@ -133,6 +160,8 @@ public struct HUDModel: Equatable, Sendable {
             traceMarker = ScenePoint(c.x, c.y + Double(def.height) * Camera.tile / 2)
         }
     }
+
+    public static let beltDescription = "Carries items. Drag from one building to another."
 
     /// Ticks a machine must wait for an input (or a used-up source) before
     /// the hint appears: 30 seconds. A full output is left alone, because in a
@@ -185,7 +214,8 @@ public struct HUDModel: Equatable, Sendable {
         }
         let takeable = (def?.kind == .gatherer || def?.kind == .processor) ? !building.output.isEmpty
             : def?.kind == .storage ? !building.input.isEmpty : false
-        return SelectionPanel(id: building.id, title: def?.name ?? building.type.rawValue, status: status,
+        return SelectionPanel(id: building.id, title: def?.name ?? building.type.rawValue,
+                              description: def?.description ?? "", status: status,
                               isBlocked: blocked, lines: lines, canPickUp: takeable)
     }
 

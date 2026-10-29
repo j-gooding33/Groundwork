@@ -1,11 +1,15 @@
 [
   {
-    "id": "level1",
-    "name": "Bare Ground",
+    "id": "world",
+    "name": "Groundwork",
     "map": "maps/level1.txt",
     "focus": {
       "x": 36,
       "y": 30
+    },
+    "revealCenter": {
+      "x": 37,
+      "y": 29
     },
     "unlocked": [
       "clay_pit"
@@ -28,75 +32,106 @@
       }
     ],
     "housingPlots": [],
-    "goal": {
-      "kind": "deliver",
-      "text": "Fill the foundation with bricks",
-      "count": 8,
-      "item": "brick",
-      "to": "foundation"
-    },
-    "tutorial": "level1"
-  },
-  {
-    "id": "level2",
-    "name": "First Belts",
-    "map": "maps/level2.txt",
-    "focus": {
-      "x": 20,
-      "y": 14
-    },
-    "unlocked": [
-      "clay_pit",
-      "lumber_camp",
-      "brick_kiln",
-      "storage_crate"
-    ],
-    "beltsAvailable": 60,
-    "preplaced": [
+    "landmarks": [
       {
-        "building": "storage_crate",
+        "text": "Clay",
         "at": {
-          "x": 34,
-          "y": 15
-        }
+          "x": 35,
+          "y": 31
+        },
+        "hideWhenBuilt": "clay_pit"
+      },
+      {
+        "text": "Forest",
+        "at": {
+          "x": 43,
+          "y": 21
+        },
+        "hideWhenBuilt": "lumber_camp"
+      },
+      {
+        "text": "Lake",
+        "at": {
+          "x": 26,
+          "y": 31
+        },
+        "untilChapter": 1
+      },
+      {
+        "text": "Foundation",
+        "at": {
+          "x": 46,
+          "y": 30
+        },
+        "untilChapter": 1
       }
     ],
-    "firstPlacementStock": [],
-    "housingPlots": [],
-    "goal": {
-      "kind": "deliver",
-      "text": "Fill the crate with 20 bricks, no carrying",
-      "count": 20,
-      "item": "brick",
-      "to": "storage_crate"
-    },
-    "tutorial": "level2"
-  },
-  {
-    "id": "level3",
-    "name": "Stone to Roof",
-    "map": "maps/level1.txt",
-    "focus": {
-      "x": 40,
-      "y": 28
-    },
-    "unlocked": [
-      "clay_pit",
-      "lumber_camp",
-      "brick_kiln",
-      "sawmill",
-      "storage_crate",
-      "builders_yard"
-    ],
-    "preplaced": [],
-    "firstPlacementStock": [],
-    "housingPlots": [],
-    "goal": {
-      "kind": "build",
-      "text": "Five cottages from an automated supply",
-      "count": 5,
-      "building": "cottage"
-    },
-    "tutorial": "level3"
+    "chapters": [
+      {
+        "id": "bare_ground",
+        "name": "Bare Ground",
+        "tutorial": "chapter1",
+        "reveal": 12,
+        "goal": {
+          "kind": "deliver",
+          "text": "Fill the foundation with bricks",
+          "count": 8,
+          "item": "brick",
+          "to": "foundation"
+        }
+      },
+      {
+        "id": "first_belts",
+        "name": "First Belts",
+        "tutorial": "chapter2",
+        "reveal": 17,
+        "unlock": [
+          "clay_pit",
+          "lumber_camp",
+          "brick_kiln",
+          "storage_crate"
+        ],
+        "beltTiles": 50,
+        "preplaced": [
+          {
+            "building": "storage_crate",
+            "at": {
+              "x": 45,
+              "y": 31
+            }
+          }
+        ],
+        "goal": {
+          "kind": "deliver",
+          "text": "Fill the crate with 20 bricks",
+          "count": 20,
+          "item": "brick",
+          "to": "storage_crate"
+        }
+      },
+      {
+        "id": "stone_to_roof",
+        "name": "Stone to Roof",
+        "tutorial": "chapter3",
+        "reveal": 24,
+        "unlock": [
+          "sawmill",
+          "builders_yard"
+        ],
+        "beltTiles": 80,
+        "goal": {
+          "kind": "build",
+          "text": "Build five cottages",
+          "count": 5,
+          "building": "cottage"
+        }
+      },
+      {
+        "id": "free_build",
+        "name": "Free Build",
+        "unlockAll": true,
+        "unlimitedBelts": true
+      }
+    ]
   }
 ]

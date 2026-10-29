@@ -14,6 +14,14 @@ final class ContentValidationTests: XCTestCase {
         }
     }
 
+    func testMissingDescriptionIsRejected() {
+        var clay = TestSupport.clayItem
+        clay.description = ""
+        XCTAssertContentProblem("Item 'clay' needs a description") {
+            try TestSupport.fixture(items: [clay, TestSupport.brickItem])
+        }
+    }
+
     func testDuplicateIDIsRejected() {
         XCTAssertContentProblem("Duplicate item id 'clay'") {
             try TestSupport.fixture(items: [TestSupport.clayItem, TestSupport.clayItem, TestSupport.brickItem])
@@ -21,15 +29,15 @@ final class ContentValidationTests: XCTestCase {
     }
 
     func testItemWithNoRecipeBreaksTheTraceRule() {
-        let orphan = ItemDef(id: "glass", name: "Glass", plural: "glass", tier: .processed)
+        let orphan = ItemDef(id: "glass", name: "Glass", plural: "glass", tier: .processed, description: "An item.")
         XCTAssertContentProblem("Item 'glass' cannot be traced back to a natural source") {
             try TestSupport.fixture(items: [TestSupport.clayItem, TestSupport.brickItem, orphan])
         }
     }
 
     func testCycleWithNoSourceBreaksTheTraceRule() {
-        let a = ItemDef(id: "a", name: "A", plural: "a", tier: .processed)
-        let b = ItemDef(id: "b", name: "B", plural: "b", tier: .processed)
+        let a = ItemDef(id: "a", name: "A", plural: "a", tier: .processed, description: "An item.")
+        let b = ItemDef(id: "b", name: "B", plural: "b", tier: .processed, description: "An item.")
         let aToB = RecipeDef(id: "a_to_b", building: "kiln", source: nil, durationTicks: 10, power: 0, level: 1,
                              inputs: [RecipeInput(item: "a", count: 1, role: .material)],
                              outputs: [ItemStack(item: "b", count: 1)])

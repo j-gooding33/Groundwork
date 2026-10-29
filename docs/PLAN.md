@@ -22,6 +22,8 @@ Phase 0 of the no-Mac track (see "No Mac yet" in docs/DESIGN.md): check the tool
 10. **Map.** The map question is still open. → For the prototype, use one handcrafted 64×64 Level 1 map stored as a text grid (`Data/maps/level1.txt`). No procedural generation, and no chunks until the world gets large.
 11. **Hand carry.** "About 10 items". → The hand holds up to 10 of one item type. Pick-up and drop are instant in the simulation, and the UI handles the animation.
 12. **Trace states.** The table shows "Normal", while the rules say running, slow and blocked. → Use `running`, `slow`, `blocked`, plus `notBuilt` for recipe steps that have no building yet.
+13. **One world, not a level list (owner's call, 2026-10-29).** A new player can't choose between level names they don't understand. → There is one world, `"world"` in `levels.json`, on the Level 1 map. The design's Levels 1 to 3 are its first three **chapters** (Bare Ground, First Belts, Stone to Roof), followed by Free Build. Buildings carry over. Each chapter draws more of the map (a reveal radius around the start; nothing can be built on undrawn paper) and opens the next when the player taps Continue on the chapter card. Every building, item and source has a one-line description, and landmarks ("Clay", "Forest") are named on the map until used. Level 2's separate map is retired.
+14. **Demand rule when the yard is full.** A full yard receives nothing, so "received a cottage's worth this minute" could never hold again and the yard stalled for good. → A yard holding its full capacity of a material counts as steadily supplied with it.
 
 ## Folder layout
 ```
@@ -70,14 +72,21 @@ buildings.json
   "recipes": ["brick"], "inputCapacity": 10, "outputCapacity": 10,
   "cost": [], "level": 1, "placeOn": "any_land" }
 ```
-levels.json
+levels.json (one world; abbreviated)
 ```json
-{ "id": "level1", "name": "Bare Ground", "map": "maps/level1.txt",
-  "unlocked": ["clay_pit", "lumber_camp", "brick_kiln", "storage_crate"],
-  "preplaced": [ {"building": "foundation", "at": [30, 20]} ],
-  "startingStock": [ {"building": "brick_kiln", "item": "log", "count": 5} ],
-  "goal": { "type": "deliver", "item": "brick", "count": 8, "to": "foundation" },
-  "tutorial": "level1" }
+{ "id": "world", "name": "Groundwork", "map": "maps/level1.txt",
+  "focus": {"x": 36, "y": 30}, "revealCenter": {"x": 37, "y": 29},
+  "unlocked": ["clay_pit"], "beltsAvailable": 0,
+  "preplaced": [ {"building": "foundation", "at": {"x": 45, "y": 27}} ],
+  "firstPlacementStock": [ {"building": "brick_kiln", "item": "log", "count": 5} ],
+  "landmarks": [ {"text": "Clay", "at": {"x": 35, "y": 31}, "hideWhenBuilt": "clay_pit"},
+                 {"text": "Lake", "at": {"x": 26, "y": 31}, "untilChapter": 1} ],
+  "chapters": [
+    { "id": "bare_ground", "name": "Bare Ground", "tutorial": "chapter1", "reveal": 12,
+      "goal": { "kind": "deliver", "text": "Fill the foundation with bricks", "count": 8, "item": "brick", "to": "foundation" } },
+    { "id": "first_belts", "name": "First Belts", "tutorial": "chapter2", "reveal": 17, "beltTiles": 50,
+      "preplaced": [ {"building": "storage_crate", "at": {"x": 45, "y": 31}} ], "goal": { "...": "20 bricks in the crate" } },
+    { "id": "free_build", "name": "Free Build", "unlockAll": true, "unlimitedBelts": true } ] }
 ```
 tutorial.json (each line of text is checked to be at most 2 lines and 80 characters)
 ```json
@@ -149,9 +158,10 @@ The starter rules from the design, adapted for Linux: GroundworkCore uses only F
 - **Screenshots** rendered from the real code: `docs/screenshots/`.
 - **Tutorial upgrade:** Trace is now taught (time stops until the player traces the kiln). New Level 2 "First Belts". Level 3 rewritten. Stuck hints, tuck-away bubble and Skip tutorial.
 - **Insight features:** Trace panel (the chain as a list, tap to jump), status bubbles over stuck machines, and a rates view with shortage warnings.
+- **One world in chapters** (after the first Mac run): no level menu; Play continues the world. Chapters reveal more of the map, buildings carry over, everything has a one-line description, landmarks are labelled, and the first building of each type wears a name tag.
 
 ### Recommended next (from the 10-feature list)
-4 paper reveal, 5 splitter and merger, 6 belt bridges and reversing, 7 move a building, 8 fun-test overlay, 9 accessibility settings, 10 Sandbox. Power for Level 2's waterwheel needs your go-ahead.
+5 splitter and merger, 6 belt bridges and reversing, 7 move a building, 8 fun-test overlay, 9 accessibility settings, 10 Sandbox. Power for Level 2's waterwheel needs your go-ahead.
 
 Performance (Linux, release build): 8,000 belt items cost 0.35 ms per tick.
 

@@ -122,7 +122,7 @@ final class InsightTests: XCTestCase {
     }
 
     func testRatesTabAppearsAfterTheTutorial() throws {
-        let session = try GameSession(content: try ViewTestSupport.content(), level: "level1")
+        let session = try GameSession(content: try ViewTestSupport.content())
         XCTAssertFalse(HUDModel(session: session, input: InputController()).tabs.contains(.rates))
         session.skipTutorial()
         XCTAssertTrue(HUDModel(session: session, input: InputController()).tabs.contains(.rates))

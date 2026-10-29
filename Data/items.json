@@ -1,6 +1,6 @@
 [
-  {"id": "clay", "name": "Clay", "tier": "raw", "plural": "clay"},
-  {"id": "log", "name": "Log", "tier": "raw", "plural": "logs"},
-  {"id": "brick", "name": "Brick", "tier": "processed", "plural": "bricks"},
-  {"id": "plank", "name": "Plank", "tier": "processed", "plural": "planks"}
+  {"id": "clay", "name": "Clay", "tier": "raw", "plural": "clay", "description": "Dug from clay deposits. A kiln bakes it into bricks."},
+  {"id": "log", "name": "Log", "tier": "raw", "plural": "logs", "description": "Cut from the forest. Burned as fuel, or sawn into planks."},
+  {"id": "brick", "name": "Brick", "tier": "processed", "plural": "bricks", "description": "Baked clay. The base of every building."},
+  {"id": "plank", "name": "Plank", "tier": "processed", "plural": "planks", "description": "Sawn wood. Cottages need it for floors and roofs."}
 ]

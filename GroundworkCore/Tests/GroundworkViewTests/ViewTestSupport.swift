@@ -27,7 +27,7 @@ enum ViewTestSupport {
 
     /// The Level 3 town from the preview: two pits, two camps, kiln, sawmill, yard, belts.
     static func town(ticks: Int) throws -> GameSession {
-        let town = try GameSession(content: try content(), level: "level3", seed: 3)
+        let town = try GameSession(content: try content(), seed: 3, chapter: 2)
         var input = InputController()
         for (type, x, y) in [("clay_pit", 36, 30), ("clay_pit", 37, 31), ("lumber_camp", 42, 23),
                              ("lumber_camp", 44, 23), ("brick_kiln", 41, 28), ("sawmill", 47, 25),

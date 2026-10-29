@@ -10,6 +10,27 @@ final class ContentLoadingTests: XCTestCase {
         XCTAssertEqual(content.buildings.count, 8)
     }
 
+    func testEverythingHasAShortDescription() throws {
+        let content = try TestSupport.content()
+        let lines = content.items.map(\.description) + content.sources.map(\.description)
+            + content.buildings.map(\.description)
+        for line in lines {
+            XCTAssertFalse(line.isEmpty)
+            XCTAssertLessThanOrEqual(line.count, 60, "One short line fits the palette: \(line)")
+        }
+        XCTAssertEqual(content.building("brick_kiln")?.description, "Bakes clay into bricks. Burns logs as fuel.")
+    }
+
+    func testOneWorldWithChaptersThatOpenUpTheMap() throws {
+        let content = try TestSupport.content()
+        XCTAssertEqual(content.levels.map(\.id), ["world"])
+        let chapters = try XCTUnwrap(content.level("world")).chapters
+        XCTAssertEqual(chapters.map(\.name), ["Bare Ground", "First Belts", "Stone to Roof", "Free Build"])
+        let radii = chapters.compactMap(\.reveal)
+        XCTAssertEqual(radii, radii.sorted(), "Each chapter draws more of the map")
+        XCTAssertNil(chapters.last?.goal, "Free build has no goal")
+    }
+
     func testBrickIsMadeByTheKilnFromClayAndLogFuel() throws {
         let content = try TestSupport.content()
         let recipes = content.recipes(producing: "brick")

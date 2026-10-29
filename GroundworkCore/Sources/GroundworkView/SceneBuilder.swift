@@ -52,6 +52,16 @@ public struct RateLabel: Equatable, Sendable {
     public var warning: String?
 }
 
+/// A name written on the map: a landmark such as "Clay" until the player has
+/// used it, so a new player knows what the patches of colour are.
+public struct MapLabel: Equatable, Sendable {
+    public var id: String
+    public var text: String
+    /// Centre of the text, in scene points.
+    public var x: Double
+    public var y: Double
+}
+
 /// Layers, bottom to top. Things on the ground that stand up (buildings, trees,
 /// people) share one layer sorted by how far down the screen they stand.
 public enum Layer {
@@ -97,7 +107,8 @@ public struct SceneBuilder: Sendable {
     // MARK: Static layer
 
     /// Terrain, edge overlays, the paper margin, and trees, rocks and clay
-    /// markers not covered by buildings or belts.
+    /// markers not covered by buildings or belts. Land the chapter hasn't
+    /// drawn yet is blank paper, with the same soft edge as the map's margin.
     public func staticLayer(_ world: World) -> [Sprite] {
         let map = world.map
         var sprites: [Sprite] = []
@@ -106,7 +117,7 @@ public struct SceneBuilder: Sendable {
             for x in -2..<(map.width + 2) {
                 let point = GridPoint(x, y)
                 let c = Camera.center(of: point, w: 1, h: 1, mapHeight: map.height)
-                guard let terrain = map.terrain(at: point) else {
+                guard let terrain = Self.drawnTerrain(at: point, world: world) else {
                     sprites.append(Sprite(id: "t:\(x),\(y)", name: "terrain_paper_fog", x: c.x, y: c.y, z: Layer.terrain))
                     continue
                 }
@@ -117,7 +128,7 @@ public struct SceneBuilder: Sendable {
                     base.phase = Double(Self.hash(point) % 3) * 0.6
                 }
                 sprites.append(base)
-                for overlay in edgeOverlays(point, map: map) {
+                for overlay in edgeOverlays(point, terrain: { Self.drawnTerrain(at: $0, world: world) }) {
                     sprites.append(Sprite(id: "e:\(x),\(y):\(overlay)", name: overlay, x: c.x, y: c.y, z: Layer.edges))
                 }
                 if let decoration = decoration(point, terrain: terrain, world: world) {
@@ -153,11 +164,20 @@ public struct SceneBuilder: Sendable {
         }
     }
 
+    /// The terrain to draw at a point: nil off the map or on undrawn paper.
+    static func drawnTerrain(at point: GridPoint, world: World) -> Terrain? {
+        world.isRevealed(point) ? world.map.terrain(at: point) : nil
+    }
+
     /// Edge overlay sprites for a tile, lowest group first, sides then corners.
     public func edgeOverlays(_ point: GridPoint, map: TileMap) -> [String] {
-        let own = Self.edgeGroup(map.terrain(at: point)).priority
+        edgeOverlays(point, terrain: map.terrain(at:))
+    }
+
+    func edgeOverlays(_ point: GridPoint, terrain: (GridPoint) -> Terrain?) -> [String] {
+        let own = Self.edgeGroup(terrain(point)).priority
         func group(_ dx: Int, _ dy: Int) -> (name: String, priority: Int) {
-            Self.edgeGroup(map.terrain(at: GridPoint(point.x + dx, point.y + dy)))
+            Self.edgeGroup(terrain(GridPoint(point.x + dx, point.y + dy)))
         }
         let n = group(0, -1), s = group(0, 1), e = group(1, 0), w = group(-1, 0)
         let ne = group(1, -1), nw = group(-1, -1), se = group(1, 1), sw = group(-1, 1)
@@ -348,6 +368,21 @@ public struct SceneBuilder: Sendable {
                                     lines: lines, warning: warning))
         }
         return Self.separate(labels)
+    }
+
+    // MARK: Map labels
+
+    /// Landmark names on drawn land, each until its job is done: "Clay" until
+    /// a pit is dug, "Lake" for the first chapter only.
+    public func mapLabels(_ world: World) -> [MapLabel] {
+        guard let state = world.level, let level = content.level(state.level) else { return [] }
+        return level.landmarks.enumerated().compactMap { i, landmark in
+            guard world.isRevealed(landmark.at) else { return nil }
+            if let until = landmark.untilChapter, state.chapter >= until { return nil }
+            if let type = landmark.hideWhenBuilt, world.buildings.contains(where: { $0.type == type }) { return nil }
+            let c = Camera.center(of: landmark.at, w: 1, h: 1, mapHeight: world.map.height)
+            return MapLabel(id: "landmark:\(i)", text: landmark.text, x: c.x, y: c.y)
+        }
     }
 
     /// Scene points per character and per line of label text, roughly.

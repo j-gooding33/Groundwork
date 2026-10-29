@@ -19,4 +19,8 @@ public enum GameEvent: Equatable, Sendable {
     case tutorialStep(String)
     case tutorialFinished(LevelID)
     case goalReached(LevelID)
+    /// A chapter began (0-based); its land, unlocks and first step are in place.
+    case chapterStarted(Int)
+    /// The chapter's goal is met; the next one begins when the player continues.
+    case chapterComplete(Int)
 }

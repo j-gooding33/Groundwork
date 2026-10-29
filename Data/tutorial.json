@@ -1,5 +1,5 @@
 {
-  "level1": [
+  "chapter1": [
     {
       "id": "l1_ground",
       "text": "Start with the ground.",
@@ -133,51 +133,18 @@
       "when": "goal"
     }
   ],
-  "level2": [
+  "chapter2": [
     {
-      "id": "l2_start",
-      "text": "One belt is a start.\nNow build a real supply line.",
-      "highlight": {
-        "tile": {
-          "x": 20,
-          "y": 13
-        }
-      },
-      "when": "placed:brick_kiln"
-    },
-    {
-      "id": "l2_pit",
-      "text": "Place a Clay Pit and belt it\nto the kiln.",
-      "highlight": {
-        "tile": {
-          "x": 13,
-          "y": 8
-        }
-      },
-      "when": "delivered:clay:belt"
-    },
-    {
-      "id": "l2_logs",
-      "text": "Kilns burn logs.\nBelt some in from the forest.",
-      "highlight": {
-        "tile": {
-          "x": 33,
-          "y": 9
-        }
-      },
-      "when": "delivered:log:belt"
-    },
-    {
-      "id": "l2_crate",
-      "text": "Belt the bricks to the crate.",
+      "id": "c2_crate",
+      "text": "A crate appeared by the kiln.\nBelt bricks into it.",
       "highlight": {
         "building": "storage_crate"
       },
-      "when": "slow:brick_kiln"
+      "when": "delivered:brick:storage_crate"
     },
     {
-      "id": "l2_slow",
-      "text": "One pit cannot keep up.\nTrace the kiln to see.",
+      "id": "c2_trace",
+      "text": "Is one pit enough?\nTrace the kiln to see.",
       "highlight": {
         "building": "brick_kiln",
         "ui": "trace"
@@ -186,18 +153,18 @@
       "pauseSim": true
     },
     {
-      "id": "l2_second",
-      "text": "Add a second pit on the\nother clay.",
+      "id": "c2_second",
+      "text": "More clay, more bricks.\nAdd a second Clay Pit.",
       "highlight": {
         "tile": {
-          "x": 13,
-          "y": 20
+          "x": 34,
+          "y": 31
         }
       },
       "when": "count:clay_pit:2"
     },
     {
-      "id": "l2_merge",
+      "id": "c2_merge",
       "text": "End its belt on the side of\nthe first belt. They merge.",
       "highlight": {
         "building": "clay_pit"
@@ -206,7 +173,7 @@
       "waitTicks": 200
     },
     {
-      "id": "l2_goal",
+      "id": "c2_goal",
       "text": "Fill the crate with bricks.",
       "highlight": {
         "building": "storage_crate"
@@ -214,20 +181,21 @@
       "when": "goal"
     }
   ],
-  "level3": [
+  "chapter3": [
     {
-      "id": "l3_start",
-      "text": "Build a brick line again:\npit, kiln and logs.",
+      "id": "c3_start",
+      "text": "Cottages need bricks and planks.\nMore land is open to build on.",
       "highlight": {
         "tile": {
-          "x": 41,
-          "y": 28
+          "x": 47,
+          "y": 25
         }
       },
-      "when": "placed:brick_kiln"
+      "when": "wait",
+      "waitTicks": 60
     },
     {
-      "id": "l3_sawmill",
+      "id": "c3_sawmill",
       "text": "Cottages need planks.\nPlace a Sawmill.",
       "highlight": {
         "tile": {
@@ -238,7 +206,7 @@
       "when": "placed:sawmill"
     },
     {
-      "id": "l3_saw_logs",
+      "id": "c3_saw_logs",
       "text": "Belt logs to the sawmill.",
       "highlight": {
         "tile": {
@@ -249,7 +217,7 @@
       "when": "delivered:log:sawmill"
     },
     {
-      "id": "l3_yard",
+      "id": "c3_yard",
       "text": "A Builder's Yard builds homes.\nPlace one.",
       "highlight": {
         "tile": {
@@ -260,7 +228,7 @@
       "when": "placed:builders_yard"
     },
     {
-      "id": "l3_bricks",
+      "id": "c3_bricks",
       "text": "Belt bricks to the yard.",
       "highlight": {
         "building": "builders_yard"
@@ -268,7 +236,7 @@
       "when": "delivered:brick:builders_yard"
     },
     {
-      "id": "l3_planks",
+      "id": "c3_planks",
       "text": "Now belt planks to the yard.",
       "highlight": {
         "building": "sawmill"
@@ -276,7 +244,7 @@
       "when": "delivered:plank:builders_yard"
     },
     {
-      "id": "l3_steady",
+      "id": "c3_steady",
       "text": "The yard starts a cottage once\nbricks and planks keep coming.",
       "highlight": {
         "building": "builders_yard"
@@ -284,7 +252,7 @@
       "when": "placed:cottage"
     },
     {
-      "id": "l3_trace",
+      "id": "c3_trace",
       "text": "Trace a cottage back to nature.",
       "highlight": {
         "building": "cottage",
@@ -294,7 +262,7 @@
       "waitTicks": 100
     },
     {
-      "id": "l3_goal",
+      "id": "c3_goal",
       "text": "Keep it flowing. Five cottages.",
       "when": "goal"
     }

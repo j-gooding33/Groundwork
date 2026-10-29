@@ -129,9 +129,9 @@ final class ViewModelTests: XCTestCase {
     }
 
     func testGoalCelebrates() throws {
-        let session = try GameSession(content: try ViewTestSupport.content(), level: "level1")
+        let session = try GameSession(content: try ViewTestSupport.content())
         var planner = EffectPlanner()
-        let effects = planner.plan([.goalReached("level1")], session: session)
+        let effects = planner.plan([.goalReached("world")], session: session)
         XCTAssertTrue(effects.contains(.celebrate))
         XCTAssertTrue(effects.contains(.haptic(.double)))
         XCTAssertEqual(planner.musicLayers, 2)
@@ -140,19 +140,58 @@ final class ViewModelTests: XCTestCase {
     // MARK: HUD
 
     func testLevel1StartsWithThreeButtonsAndOneBuilding() throws {
-        let session = try GameSession(content: try ViewTestSupport.content(), level: "level1")
+        let session = try GameSession(content: try ViewTestSupport.content())
         let hud = HUDModel(session: session, input: InputController())
         XCTAssertEqual(hud.tabs, [.build, .trace, .undo])
         XCTAssertEqual(hud.palette.map(\.title), ["Clay Pit"])
         XCTAssertEqual(hud.tutorial?.text, "Start with the ground.")
         XCTAssertEqual(hud.tutorial?.tile, GridPoint(37, 29))
         XCTAssertEqual(hud.goal?.text, "Fill the foundation with bricks")
+        XCTAssertEqual(hud.chapterTitle, "Chapter 1 · Bare Ground")
+        XCTAssertNil(hud.chapterCard)
+        XCTAssertEqual(hud.palette.first?.description, "Digs clay. Place it on a clay deposit.")
         XCTAssertEqual(hud.clock, "Day 1, 07:40")
         XCTAssertTrue(hud.paused)
     }
 
+    func testPickingAToolSaysWhatItDoes() throws {
+        let session = try GameSession(content: try ViewTestSupport.content())
+        var input = InputController()
+        XCTAssertNil(HUDModel(session: session, input: input).toolHint)
+        input.use(.build("clay_pit"))
+        XCTAssertEqual(HUDModel(session: session, input: input).toolHint,
+                       "Clay Pit: Digs clay. Place it on a clay deposit.")
+    }
+
+    func testChapterCardAppearsWhenTheGoalIsMetAndGoesOnContinue() throws {
+        let session = try GameSession(content: try ViewTestSupport.content())
+        session.skipTutorial()
+        let foundation = try XCTUnwrap(session.world.buildings.first { $0.type == "foundation" })
+        session.stock(foundation.id, with: "brick", count: 8)
+        session.advance(ticks: 1)
+        let card = try XCTUnwrap(HUDModel(session: session, input: InputController()).chapterCard)
+        XCTAssertEqual(card, ChapterCard(heading: "Chapter 1 complete", name: "Bare Ground", next: "Next: First Belts"))
+
+        XCTAssertTrue(session.beginNextChapter())
+        let hud = HUDModel(session: session, input: InputController())
+        XCTAssertNil(hud.chapterCard)
+        XCTAssertEqual(hud.chapterTitle, "Chapter 2 · First Belts")
+        XCTAssertEqual(hud.goal?.text, "Fill the crate with 20 bricks")
+    }
+
+    func testFirstBuildingOfATypeWearsItsName() throws {
+        let session = try GameSession(content: try ViewTestSupport.content())
+        var planner = EffectPlanner()
+        session.place("clay_pit", at: GridPoint(37, 29))
+        let first = planner.plan(session.drainEvents(), session: session)
+        XCTAssertTrue(first.contains { if case .nameTag(_, "Clay Pit", "Digs clay. Place it on a clay deposit.", _) = $0 { return true }; return false })
+        session.place("clay_pit", at: GridPoint(35, 31))
+        let second = planner.plan(session.drainEvents(), session: session)
+        XCTAssertFalse(second.contains { if case .nameTag = $0 { return true }; return false }, "Only the first one")
+    }
+
     func testBeltButtonAppearsWithItsCount() throws {
-        let session = try GameSession(content: try ViewTestSupport.content(), level: "level1")
+        let session = try GameSession(content: try ViewTestSupport.content())
         session.setBeltsAvailable(12)
         let hud = HUDModel(session: session, input: InputController())
         XCTAssertEqual(hud.palette.last?.title, "Belt")

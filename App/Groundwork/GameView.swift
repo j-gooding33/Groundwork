@@ -63,6 +63,13 @@ private struct HUD: View {
                         .opacity(0.9)
                 }
                 Spacer()
+                if let toolHint = hud.toolHint {
+                    Text(toolHint)
+                        .font(.pixel(11))
+                        .foregroundStyle(Palette.ink)
+                        .paperCard()
+                        .id(toolHint)
+                }
                 if let hand = hud.hand {
                     Label(hand, systemImage: "hand.raised.fill")
                         .font(.pixel(12))
@@ -95,8 +102,8 @@ private struct HUD: View {
             }
             .padding(.horizontal, 16)
 
-            if hud.levelComplete && !store.completeDismissed && !store.menuOpen {
-                LevelCompleteCard()
+            if let card = hud.chapterCard, !store.completeDismissed, !store.menuOpen {
+                ChapterCompleteCard(card: card)
             }
             if store.menuOpen {
                 PauseMenu()
@@ -116,10 +123,22 @@ private struct TopBar: View {
             Button { store.toggleMenu() } label: {
                 SpriteIcon(images: images, name: "icon_pause", size: 28).frame(width: 44, height: 44)
             }
+            if hud.chapterCard != nil && store.completeDismissed {
+                Button { store.continueChapter() } label: {
+                    Text("Next chapter").font(.pixel(12)).foregroundStyle(Palette.ink).paperCard()
+                }
+                .buttonStyle(.plain)
+            }
+            if hud.goal == nil, let title = hud.chapterTitle {
+                Text(title).font(.pixel(11)).foregroundStyle(Palette.ink).paperCard()
+            }
             if let goal = hud.goal {
                 HStack(spacing: 8) {
                     SpriteIcon(images: images, name: "icon_goal", size: 20)
                     VStack(alignment: .leading, spacing: 3) {
+                        if let title = hud.chapterTitle {
+                            Text(title).font(.pixel(9)).foregroundStyle(Palette.ink.opacity(0.65))
+                        }
                         Text(goal.text).font(.pixel(11))
                         GeometryReader { g in
                             ZStack(alignment: .leading) {
@@ -183,6 +202,9 @@ private struct SelectionCard: View {
                 Text(panel.title).font(.pixel(13))
                 Spacer()
                 Button { store.closePanel() } label: { Image(systemName: "xmark").frame(width: 32, height: 32) }
+            }
+            if !panel.description.isEmpty {
+                Text(panel.description).font(.pixel(10)).foregroundStyle(Palette.ink.opacity(0.7))
             }
             Text(panel.status)
                 .font(.pixel(11))
@@ -326,18 +348,22 @@ private struct Tabs: View {
     }
 }
 
-private struct LevelCompleteCard: View {
+private struct ChapterCompleteCard: View {
     @Environment(GameStore.self) private var store
+    let card: ChapterCard
 
     var body: some View {
-        VStack(spacing: 12) {
-            Text("Goal reached!").font(.pixel(22))
-            Text(store.hud?.goal?.text ?? "").font(.pixel(12))
+        VStack(spacing: 10) {
+            Text(card.heading).font(.pixel(20))
+            Text(card.name).font(.pixel(14)).foregroundStyle(Palette.ink.opacity(0.7))
+            if let next = card.next {
+                Text(next).font(.pixel(12))
+            }
             HStack(spacing: 12) {
-                if let next = store.nextLevel {
-                    TitleButton(title: next.name) { store.newGame(next.id) }
+                if card.next != nil {
+                    TitleButton(title: "Continue") { store.continueChapter() }
                 }
-                TitleButton(title: "Keep building") { store.closeCompleteCard() }
+                TitleButton(title: "Stay a while") { store.closeCompleteCard() }
             }
         }
         .foregroundStyle(Palette.ink)

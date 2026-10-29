@@ -217,6 +217,11 @@ public struct ContentDatabase: Sendable {
         problems += rules.problems()
         problems += traceRuleProblems()
         problems += Self.duplicates(levels.map(\.id), kind: "level")
+        for item in items where item.description.isEmpty { problems.append("Item '\(item.id)' needs a description") }
+        for source in sources where source.description.isEmpty { problems.append("Source '\(source.id)' needs a description") }
+        for building in buildings where building.description.isEmpty {
+            problems.append("Building '\(building.id)' needs a description")
+        }
         for level in levels { problems += levelProblems(level) }
         return problems
     }
@@ -246,7 +251,7 @@ public struct ContentDatabase: Sendable {
     }
 
     private func levelProblems(_ level: LevelDef) -> [String] {
-        let name = "Level '\(level.id)'"
+        let name = "World '\(level.id)'"
         var problems: [String] = []
         for type in level.unlocked where building(type) == nil {
             problems.append("\(name) unlocks unknown building '\(type)'")
@@ -255,21 +260,34 @@ public struct ContentDatabase: Sendable {
             if building(stock.building) == nil { problems.append("\(name) stocks unknown building '\(stock.building)'") }
             if item(stock.item) == nil { problems.append("\(name) stocks unknown item '\(stock.item)'") }
         }
-        let goal = level.goal
-        if goal.count <= 0 { problems.append("\(name) goal needs a count above 0") }
-        switch goal.kind {
-        case .deliver:
-            if goal.item.flatMap(item) == nil { problems.append("\(name) goal delivers an unknown item") }
-            if goal.to.flatMap(building) == nil { problems.append("\(name) goal delivers to an unknown building") }
-        case .build:
-            if goal.building.flatMap(building) == nil { problems.append("\(name) goal builds an unknown building") }
-        }
+        if level.chapters.isEmpty { problems.append("\(name) has no chapters") }
 
-        if let key = level.tutorial {
-            if let steps = tutorials[key] {
-                for step in steps { problems += stepProblems(step, in: name) }
-            } else {
-                problems.append("\(name) uses unknown tutorial '\(key)'")
+        for (i, chapter) in level.chapters.enumerated() {
+            let cname = "\(name) chapter \(i + 1) '\(chapter.id)'"
+            for type in chapter.unlock ?? [] where building(type) == nil {
+                problems.append("\(cname) unlocks unknown building '\(type)'")
+            }
+            if let goal = chapter.goal {
+                if goal.count <= 0 { problems.append("\(cname) goal needs a count above 0") }
+                switch goal.kind {
+                case .deliver:
+                    if goal.item.flatMap(item) == nil { problems.append("\(cname) goal delivers an unknown item") }
+                    if goal.to.flatMap(building) == nil { problems.append("\(cname) goal delivers to an unknown building") }
+                case .build:
+                    if goal.building.flatMap(building) == nil { problems.append("\(cname) goal builds an unknown building") }
+                }
+            } else if i + 1 < level.chapters.count {
+                problems.append("\(cname) has no goal, so the chapters after it can never begin")
+            }
+            if let key = chapter.tutorial {
+                if let steps = tutorials[key] {
+                    for step in steps { problems += stepProblems(step, in: cname) }
+                } else {
+                    problems.append("\(cname) uses unknown tutorial '\(key)'")
+                }
+            }
+            if let reveal = chapter.reveal, i > 0, let before = level.chapters[i - 1].reveal, reveal < before {
+                problems.append("\(cname) reveals less land than the chapter before it")
             }
         }
 
@@ -281,12 +299,23 @@ public struct ContentDatabase: Sendable {
             return problems
         }
         if !map.contains(level.focus) { problems.append("\(name) camera focus is off the map") }
+        if !map.contains(level.revealCenter) { problems.append("\(name) reveal centre is off the map") }
+        for landmark in level.landmarks {
+            if !map.contains(landmark.at) { problems.append("\(name) landmark '\(landmark.text)' is off the map") }
+            if let type = landmark.hideWhenBuilt, building(type) == nil {
+                problems.append("\(name) landmark '\(landmark.text)' waits for unknown building '\(type)'")
+            }
+        }
         var world = World(map: map, seed: 0)
-        for item in level.preplaced {
+        let preplaced = level.preplaced.map { ($0, nil as Int?) }
+            + level.chapters.enumerated().flatMap { i, c in (c.preplaced ?? []).map { ($0, i as Int?) } }
+        for (item, chapter) in preplaced {
             guard let def = building(item.building) else {
                 problems.append("\(name) preplaces unknown building '\(item.building)'")
                 continue
             }
+            world.revealed = chapter.flatMap { level.chapters[$0].reveal }.map { Reveal(center: level.revealCenter, radius: $0) }
+            world.index = WorldIndex(world: world, content: self)
             if let problem = Commands.placementProblem(def, at: item.at, world: world, content: self) {
                 problems.append("\(name) cannot preplace \(def.name) at \(item.at): \(problem.message)")
             } else {

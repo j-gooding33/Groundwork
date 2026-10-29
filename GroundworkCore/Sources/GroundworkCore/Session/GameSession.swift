@@ -57,13 +57,15 @@ public final class GameSession {
         world.index = WorldIndex(world: world, content: content)
     }
 
-    /// Starts a level: its map, preplaced buildings, unlocks, belt stock and tutorial.
-    public convenience init(content: ContentDatabase, level id: LevelID, seed: UInt64 = 1) throws {
+    /// Starts the world at a chapter (0 for a new game): its map, buildings,
+    /// unlocks, belt stock, drawn land and tutorial.
+    public convenience init(content: ContentDatabase, level id: LevelID = "world", seed: UInt64 = 1,
+                            chapter: Int = 0) throws {
         guard let level = content.level(id) else {
-            throw ContentError.invalid(["Unknown level '\(id)'"])
+            throw ContentError.invalid(["Unknown world '\(id)'"])
         }
         self.init(content: content, map: try content.map(for: level), seed: seed)
-        LevelRunner.start(level, world: &world, content: content, events: &events)
+        LevelRunner.start(level, chapter: chapter, world: &world, content: content, events: &events)
         afterEvents(since: 0, byPlayer: false, succeeded: true)
     }
 
@@ -243,6 +245,24 @@ public final class GameSession {
     // MARK: Level
 
     public var level: LevelDef? { world.level.flatMap { content.level($0.level) } }
+
+    /// The chapter being played, and its 0-based number.
+    public var chapter: ChapterDef? { LevelRunner.chapter(world: world, content: content) }
+    public var chapterIndex: Int { world.level?.chapter ?? 0 }
+    /// False for paper the current chapter hasn't drawn yet; nothing can be built there.
+    public func isRevealed(_ point: GridPoint) -> Bool { world.isRevealed(point) }
+    /// The chapter after this one, if there is one.
+    public var nextChapter: ChapterDef? { LevelRunner.nextChapter(world: world, content: content) }
+
+    /// Opens the next chapter once this one's goal is met: more land, new
+    /// buildings, its tutorial. Returns false if there is nothing to open yet.
+    @discardableResult
+    public func beginNextChapter() -> Bool {
+        let mark = events.count
+        let opened = LevelRunner.beginNextChapter(world: &world, content: content, events: &events)
+        if opened { afterEvents(since: mark, byPlayer: false, succeeded: true) }
+        return opened
+    }
 
     /// The guided step showing now, or nil when there is none or the tutorial is done.
     public var tutorialStep: TutorialStep? { LevelRunner.currentStep(world: world, content: content) }
