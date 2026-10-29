@@ -76,6 +76,9 @@ public struct TutorialStep: Codable, Equatable, Sendable {
     public var grant: Grant?
     /// Hold the simulation while this step shows.
     public var pauseSim: Bool?
+    /// Show the step for at least this many ticks before it can finish, so a
+    /// quick step is not gone before it can be read.
+    public var waitTicks: Int?
 }
 
 /// What a tutorial step waits for. Written in JSON as a short string:
@@ -85,12 +88,22 @@ public struct TutorialStep: Codable, Equatable, Sendable {
 /// - `delivered:<item>`, `delivered:<item>:hand`, `delivered:<item>:belt`,
 ///   `delivered:<item>:<building>` an item arrived (by that means, or at that building)
 /// - `waiting:<item>` a machine is blocked waiting for that item
+/// - `slow:<building>` Trace judges a building of that type slow right now
+/// - `traced:<building>` the player used Trace on a building of that type
+/// - `ui:<name>` the app reported a UI action, such as `ui:panned`
+/// - `count:<building>:<n>` there are at least n finished buildings of that type
+/// - `wait` nothing: the step finishes after its `waitTicks` (a tip)
 /// - `goal` the level goal is reached
 public enum TutorialCondition: Equatable, Sendable {
     case placed(BuildingTypeID)
     case produced(ItemID)
     case delivered(ItemID, qualifier: String?)
     case waiting(ItemID)
+    case slow(BuildingTypeID)
+    case traced(BuildingTypeID)
+    case ui(String)
+    case count(BuildingTypeID, Int)
+    case wait
     case goal
 
     public init?(_ text: String) {
@@ -101,6 +114,13 @@ public enum TutorialCondition: Equatable, Sendable {
         case ("delivered", 2): self = .delivered(ItemID(rawValue: parts[1]), qualifier: nil)
         case ("delivered", 3): self = .delivered(ItemID(rawValue: parts[1]), qualifier: parts[2])
         case ("waiting", 2): self = .waiting(ItemID(rawValue: parts[1]))
+        case ("slow", 2): self = .slow(BuildingTypeID(rawValue: parts[1]))
+        case ("traced", 2): self = .traced(BuildingTypeID(rawValue: parts[1]))
+        case ("ui", 2) where !parts[1].isEmpty: self = .ui(parts[1])
+        case ("count", 3):
+            guard let n = Int(parts[2]), n > 0 else { return nil }
+            self = .count(BuildingTypeID(rawValue: parts[1]), n)
+        case ("wait", 1): self = .wait
         case ("goal", 1): self = .goal
         default: return nil
         }
@@ -114,6 +134,11 @@ public enum TutorialCondition: Equatable, Sendable {
         case let .delivered(item, nil): return "delivered:\(item)"
         case let .delivered(item, qualifier?): return "delivered:\(item):\(qualifier)"
         case let .waiting(item): return "waiting:\(item)"
+        case let .slow(type): return "slow:\(type)"
+        case let .traced(type): return "traced:\(type)"
+        case let .ui(name): return "ui:\(name)"
+        case let .count(type, n): return "count:\(type):\(n)"
+        case .wait: return "wait"
         case .goal: return "goal"
         }
     }
@@ -129,6 +154,8 @@ public struct LevelState: Codable, Equatable, Sendable {
     public internal(set) var goalReached: Bool
     /// Building types that already got their first-placement stock.
     public internal(set) var stocked: [BuildingTypeID]
+    /// The tick the current step began, for `waitTicks`.
+    public internal(set) var stepStartedTick: UInt64?
 
     init(level: LevelID) {
         self.level = level

@@ -22,6 +22,8 @@ final class GameStore {
     private(set) var toast: Toast?
     var showPalette = true
     var menuOpen = false
+    /// The tutorial bubble the player tucked away; "?" brings it back.
+    var collapsedStep: String?
     /// The player closed the goal card to keep building.
     private(set) var completeDismissed = false
     private(set) var speed = 1
@@ -243,9 +245,11 @@ final class GameStore {
             if !input.dragDraws {
                 let d = mapping.toView(dx: dx, dy: dy)
                 camera.pan(byView: d.dx, d.dy)
+                session.noteUI("panned")
             }
         case let .pinch(factor, center):
             camera.pinch(factor, aroundView: mapping.toView(center))
+            session.noteUI("zoomed")
         }
         refreshHUD()
     }
@@ -292,6 +296,12 @@ final class GameStore {
     }
 
     func closeCompleteCard() { completeDismissed = true }
+
+    func skipTutorial() {
+        session?.skipTutorial()
+        menuOpen = false
+        refreshHUD()
+    }
 
     func toggleMenu() {
         menuOpen.toggle()

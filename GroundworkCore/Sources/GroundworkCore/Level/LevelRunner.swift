@@ -81,10 +81,15 @@ enum LevelRunner {
         }
 
         world.level = state
+        advanceSteps(level, world: &world, content: content, events: &events)
+    }
+
+    /// Moves past every step whose condition holds and whose minimum time is up.
+    static func advanceSteps(_ level: LevelDef, world: inout World, content: ContentDatabase,
+                             events: inout [GameEvent]) {
         let all = steps(level, content)
         while let index = world.level?.step, all.indices.contains(index),
-              let condition = TutorialCondition(all[index].when),
-              world.level?.hasSeen(condition.key) == true {
+              isDone(all[index], world: world, content: content) {
             world.level?.step = index + 1
             if all.indices.contains(index + 1) {
                 enter(all[index + 1], world: &world, events: &events)
@@ -94,7 +99,44 @@ enum LevelRunner {
         }
     }
 
-    private static func enter(_ step: TutorialStep, world: inout World, events: inout [GameEvent]) {
+    static func isDone(_ step: TutorialStep, world: World, content: ContentDatabase) -> Bool {
+        guard let state = world.level, let condition = TutorialCondition(step.when) else { return false }
+        if let wait = step.waitTicks, world.tick < (state.stepStartedTick ?? 0) + UInt64(wait) { return false }
+        switch condition {
+        case .wait:
+            return true
+        case let .count(type, n):
+            return world.buildings.filter { $0.type == type && $0.isBuilt }.count >= n
+        case let .slow(type):
+            return world.buildings.contains { b in
+                b.type == type && Trace.run(.building(b.id), world: world, content: content).root.state == .slow
+            }
+        default:
+            return state.hasSeen(condition.key)
+        }
+    }
+
+    /// Records something the player did outside the simulation (used Trace,
+    /// panned the map) and lets the tutorial react.
+    static func note(_ key: String, world: inout World, content: ContentDatabase, events: inout [GameEvent]) {
+        guard var state = world.level, !state.hasSeen(key), let level = content.level(state.level) else { return }
+        state.record(key)
+        world.level = state
+        advanceSteps(level, world: &world, content: content, events: &events)
+    }
+
+    /// Finishes every remaining step, giving their unlocks and belt tiles so
+    /// nothing is held back.
+    static func skipTutorial(world: inout World, content: ContentDatabase, events: inout [GameEvent]) {
+        guard let state = world.level, let level = content.level(state.level) else { return }
+        let all = steps(level, content)
+        guard state.step < all.count else { return }
+        for step in all[(state.step + 1)...] { applyGrant(step, world: &world) }
+        world.level?.step = all.count
+        events.append(.tutorialFinished(level.id))
+    }
+
+    private static func applyGrant(_ step: TutorialStep, world: inout World) {
         if let tiles = step.grant?.beltTiles {
             world.beltsAvailable = (world.beltsAvailable ?? 0) + tiles
         }
@@ -102,6 +144,11 @@ enum LevelRunner {
             for type in unlock where !unlocked.contains(type) { unlocked.append(type) }
             world.unlocked = unlocked
         }
+    }
+
+    private static func enter(_ step: TutorialStep, world: inout World, events: inout [GameEvent]) {
+        applyGrant(step, world: &world)
+        world.level?.stepStartedTick = world.tick
         events.append(.tutorialStep(step.id))
     }
 }

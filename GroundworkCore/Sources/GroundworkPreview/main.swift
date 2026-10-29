@@ -156,10 +156,11 @@ input.use(.belt)
 let foundation = level1.world.buildings.first { $0.type == "foundation" }!
 input.dragBegan(kiln.origin, session: level1)
 check(input.dragEnded(foundation.origin, session: level1), "belt to foundation")
-waitUntil(level1) { level1.tutorialStep?.id == "l1_lumber" }
+waitUntil(level1) { level1.tutorialStep?.id == "l1_logs" }
+try shot("04_tutorial_asks_for_trace", session: level1, camera: camera, input: input, seconds: 0.3)
 input.use(.trace)
 check(input.tap(kiln.origin, session: level1), "trace kiln")
-try shot("04_trace_shows_the_gap", session: level1, camera: camera, input: input, seconds: 0.9)
+try shot("05_trace_shows_the_gap", session: level1, camera: camera, input: input, seconds: 0.9)
 
 input.use(.build("lumber_camp"))
 let forest = level1.tutorialStep!.highlight!.tile!
@@ -170,7 +171,7 @@ check(input.dragEnded(kiln.origin, session: level1), "belt logs to kiln")
 input.cancel()
 waitUntil(level1) { level1.isGoalReached }
 level1.advance(ticks: 40)
-try shot("05_level1_complete", session: level1, camera: camera, input: input)
+try shot("06_level1_complete", session: level1, camera: camera, input: input)
 
 // MARK: Level 3, a small town building itself
 
@@ -202,10 +203,10 @@ townInput.cancel()
 town.advance(ticks: 7200)
 var townCamera = Camera(mapWidth: town.world.map.width, mapHeight: town.world.map.height,
                         focus: GridPoint(46, 28), zoom: 1)
-try shot("06_town_day", session: town, camera: townCamera, input: townInput)
+try shot("07_town_day", session: town, camera: townCamera, input: townInput)
 town.advance(ticks: 2100)
-try shot("07_town_night", session: town, camera: townCamera, input: townInput)
+try shot("08_town_night", session: town, camera: townCamera, input: townInput)
 townCamera.pinch(2, aroundView: ScenePoint(Camera.viewWidth / 2, Camera.viewHeight / 2))
-try shot("08_town_zoomed", session: town, camera: townCamera, input: townInput)
+try shot("09_town_zoomed", session: town, camera: townCamera, input: townInput)
 let homes = town.world.buildings.filter { $0.type == "cottage" }
 print("Town: \(homes.filter(\.isBuilt).count) cottages built, \(homes.count - homes.filter(\.isBuilt).count) underway")

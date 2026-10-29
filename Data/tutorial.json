@@ -1,50 +1,302 @@
 {
   "level1": [
-    { "id": "l1_ground", "text": "Start with the ground.",
-      "highlight": { "tile": { "x": 37, "y": 29 } },
-      "when": "placed:clay_pit", "pauseSim": true },
-    { "id": "l1_source", "text": "Everything starts somewhere.",
-      "highlight": { "ui": "trace" },
-      "when": "produced:clay" },
-    { "id": "l1_kiln", "text": "Clay becomes brick in a kiln.",
-      "highlight": { "tile": { "x": 41, "y": 28 } },
-      "grant": { "unlock": ["brick_kiln"] },
-      "when": "placed:brick_kiln" },
-    { "id": "l1_carry", "text": "Carry clay from the pit\nto the kiln.",
-      "highlight": { "building": "clay_pit" },
-      "when": "delivered:clay:hand" },
-    { "id": "l1_first_brick", "text": "Watch the kiln.",
-      "highlight": { "building": "brick_kiln" },
-      "when": "produced:brick" },
-    { "id": "l1_belt", "text": "Drag a belt from the pit to the kiln.",
-      "highlight": { "building": "clay_pit" },
-      "grant": { "beltTiles": 12 },
-      "when": "delivered:clay:belt" },
-    { "id": "l1_foundation", "text": "Bricks fill the foundation.\nBelt or carry them there.",
-      "highlight": { "building": "foundation" },
-      "when": "delivered:brick:foundation" },
-    { "id": "l1_logs", "text": "The kiln needs logs to burn.\nTap Trace to see why.",
-      "highlight": { "ui": "trace" },
-      "grant": { "unlock": ["lumber_camp", "storage_crate"] },
-      "when": "waiting:log" },
-    { "id": "l1_lumber", "text": "Place a Lumber Camp on the forest.",
-      "highlight": { "tile": { "x": 42, "y": 23 } },
-      "grant": { "beltTiles": 6 },
-      "when": "placed:lumber_camp" },
-    { "id": "l1_finish", "text": "Fill the foundation.",
-      "highlight": { "building": "foundation" },
-      "when": "goal" }
+    {
+      "id": "l1_ground",
+      "text": "Start with the ground.",
+      "highlight": {
+        "tile": {
+          "x": 37,
+          "y": 29
+        }
+      },
+      "when": "placed:clay_pit",
+      "pauseSim": true
+    },
+    {
+      "id": "l1_source",
+      "text": "Everything starts somewhere.",
+      "highlight": {
+        "ui": "trace"
+      },
+      "when": "produced:clay",
+      "waitTicks": 20
+    },
+    {
+      "id": "l1_kiln",
+      "text": "Clay becomes brick in a kiln.",
+      "highlight": {
+        "tile": {
+          "x": 41,
+          "y": 28
+        }
+      },
+      "grant": {
+        "unlock": [
+          "brick_kiln"
+        ]
+      },
+      "when": "placed:brick_kiln"
+    },
+    {
+      "id": "l1_carry",
+      "text": "Tap the pit to pick up clay.\nTap the kiln to drop it.",
+      "highlight": {
+        "building": "clay_pit"
+      },
+      "when": "delivered:clay:hand"
+    },
+    {
+      "id": "l1_first_brick",
+      "text": "Watch the kiln.",
+      "highlight": {
+        "building": "brick_kiln"
+      },
+      "when": "produced:brick"
+    },
+    {
+      "id": "l1_belt",
+      "text": "Pick Belt, then drag from\nthe pit to the kiln.",
+      "highlight": {
+        "building": "clay_pit",
+        "ui": "build"
+      },
+      "grant": {
+        "beltTiles": 12
+      },
+      "when": "delivered:clay:belt"
+    },
+    {
+      "id": "l1_look",
+      "text": "Drag to look around.\nPinch to zoom.",
+      "when": "wait",
+      "waitTicks": 100
+    },
+    {
+      "id": "l1_undo",
+      "text": "Made a mistake? Undo is free.",
+      "highlight": {
+        "ui": "undo"
+      },
+      "when": "wait",
+      "waitTicks": 60
+    },
+    {
+      "id": "l1_foundation",
+      "text": "Bricks fill the foundation.\nBelt or carry them there.",
+      "highlight": {
+        "building": "foundation"
+      },
+      "when": "waiting:log"
+    },
+    {
+      "id": "l1_logs",
+      "text": "The kiln has stopped.\nTap Trace, then the kiln.",
+      "highlight": {
+        "building": "brick_kiln",
+        "ui": "trace"
+      },
+      "when": "traced:brick_kiln",
+      "pauseSim": true
+    },
+    {
+      "id": "l1_lumber",
+      "text": "Trace found it: no logs.\nPlace a Lumber Camp on the forest.",
+      "highlight": {
+        "tile": {
+          "x": 42,
+          "y": 23
+        }
+      },
+      "grant": {
+        "unlock": [
+          "lumber_camp",
+          "storage_crate"
+        ],
+        "beltTiles": 6
+      },
+      "when": "placed:lumber_camp"
+    },
+    {
+      "id": "l1_log_belt",
+      "text": "Belt the logs to the kiln.",
+      "highlight": {
+        "building": "lumber_camp"
+      },
+      "when": "delivered:log:belt"
+    },
+    {
+      "id": "l1_finish",
+      "text": "Fill the foundation.",
+      "highlight": {
+        "building": "foundation"
+      },
+      "when": "goal"
+    }
+  ],
+  "level2": [
+    {
+      "id": "l2_start",
+      "text": "One belt is a start.\nNow build a real supply line.",
+      "highlight": {
+        "tile": {
+          "x": 20,
+          "y": 13
+        }
+      },
+      "when": "placed:brick_kiln"
+    },
+    {
+      "id": "l2_pit",
+      "text": "Place a Clay Pit and belt it\nto the kiln.",
+      "highlight": {
+        "tile": {
+          "x": 13,
+          "y": 8
+        }
+      },
+      "when": "delivered:clay:belt"
+    },
+    {
+      "id": "l2_logs",
+      "text": "Kilns burn logs.\nBelt some in from the forest.",
+      "highlight": {
+        "tile": {
+          "x": 33,
+          "y": 9
+        }
+      },
+      "when": "delivered:log:belt"
+    },
+    {
+      "id": "l2_crate",
+      "text": "Belt the bricks to the crate.",
+      "highlight": {
+        "building": "storage_crate"
+      },
+      "when": "slow:brick_kiln"
+    },
+    {
+      "id": "l2_slow",
+      "text": "One pit cannot keep up.\nTrace the kiln to see.",
+      "highlight": {
+        "building": "brick_kiln",
+        "ui": "trace"
+      },
+      "when": "traced:brick_kiln",
+      "pauseSim": true
+    },
+    {
+      "id": "l2_second",
+      "text": "Add a second pit on the\nother clay.",
+      "highlight": {
+        "tile": {
+          "x": 13,
+          "y": 20
+        }
+      },
+      "when": "count:clay_pit:2"
+    },
+    {
+      "id": "l2_merge",
+      "text": "End its belt on the side of\nthe first belt. They merge.",
+      "highlight": {
+        "building": "clay_pit"
+      },
+      "when": "wait",
+      "waitTicks": 200
+    },
+    {
+      "id": "l2_goal",
+      "text": "Fill the crate with bricks.",
+      "highlight": {
+        "building": "storage_crate"
+      },
+      "when": "goal"
+    }
   ],
   "level3": [
-    { "id": "l3_yard", "text": "A Builder's Yard builds homes\nwhen supply is steady.",
-      "highlight": { "ui": "build" },
-      "when": "placed:builders_yard" },
-    { "id": "l3_planks", "text": "Cottages need planks too.\nTry a Sawmill.",
-      "when": "placed:sawmill" },
-    { "id": "l3_feed", "text": "Belt bricks and planks to the yard.",
-      "highlight": { "building": "builders_yard" },
-      "when": "placed:cottage" },
-    { "id": "l3_grow", "text": "Keep it flowing. Five cottages.",
-      "when": "goal" }
+    {
+      "id": "l3_start",
+      "text": "Build a brick line again:\npit, kiln and logs.",
+      "highlight": {
+        "tile": {
+          "x": 41,
+          "y": 28
+        }
+      },
+      "when": "placed:brick_kiln"
+    },
+    {
+      "id": "l3_sawmill",
+      "text": "Cottages need planks.\nPlace a Sawmill.",
+      "highlight": {
+        "tile": {
+          "x": 47,
+          "y": 25
+        }
+      },
+      "when": "placed:sawmill"
+    },
+    {
+      "id": "l3_saw_logs",
+      "text": "Belt logs to the sawmill.",
+      "highlight": {
+        "tile": {
+          "x": 44,
+          "y": 23
+        }
+      },
+      "when": "delivered:log:sawmill"
+    },
+    {
+      "id": "l3_yard",
+      "text": "A Builder's Yard builds homes.\nPlace one.",
+      "highlight": {
+        "tile": {
+          "x": 51,
+          "y": 28
+        }
+      },
+      "when": "placed:builders_yard"
+    },
+    {
+      "id": "l3_bricks",
+      "text": "Belt bricks to the yard.",
+      "highlight": {
+        "building": "builders_yard"
+      },
+      "when": "delivered:brick:builders_yard"
+    },
+    {
+      "id": "l3_planks",
+      "text": "Now belt planks to the yard.",
+      "highlight": {
+        "building": "sawmill"
+      },
+      "when": "delivered:plank:builders_yard"
+    },
+    {
+      "id": "l3_steady",
+      "text": "The yard starts a cottage once\nbricks and planks keep coming.",
+      "highlight": {
+        "building": "builders_yard"
+      },
+      "when": "placed:cottage"
+    },
+    {
+      "id": "l3_trace",
+      "text": "Trace a cottage back to nature.",
+      "highlight": {
+        "building": "cottage",
+        "ui": "trace"
+      },
+      "when": "traced:cottage",
+      "waitTicks": 100
+    },
+    {
+      "id": "l3_goal",
+      "text": "Keep it flowing. Five cottages.",
+      "when": "goal"
+    }
   ]
 }

@@ -3,27 +3,100 @@
     "id": "level1",
     "name": "Bare Ground",
     "map": "maps/level1.txt",
-    "focus": { "x": 36, "y": 30 },
-    "unlocked": ["clay_pit"],
+    "focus": {
+      "x": 36,
+      "y": 30
+    },
+    "unlocked": [
+      "clay_pit"
+    ],
     "beltsAvailable": 0,
-    "preplaced": [ { "building": "foundation", "at": { "x": 45, "y": 27 } } ],
-    "firstPlacementStock": [ { "building": "brick_kiln", "item": "log", "count": 5 } ],
+    "preplaced": [
+      {
+        "building": "foundation",
+        "at": {
+          "x": 45,
+          "y": 27
+        }
+      }
+    ],
+    "firstPlacementStock": [
+      {
+        "building": "brick_kiln",
+        "item": "log",
+        "count": 5
+      }
+    ],
     "housingPlots": [],
-    "goal": { "kind": "deliver", "text": "Fill the foundation with bricks", "count": 8,
-              "item": "brick", "to": "foundation" },
+    "goal": {
+      "kind": "deliver",
+      "text": "Fill the foundation with bricks",
+      "count": 8,
+      "item": "brick",
+      "to": "foundation"
+    },
     "tutorial": "level1"
+  },
+  {
+    "id": "level2",
+    "name": "First Belts",
+    "map": "maps/level2.txt",
+    "focus": {
+      "x": 20,
+      "y": 14
+    },
+    "unlocked": [
+      "clay_pit",
+      "lumber_camp",
+      "brick_kiln",
+      "storage_crate"
+    ],
+    "beltsAvailable": 60,
+    "preplaced": [
+      {
+        "building": "storage_crate",
+        "at": {
+          "x": 34,
+          "y": 15
+        }
+      }
+    ],
+    "firstPlacementStock": [],
+    "housingPlots": [],
+    "goal": {
+      "kind": "deliver",
+      "text": "Fill the crate with 20 bricks, no carrying",
+      "count": 20,
+      "item": "brick",
+      "to": "storage_crate"
+    },
+    "tutorial": "level2"
   },
   {
     "id": "level3",
     "name": "Stone to Roof",
     "map": "maps/level1.txt",
-    "focus": { "x": 40, "y": 28 },
-    "unlocked": ["clay_pit", "lumber_camp", "brick_kiln", "sawmill", "storage_crate", "builders_yard"],
+    "focus": {
+      "x": 40,
+      "y": 28
+    },
+    "unlocked": [
+      "clay_pit",
+      "lumber_camp",
+      "brick_kiln",
+      "sawmill",
+      "storage_crate",
+      "builders_yard"
+    ],
     "preplaced": [],
     "firstPlacementStock": [],
     "housingPlots": [],
-    "goal": { "kind": "build", "text": "Five cottages from an automated supply", "count": 5,
-              "building": "cottage" },
+    "goal": {
+      "kind": "build",
+      "text": "Five cottages from an automated supply",
+      "count": 5,
+      "building": "cottage"
+    },
     "tutorial": "level3"
   }
 ]

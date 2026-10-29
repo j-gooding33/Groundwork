@@ -63,11 +63,17 @@ final class ScriptedPlayerTests: XCTestCase {
         let foundationOrigin = try building("foundation").origin
         XCTAssertEqual(session.layBelt(from: kilnOrigin, to: foundationOrigin), .ok)
 
-        // 4:00 The kiln burns through its starting logs and Trace shows the gap.
-        waitUntil { self.session.tutorialStep?.id == "l1_lumber" }
+        // 4:00 The kiln burns through its starting logs. The tutorial stops time
+        // and will not go on until the player asks Trace why.
+        waitUntil { self.session.tutorialStep?.id == "l1_logs" }
+        XCTAssertTrue(session.isPausedByTutorial)
+        let pausedAt = session.world.tick
+        session.advance(ticks: 100)
+        XCTAssertEqual(session.world.tick, pausedAt, "Time waits while Trace is taught")
         let trace = session.trace(.building(kiln))
         XCTAssertEqual(trace.root.reason, "Waiting for logs")
         XCTAssertEqual(trace.firstBroken?.subject, .missingBuilding("lumber_camp"))
+        XCTAssertEqual(session.tutorialStep?.id, "l1_lumber", "Using Trace finishes the step")
         XCTAssertFalse(session.isGoalReached, "Five starting logs cannot fill an eight-brick foundation")
 
         // The player fixes it: a lumber camp on the forest, belted to the kiln.

@@ -318,8 +318,15 @@ public struct ContentDatabase: Sendable {
                building(BuildingTypeID(rawValue: qualifier)) == nil {
                 problems.append("\(name) has an unknown delivery qualifier '\(qualifier)'")
             }
-        case .goal:
+        case let .traced(type), let .count(type, _), let .slow(type):
+            if building(type) == nil { problems.append("\(name) waits for unknown building '\(type)'") }
+        case .ui, .goal:
             break
+        case .wait:
+            if (step.waitTicks ?? 0) <= 0 { problems.append("\(name) uses 'wait' so it needs waitTicks above 0") }
+        }
+        if step.pauseSim == true, (step.waitTicks ?? 0) > 0 {
+            problems.append("\(name) pauses time, so its waitTicks could never pass")
         }
         for type in step.grant?.unlock ?? [] where building(type) == nil {
             problems.append("\(name) unlocks unknown building '\(type)'")

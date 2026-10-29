@@ -177,6 +177,29 @@ final class ViewModelTests: XCTestCase {
         XCTAssertTrue(stuck.isBlocked)
     }
 
+    func testStuckHintAppearsAfterThirtySeconds() throws {
+        let session = try ViewTestSupport.session(["......", "......"])
+        session.place("brick_kiln", at: GridPoint(1, 0))
+        let kiln = try XCTUnwrap(session.world.building(at: GridPoint(1, 0)))
+        session.stock(kiln.id, with: "clay", count: 4)
+        session.advance(ticks: 200)
+        XCTAssertNil(HUDModel(session: session, input: InputController()).hint)
+        session.advance(ticks: 150)
+        XCTAssertNotNil(HUDModel(session: session, input: InputController()).hint)
+        var tracing = InputController()
+        tracing.use(.trace)
+        _ = tracing.tap(GridPoint(1, 0), session: session)
+        XCTAssertNil(HUDModel(session: session, input: tracing).hint, "No nagging while Trace is open")
+    }
+
+    func testFullOutputIsNotCalledStuck() throws {
+        let session = try ViewTestSupport.session([".c....", "......"])
+        session.place("clay_pit", at: GridPoint(1, 0))
+        session.advance(ticks: 1000)
+        XCTAssertEqual(session.world.building(at: GridPoint(1, 0))?.status, .blocked(.outputFull))
+        XCTAssertNil(HUDModel(session: session, input: InputController()).hint)
+    }
+
     // MARK: Day, night, autosave
 
     func testDayAndNight() {

@@ -12,6 +12,8 @@ public struct PaletteEntry: Equatable, Sendable {
 }
 
 public struct TutorialBubble: Equatable, Sendable {
+    /// The step's id, so the app can remember which bubble was tucked away.
+    public var id: String
     public var text: String
     public var tile: GridPoint?
     /// Buildings to outline.
@@ -53,6 +55,9 @@ public struct HUDModel: Equatable, Sendable {
     public var selection: SelectionPanel?
     public var hand: String?
     public var traceLines: [TraceLine]
+    /// A gentle nudge when a machine has been stuck a while and nobody is
+    /// looking at it with Trace. Never shown during a tutorial step.
+    public var hint: String?
     /// Above the top of the building Trace says to fix (or nearest to it).
     public var traceMarker: ScenePoint?
     public var levelComplete: Bool
@@ -93,7 +98,7 @@ public struct HUDModel: Equatable, Sendable {
             let outlined = step.highlight?.building.map { type in
                 world.buildings.filter { $0.type == type }.map(\.id)
             } ?? []
-            tutorial = TutorialBubble(text: step.text, tile: step.highlight?.tile,
+            tutorial = TutorialBubble(id: step.id, text: step.text, tile: step.highlight?.tile,
                                       buildings: outlined, control: step.highlight?.ui)
         }
 
@@ -103,10 +108,29 @@ public struct HUDModel: Equatable, Sendable {
             selection = Self.panel(for: building, session: session)
         }
         traceLines = input.trace.map { Self.lines(for: $0, world: world, content: content) } ?? []
+        if tutorial == nil, input.trace == nil, Self.hasStuckMachine(world, content: content) {
+            hint = "Something has stopped.\nTap Trace, then the dim building."
+        }
         if let trace = input.trace, trace.firstBroken != nil, let id = trace.jumpTarget,
            let b = world.building(id), let def = content.building(b.type) {
             let c = Camera.center(of: b.origin, w: def.width, h: def.height, mapHeight: world.map.height)
             traceMarker = ScenePoint(c.x, c.y + Double(def.height) * Camera.tile / 2)
+        }
+    }
+
+    /// Ticks a machine must wait for an input (or a used-up source) before
+    /// the hint appears: 30 seconds. A full output is left alone, because in a
+    /// working factory the step before a bottleneck always backs up.
+    public static let stuckTicks = 300
+
+    static func hasStuckMachine(_ world: World, content: ContentDatabase) -> Bool {
+        world.buildings.contains { b in
+            guard let kind = content.building(b.type)?.kind, kind == .gatherer || kind == .processor,
+                  let reason = b.waitReason, b.waitingTicks >= stuckTicks else { return false }
+            switch reason {
+            case .missingInput, .missingFuel, .sourceDepleted, .noSource: return true
+            case .outputFull, .noPower: return false
+            }
         }
     }
 

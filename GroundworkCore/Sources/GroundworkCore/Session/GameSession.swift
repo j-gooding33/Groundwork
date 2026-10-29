@@ -239,8 +239,25 @@ public final class GameSession {
 
     // MARK: Queries
 
+    /// Runs Trace. Trace itself is pure; the session only notes that the player
+    /// asked about a building, which some tutorial steps wait for.
+    @discardableResult
     public func trace(_ target: TraceTarget) -> TraceResult {
-        Trace.run(target, world: world, content: content)
+        let result = Trace.run(target, world: world, content: content)
+        if case let .building(id) = target, let type = world.building(id)?.type {
+            LevelRunner.note(TutorialCondition.traced(type).key, world: &world, content: content, events: &events)
+        }
+        return result
+    }
+
+    /// The app reports UI actions the tutorial may wait for ("panned", "zoomed").
+    public func noteUI(_ name: String) {
+        LevelRunner.note(TutorialCondition.ui(name).key, world: &world, content: content, events: &events)
+    }
+
+    /// Ends the tutorial now, handing over everything its remaining steps would unlock.
+    public func skipTutorial() {
+        LevelRunner.skipTutorial(world: &world, content: content, events: &events)
     }
 
     /// Made, used and received per minute for every item the building has handled.

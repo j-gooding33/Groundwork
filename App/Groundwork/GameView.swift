@@ -38,13 +38,29 @@ private struct HUD: View {
             VStack(spacing: 6) {
                 TopBar(hud: hud, images: images)
                 if let bubble = hud.tutorial {
-                    Text(bubble.text)
-                        .font(.pixel(13))
+                    if store.collapsedStep == bubble.id {
+                        // Tucked away: a "?" brings the step back.
+                        Button { store.collapsedStep = nil } label: {
+                            Text("?").font(.pixel(18)).frame(width: 44, height: 44).paperCard()
+                        }
+                        .buttonStyle(.plain)
+                    } else {
+                        Text(bubble.text)
+                            .font(.pixel(13))
+                            .multilineTextAlignment(.center)
+                            .foregroundStyle(Palette.ink)
+                            .paperCard()
+                            .onTapGesture { store.collapsedStep = bubble.id }
+                            .transition(.opacity)
+                            .id(bubble.text)
+                    }
+                } else if let hint = hud.hint {
+                    Text(hint)
+                        .font(.pixel(12))
                         .multilineTextAlignment(.center)
                         .foregroundStyle(Palette.ink)
                         .paperCard()
-                        .transition(.opacity)
-                        .id(bubble.text)
+                        .opacity(0.9)
                 }
                 Spacer()
                 if let hand = hud.hand {
@@ -276,6 +292,9 @@ private struct PauseMenu: View {
                 TitleButton(title: "Resume") { store.toggleMenu() }
                 Toggle("Sound", isOn: $store.soundOn).font(.pixel(13)).frame(width: 200)
                 Toggle("Haptics", isOn: $store.hapticsOn).font(.pixel(13)).frame(width: 200)
+                if store.hud?.tutorial != nil {
+                    TitleButton(title: "Skip tutorial") { store.skipTutorial() }
+                }
                 TitleButton(title: "Save and quit") { store.quitToTitle() }
             }
             .tint(Palette.grass)
