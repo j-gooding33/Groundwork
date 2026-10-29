@@ -1,0 +1,305 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		6A0D00000000000000000009 /* Data in Resources */ = {isa = PBXBuildFile; fileRef = 6A0D00000000000000000006 /* Data */; };
+		6A0D0000000000000000000A /* generated in Resources */ = {isa = PBXBuildFile; fileRef = 6A0D00000000000000000007 /* generated */; };
+		6A0D0000000000000000000B /* GroundworkCore in Frameworks */ = {isa = PBXBuildFile; productRef = 6A0D00000000000000000012 /* GroundworkCore */; };
+		6A0D0000000000000000000C /* GroundworkView in Frameworks */ = {isa = PBXBuildFile; productRef = 6A0D00000000000000000013 /* GroundworkView */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		6A0D00000000000000000008 /* Groundwork.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Groundwork.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		6A0D00000000000000000006 /* Data */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Data; sourceTree = "<group>"; };
+		6A0D00000000000000000007 /* generated */ = {isa = PBXFileReference; lastKnownFileType = folder; name = generated; path = Art/generated; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		6A0D00000000000000000004 /* Groundwork */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Groundwork;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		6A0D0000000000000000000E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6A0D0000000000000000000B /* GroundworkCore in Frameworks */,
+				6A0D0000000000000000000C /* GroundworkView in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		6A0D00000000000000000002 = {
+			isa = PBXGroup;
+			children = (
+				6A0D00000000000000000003 /* App */,
+				6A0D00000000000000000006 /* Data */,
+				6A0D00000000000000000007 /* generated */,
+				6A0D00000000000000000005 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		6A0D00000000000000000003 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				6A0D00000000000000000004 /* Groundwork */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		6A0D00000000000000000005 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				6A0D00000000000000000008 /* Groundwork.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		6A0D00000000000000000010 /* Groundwork */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6A0D00000000000000000019 /* Build configuration list for PBXNativeTarget "Groundwork" */;
+			buildPhases = (
+				6A0D0000000000000000000D /* Sources */,
+				6A0D0000000000000000000E /* Frameworks */,
+				6A0D0000000000000000000F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				6A0D00000000000000000004 /* Groundwork */,
+			);
+			name = Groundwork;
+			packageProductDependencies = (
+				6A0D00000000000000000012 /* GroundworkCore */,
+				6A0D00000000000000000013 /* GroundworkView */,
+			);
+			productName = Groundwork;
+			productReference = 6A0D00000000000000000008 /* Groundwork.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		6A0D00000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					6A0D00000000000000000010 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
+			};
+			buildConfigurationList = 6A0D00000000000000000016 /* Build configuration list for PBXProject "Groundwork" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 6A0D00000000000000000002;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				6A0D00000000000000000011 /* XCLocalSwiftPackageReference "GroundworkCore" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 6A0D00000000000000000005 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				6A0D00000000000000000010 /* Groundwork */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		6A0D0000000000000000000F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6A0D00000000000000000009 /* Data in Resources */,
+				6A0D0000000000000000000A /* generated in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		6A0D0000000000000000000D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		6A0D00000000000000000014 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		6A0D00000000000000000015 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		6A0D00000000000000000017 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Groundwork;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.simulation-games";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiresFullScreen = YES;
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.groundwork.Groundwork;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		6A0D00000000000000000018 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Groundwork;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.simulation-games";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIRequiresFullScreen = YES;
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.groundwork.Groundwork;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		6A0D00000000000000000016 /* Build configuration list for PBXProject "Groundwork" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6A0D00000000000000000014 /* Debug */,
+				6A0D00000000000000000015 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		6A0D00000000000000000019 /* Build configuration list for PBXNativeTarget "Groundwork" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6A0D00000000000000000017 /* Debug */,
+				6A0D00000000000000000018 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		6A0D00000000000000000011 /* XCLocalSwiftPackageReference "GroundworkCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = GroundworkCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		6A0D00000000000000000012 /* GroundworkCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6A0D00000000000000000011 /* XCLocalSwiftPackageReference "GroundworkCore" */;
+			productName = GroundworkCore;
+		};
+		6A0D00000000000000000013 /* GroundworkView */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6A0D00000000000000000011 /* XCLocalSwiftPackageReference "GroundworkCore" */;
+			productName = GroundworkView;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 6A0D00000000000000000001 /* Project object */;
+}

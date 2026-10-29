@@ -64,3 +64,6 @@ fastlane/test_output
 # Python
 __pycache__/
 Art/generated/atlas.rgba
+
+# Local Xcode builds
+build/
