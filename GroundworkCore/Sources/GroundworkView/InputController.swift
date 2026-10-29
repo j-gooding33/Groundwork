@@ -74,6 +74,12 @@ public struct InputController: Sendable {
 
     public mutating func clearSelection() { selection = nil }
 
+    /// Drops a half-dragged belt without laying it (a second finger came down).
+    public mutating func cancelDrag() {
+        ghost = []
+        dragStart = nil
+    }
+
     // MARK: Taps
 
     public mutating func tap(_ tile: GridPoint, session: GameSession) -> Feedback {
