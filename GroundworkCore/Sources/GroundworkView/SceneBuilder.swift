@@ -41,6 +41,17 @@ public struct Sprite: Equatable, Sendable {
     }
 }
 
+/// A few short lines of text under a building: its rates per minute.
+public struct RateLabel: Equatable, Sendable {
+    public var id: String
+    /// Top centre of the label, in scene points.
+    public var x: Double
+    public var y: Double
+    public var lines: [String]
+    /// "logs out in 20s", shown in red.
+    public var warning: String?
+}
+
 /// Layers, bottom to top. Things on the ground that stand up (buildings, trees,
 /// people) share one layer sorted by how far down the screen they stand.
 public enum Layer {
@@ -53,6 +64,8 @@ public enum Layer {
     public static let tint = 40.0
     /// Lit windows and fire, above the wash so they glow at night.
     public static let lights = 41.0
+    /// Status bubbles over machines: above the night wash so they always show.
+    public static let status = 45.0
     public static let overlay = 50.0
     public static let effects = 60.0
 }
@@ -249,6 +262,7 @@ public struct SceneBuilder: Sendable {
             break
         }
         var sprites = [sprite]
+        sprites += statusSprites(building, def: def, center: c, world: world, time: time)
         // At night, the lit pixels go above the wash so windows and fire glow.
         let dayName = name.hasSuffix("_night") ? String(name.dropLast(6)) : name
         let glowing = def.kind == .home ? building.isBuilt
@@ -278,6 +292,94 @@ public struct SceneBuilder: Sendable {
             sprites.append(puff)
         }
         return sprites
+    }
+
+    // MARK: Status bubbles
+
+    /// What a machine's bubble shows, if anything: the item it is missing, or
+    /// a glyph for a full output, a used-up source, or running slow.
+    public func statusIcon(for building: Building, world: World) -> String? {
+        guard let kind = content.building(building.type)?.kind, kind == .gatherer || kind == .processor else { return nil }
+        switch building.status {
+        case let .blocked(reason):
+            switch reason {
+            case let .missingInput(item), let .missingFuel(item): return "item_\(item)"
+            case .outputFull: return "status_full"
+            case .sourceDepleted, .noSource: return "status_empty"
+            case .noPower: return nil
+            }
+        case .running where kind == .processor:
+            return Trace.run(.building(building.id), world: world, content: content).root.state == .slow ? "status_slow" : nil
+        default:
+            return nil
+        }
+    }
+
+    private func statusSprites(_ building: Building, def: BuildingDef, center c: ScenePoint, world: World,
+                               time: RenderTime) -> [Sprite] {
+        guard let icon = statusIcon(for: building, world: world), atlas.has(icon) else { return [] }
+        let bob = (time.seconds * 2).truncatingRemainder(dividingBy: 2) < 1 ? 0.0 : 1.0
+        let y = c.y + Double(def.height) * Camera.tile / 2 + 8 + bob
+        return [Sprite(id: "st:\(building.id)", name: "ui_status_bubble", x: c.x, y: y, z: Layer.status),
+                Sprite(id: "sti:\(building.id)", name: icon, x: c.x, y: y + 1, z: Layer.status + 0.5)]
+    }
+
+    // MARK: Rate labels
+
+    /// Made and used per minute over each working building, plus a warning
+    /// when an input will run out within a minute. Drawn when the rates view is on.
+    public func rateLabels(_ world: World) -> [RateLabel] {
+        var labels: [RateLabel] = []
+        for building in world.buildings {
+            guard let def = content.building(building.type),
+                  [.gatherer, .processor, .yard].contains(def.kind) else { continue }
+            var lines: [String] = []
+            var warning: String?
+            for rate in ItemRate.all(for: building, tick: world.tick, rules: content.rules) {
+                let plural = content.plural(rate.item)
+                if rate.made > 0 { lines.insert("+\(rate.made) \(plural)/min", at: 0) }
+                if rate.used > 0 { lines.append("-\(rate.used) \(plural)") }
+                if def.kind == .yard, rate.received > 0 { lines.append("\(rate.received) \(plural) in") }
+                if let seconds = rate.runsOut(within: 60) { warning = "\(plural) out in \(seconds)s" }
+            }
+            guard !lines.isEmpty || warning != nil else { continue }
+            let c = Camera.center(of: building.origin, w: def.width, h: def.height, mapHeight: world.map.height)
+            labels.append(RateLabel(id: "rate:\(building.id)", x: c.x, y: c.y - Double(def.height) * Camera.tile / 2 - 2,
+                                    lines: lines, warning: warning))
+        }
+        return Self.separate(labels)
+    }
+
+    /// Scene points per character and per line of label text, roughly.
+    public static let labelCharWidth = 4.0
+    public static let labelLineHeight = 6.0
+
+    /// Moves labels down until none overlap, top of the screen first, so two
+    /// neighbouring buildings never print over each other.
+    static func separate(_ labels: [RateLabel]) -> [RateLabel] {
+        func box(_ l: RateLabel) -> (minX: Double, maxX: Double, top: Double, bottom: Double) {
+            let chars = Double((l.lines + [l.warning ?? ""]).map(\.count).max() ?? 0)
+            let rows = Double(l.lines.count + (l.warning == nil ? 0 : 1))
+            return (l.x - chars * labelCharWidth / 2, l.x + chars * labelCharWidth / 2, l.y, l.y - rows * labelLineHeight)
+        }
+        var placed: [RateLabel] = []
+        for var label in labels.sorted(by: { ($0.y, $1.x) > ($1.y, $0.x) }) {
+            var moved = true
+            while moved {
+                moved = false
+                let a = box(label)
+                for other in placed {
+                    let b = box(other)
+                    if a.minX < b.maxX && b.minX < a.maxX && a.bottom < b.top && b.bottom < a.top {
+                        label.y = b.bottom - 1
+                        moved = true
+                        break
+                    }
+                }
+            }
+            placed.append(label)
+        }
+        return placed.sorted { $0.id < $1.id }
     }
 
     // MARK: Belts and items

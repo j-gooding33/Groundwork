@@ -710,6 +710,10 @@ def icon(name):
         for k, r in enumerate((3, 5)):
             for a in range(-3, 4):
                 c.set(int(9 + r * math.cos(a * 0.35)), int(8 + r * math.sin(a * 0.35)), "F")
+    elif name == "rates":
+        for i, h in enumerate((5, 9, 7)):
+            c.rect(3 + i * 4, 13 - h, 2, h, "F")
+        c.hline(2, 14, 13, "F")
     elif name == "settings":
         c.ellipse(8, 8, 5, 5, "F"); c.ellipse(8, 8, 2, 2, ".")
         for k in range(8):
@@ -750,6 +754,30 @@ def ui_banner():
 def ui_trace_dot():
     c = Canvas(16, 16)
     c.ellipse(8, 8, 3, 3, "D"); c.set(7, 6, "F"); c.outline("E")
+    return c
+
+
+def ui_status_bubble():
+    """A speech bubble over a machine, framing an 8x8 item or status glyph."""
+    c = Canvas(16, 16)
+    c.ellipse(8, 7, 6.6, 6.2, "F")
+    c.set(7, 13, "F"); c.set(8, 13, "F"); c.set(7, 14, "F")
+    c.outline("K")
+    return c
+
+
+def status(kind):
+    """8x8 glyphs with distinct shapes, so colour is never the only cue."""
+    c = Canvas(8, 8)
+    if kind == "full":        # an arrow pointing up: the output cannot leave
+        c.pixels(["...EE...", "..EEEE..", ".EEEEEE.", "...EE...", "...EE...", "...EE...", "...EE..."], 0, 0)
+        c.hline(1, 6, 7, "n")
+    elif kind == "empty":     # a circle with a slash: nothing left to gather
+        c.ellipse(4, 4, 3.6, 3.6, "x"); c.ellipse(4, 4, 2.4, 2.4, ".")
+        for i in range(6):
+            c.set(1 + i, 6 - i, "x")
+    elif kind == "slow":      # an hourglass
+        c.pixels(["uuuuuuu.", ".DDDDD..", "..DDD...", "...D....", "..D.D...", ".D...D..", "uuuuuuu."], 0, 0)
     return c
 
 
@@ -811,9 +839,13 @@ SPRITES = {
     "ui_banner": (ui_banner, {}),
     "ui_trace_dot": (ui_trace_dot, {}),
     "ui_tile_cursor": (ui_tile_cursor, {}),
+    "ui_status_bubble": (ui_status_bubble, {}),
+    "status_full": (lambda: status("full"), {}),
+    "status_empty": (lambda: status("empty"), {}),
+    "status_slow": (lambda: status("slow"), {}),
 }
 for _name in ["build", "trace", "undo", "demolish", "play_pause", "pause", "speed_1", "speed_2", "speed_4",
-              "cancel", "bricks", "goal", "hand", "belt", "sound", "settings"]:
+              "cancel", "bricks", "goal", "hand", "belt", "sound", "settings", "rates"]:
     SPRITES[f"icon_{_name}"] = ((lambda n: lambda: icon(n))(_name), {})
 for _terrain in TERRAIN:
     for _side in ["n", "e", "s", "w", "ne", "nw", "se", "sw"]:

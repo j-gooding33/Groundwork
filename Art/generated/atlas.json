@@ -534,19 +534,19 @@
   "fx_smoke_1": {
    "h": 8,
    "w": 8,
-   "x": 504,
+   "x": 540,
    "y": 86
   },
   "fx_smoke_2": {
    "h": 8,
    "w": 8,
-   "x": 514,
+   "x": 550,
    "y": 86
   },
   "fx_smoke_3": {
    "h": 8,
    "w": 8,
-   "x": 524,
+   "x": 560,
    "y": 86
   },
   "icon_belt": {
@@ -603,358 +603,364 @@
    "x": 486,
    "y": 68
   },
-  "icon_settings": {
+  "icon_rates": {
    "h": 16,
    "w": 16,
    "x": 504,
    "y": 68
   },
-  "icon_sound": {
+  "icon_settings": {
    "h": 16,
    "w": 16,
    "x": 522,
    "y": 68
   },
-  "icon_speed_1": {
+  "icon_sound": {
    "h": 16,
    "w": 16,
    "x": 540,
    "y": 68
   },
-  "icon_speed_2": {
+  "icon_speed_1": {
    "h": 16,
    "w": 16,
    "x": 558,
    "y": 68
   },
-  "icon_speed_4": {
+  "icon_speed_2": {
    "h": 16,
    "w": 16,
    "x": 576,
    "y": 68
   },
-  "icon_trace": {
+  "icon_speed_4": {
    "h": 16,
    "w": 16,
    "x": 594,
    "y": 68
   },
-  "icon_undo": {
+  "icon_trace": {
    "h": 16,
    "w": 16,
    "x": 612,
    "y": 68
   },
-  "item_brick": {
-   "h": 8,
-   "w": 8,
-   "x": 534,
-   "y": 86
-  },
-  "item_clay": {
-   "h": 8,
-   "w": 8,
-   "x": 544,
-   "y": 86
-  },
-  "item_log": {
-   "h": 8,
-   "w": 8,
-   "x": 554,
-   "y": 86
-  },
-  "item_plank": {
-   "h": 8,
-   "w": 8,
-   "x": 564,
-   "y": 86
-  },
-  "lumber_camp": {
+  "icon_undo": {
    "h": 16,
    "w": 16,
    "x": 630,
    "y": 68
   },
-  "lumber_camp_v1": {
+  "item_brick": {
+   "h": 8,
+   "w": 8,
+   "x": 570,
+   "y": 86
+  },
+  "item_clay": {
+   "h": 8,
+   "w": 8,
+   "x": 580,
+   "y": 86
+  },
+  "item_log": {
+   "h": 8,
+   "w": 8,
+   "x": 590,
+   "y": 86
+  },
+  "item_plank": {
+   "h": 8,
+   "w": 8,
+   "x": 600,
+   "y": 86
+  },
+  "lumber_camp": {
    "h": 16,
    "w": 16,
    "x": 648,
    "y": 68
   },
-  "lumber_camp_v2": {
+  "lumber_camp_v1": {
    "h": 16,
    "w": 16,
    "x": 666,
    "y": 68
   },
-  "nature_clay_marker": {
+  "lumber_camp_v2": {
    "h": 16,
    "w": 16,
    "x": 684,
    "y": 68
   },
-  "nature_rock": {
+  "nature_clay_marker": {
    "h": 16,
    "w": 16,
    "x": 702,
    "y": 68
   },
-  "nature_rock_v1": {
+  "nature_rock": {
    "h": 16,
    "w": 16,
    "x": 720,
    "y": 68
   },
-  "nature_tree": {
+  "nature_rock_v1": {
    "h": 16,
    "w": 16,
    "x": 738,
    "y": 68
   },
-  "nature_tree_f1": {
+  "nature_tree": {
    "h": 16,
    "w": 16,
    "x": 756,
    "y": 68
   },
-  "nature_tree_v1": {
+  "nature_tree_f1": {
    "h": 16,
    "w": 16,
    "x": 774,
    "y": 68
   },
-  "nature_tree_v1_f1": {
+  "nature_tree_v1": {
    "h": 16,
    "w": 16,
    "x": 792,
    "y": 68
   },
-  "nature_tree_v2": {
+  "nature_tree_v1_f1": {
    "h": 16,
    "w": 16,
    "x": 810,
    "y": 68
   },
-  "nature_tree_v2_f1": {
+  "nature_tree_v2": {
    "h": 16,
    "w": 16,
    "x": 828,
    "y": 68
   },
+  "nature_tree_v2_f1": {
+   "h": 16,
+   "w": 16,
+   "x": 846,
+   "y": 68
+  },
   "person_back_0": {
    "h": 12,
    "w": 8,
-   "x": 144,
+   "x": 180,
    "y": 86
   },
   "person_back_0_v1": {
    "h": 12,
    "w": 8,
-   "x": 154,
+   "x": 190,
    "y": 86
   },
   "person_back_0_v2": {
    "h": 12,
    "w": 8,
-   "x": 164,
+   "x": 200,
    "y": 86
   },
   "person_back_0_v3": {
    "h": 12,
    "w": 8,
-   "x": 174,
+   "x": 210,
    "y": 86
   },
   "person_back_0_v4": {
    "h": 12,
    "w": 8,
-   "x": 184,
+   "x": 220,
    "y": 86
   },
   "person_back_0_v5": {
    "h": 12,
    "w": 8,
-   "x": 194,
+   "x": 230,
    "y": 86
   },
   "person_back_1": {
    "h": 12,
    "w": 8,
-   "x": 204,
+   "x": 240,
    "y": 86
   },
   "person_back_1_v1": {
    "h": 12,
    "w": 8,
-   "x": 214,
+   "x": 250,
    "y": 86
   },
   "person_back_1_v2": {
    "h": 12,
    "w": 8,
-   "x": 224,
+   "x": 260,
    "y": 86
   },
   "person_back_1_v3": {
    "h": 12,
    "w": 8,
-   "x": 234,
+   "x": 270,
    "y": 86
   },
   "person_back_1_v4": {
    "h": 12,
    "w": 8,
-   "x": 244,
+   "x": 280,
    "y": 86
   },
   "person_back_1_v5": {
    "h": 12,
    "w": 8,
-   "x": 254,
+   "x": 290,
    "y": 86
   },
   "person_front_0": {
    "h": 12,
    "w": 8,
-   "x": 264,
+   "x": 300,
    "y": 86
   },
   "person_front_0_v1": {
    "h": 12,
    "w": 8,
-   "x": 274,
+   "x": 310,
    "y": 86
   },
   "person_front_0_v2": {
    "h": 12,
    "w": 8,
-   "x": 284,
+   "x": 320,
    "y": 86
   },
   "person_front_0_v3": {
    "h": 12,
    "w": 8,
-   "x": 294,
+   "x": 330,
    "y": 86
   },
   "person_front_0_v4": {
    "h": 12,
    "w": 8,
-   "x": 304,
+   "x": 340,
    "y": 86
   },
   "person_front_0_v5": {
    "h": 12,
    "w": 8,
-   "x": 314,
+   "x": 350,
    "y": 86
   },
   "person_front_1": {
    "h": 12,
    "w": 8,
-   "x": 324,
+   "x": 360,
    "y": 86
   },
   "person_front_1_v1": {
    "h": 12,
    "w": 8,
-   "x": 334,
+   "x": 370,
    "y": 86
   },
   "person_front_1_v2": {
    "h": 12,
    "w": 8,
-   "x": 344,
+   "x": 380,
    "y": 86
   },
   "person_front_1_v3": {
    "h": 12,
    "w": 8,
-   "x": 354,
+   "x": 390,
    "y": 86
   },
   "person_front_1_v4": {
    "h": 12,
    "w": 8,
-   "x": 364,
+   "x": 400,
    "y": 86
   },
   "person_front_1_v5": {
    "h": 12,
    "w": 8,
-   "x": 374,
+   "x": 410,
    "y": 86
   },
   "person_side_0": {
    "h": 12,
    "w": 8,
-   "x": 384,
+   "x": 420,
    "y": 86
   },
   "person_side_0_v1": {
    "h": 12,
    "w": 8,
-   "x": 394,
+   "x": 430,
    "y": 86
   },
   "person_side_0_v2": {
    "h": 12,
    "w": 8,
-   "x": 404,
+   "x": 440,
    "y": 86
   },
   "person_side_0_v3": {
    "h": 12,
    "w": 8,
-   "x": 414,
+   "x": 450,
    "y": 86
   },
   "person_side_0_v4": {
    "h": 12,
    "w": 8,
-   "x": 424,
+   "x": 460,
    "y": 86
   },
   "person_side_0_v5": {
    "h": 12,
    "w": 8,
-   "x": 434,
+   "x": 470,
    "y": 86
   },
   "person_side_1": {
    "h": 12,
    "w": 8,
-   "x": 444,
+   "x": 480,
    "y": 86
   },
   "person_side_1_v1": {
    "h": 12,
    "w": 8,
-   "x": 454,
+   "x": 490,
    "y": 86
   },
   "person_side_1_v2": {
    "h": 12,
    "w": 8,
-   "x": 464,
+   "x": 500,
    "y": 86
   },
   "person_side_1_v3": {
    "h": 12,
    "w": 8,
-   "x": 474,
+   "x": 510,
    "y": 86
   },
   "person_side_1_v4": {
    "h": 12,
    "w": 8,
-   "x": 484,
+   "x": 520,
    "y": 86
   },
   "person_side_1_v5": {
    "h": 12,
    "w": 8,
-   "x": 494,
+   "x": 530,
    "y": 86
   },
   "sawmill": {
@@ -1011,106 +1017,130 @@
    "x": 272,
    "y": 34
   },
-  "storage_crate": {
-   "h": 16,
-   "w": 16,
-   "x": 846,
-   "y": 68
+  "status_empty": {
+   "h": 8,
+   "w": 8,
+   "x": 610,
+   "y": 86
   },
-  "storage_crate_v1": {
+  "status_full": {
+   "h": 8,
+   "w": 8,
+   "x": 620,
+   "y": 86
+  },
+  "status_slow": {
+   "h": 8,
+   "w": 8,
+   "x": 630,
+   "y": 86
+  },
+  "storage_crate": {
    "h": 16,
    "w": 16,
    "x": 864,
    "y": 68
   },
-  "terrain_clay_ground": {
+  "storage_crate_v1": {
    "h": 16,
    "w": 16,
    "x": 882,
    "y": 68
   },
-  "terrain_dirt": {
+  "terrain_clay_ground": {
    "h": 16,
    "w": 16,
    "x": 900,
    "y": 68
   },
-  "terrain_grass_1": {
+  "terrain_dirt": {
    "h": 16,
    "w": 16,
    "x": 918,
    "y": 68
   },
-  "terrain_grass_2": {
+  "terrain_grass_1": {
    "h": 16,
    "w": 16,
    "x": 936,
    "y": 68
   },
-  "terrain_grass_3": {
+  "terrain_grass_2": {
    "h": 16,
    "w": 16,
    "x": 954,
    "y": 68
   },
-  "terrain_paper_fog": {
+  "terrain_grass_3": {
    "h": 16,
    "w": 16,
    "x": 972,
    "y": 68
   },
-  "terrain_shore": {
+  "terrain_paper_fog": {
    "h": 16,
    "w": 16,
    "x": 990,
    "y": 68
   },
-  "terrain_water": {
+  "terrain_shore": {
    "h": 16,
    "w": 16,
    "x": 0,
    "y": 86
   },
-  "terrain_water_f1": {
+  "terrain_water": {
    "h": 16,
    "w": 16,
    "x": 18,
    "y": 86
   },
-  "terrain_water_f2": {
+  "terrain_water_f1": {
    "h": 16,
    "w": 16,
    "x": 36,
    "y": 86
   },
-  "ui_banner": {
+  "terrain_water_f2": {
    "h": 16,
    "w": 16,
    "x": 54,
    "y": 86
   },
-  "ui_highlight": {
+  "ui_banner": {
    "h": 16,
    "w": 16,
    "x": 72,
    "y": 86
   },
-  "ui_panel": {
+  "ui_highlight": {
    "h": 16,
    "w": 16,
    "x": 90,
    "y": 86
   },
-  "ui_tile_cursor": {
+  "ui_panel": {
    "h": 16,
    "w": 16,
    "x": 108,
    "y": 86
   },
-  "ui_trace_dot": {
+  "ui_status_bubble": {
    "h": 16,
    "w": 16,
    "x": 126,
+   "y": 86
+  },
+  "ui_tile_cursor": {
+   "h": 16,
+   "w": 16,
+   "x": 144,
+   "y": 86
+  },
+  "ui_trace_dot": {
+   "h": 16,
+   "w": 16,
+   "x": 162,
    "y": 86
   }
  },

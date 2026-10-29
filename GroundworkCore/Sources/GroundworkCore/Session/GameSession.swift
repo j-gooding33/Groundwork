@@ -16,6 +16,23 @@ public struct ItemRate: Equatable, Sendable {
     /// For an input used faster than it arrives: seconds until the building's
     /// stock runs out at the current rates. Nil when supply keeps up.
     public var runsOutInSeconds: Int?
+
+    /// Seconds until it runs out, if that is within `limit` seconds.
+    public func runsOut(within limit: Int) -> Int? {
+        runsOutInSeconds.flatMap { $0 <= limit ? $0 : nil }
+    }
+
+    /// Every item a building has handled, with its rates at `tick`.
+    public static func all(for building: Building, tick: UInt64, rules: GameRules) -> [ItemRate] {
+        building.rates.trackedItems.map { item in
+            let used = building.rates.perMinute(.used, item, tick: tick, rules: rules)
+            let received = building.rates.perMinute(.received, item, tick: tick, rules: rules)
+            let falling = used - received
+            let runsOut = falling > 0 ? building.input.count(of: item) * 60 / falling : nil
+            return ItemRate(item: item, made: building.rates.perMinute(.made, item, tick: tick, rules: rules),
+                            used: used, received: received, runsOutInSeconds: runsOut)
+        }
+    }
 }
 
 /// The one entry point a renderer or UI uses. It owns the world and the
@@ -263,16 +280,7 @@ public final class GameSession {
     /// Made, used and received per minute for every item the building has handled.
     public func rates(of id: EntityID) -> [ItemRate] {
         guard let building = world.building(id) else { return [] }
-        let rules = content.rules
-        return building.rates.trackedItems.map { item in
-            let used = building.rates.perMinute(.used, item, tick: world.tick, rules: rules)
-            let received = building.rates.perMinute(.received, item, tick: world.tick, rules: rules)
-            let falling = used - received
-            let runsOut = falling > 0 ? building.input.count(of: item) * 60 / falling : nil
-            return ItemRate(item: item,
-                            made: building.rates.perMinute(.made, item, tick: world.tick, rules: rules),
-                            used: used, received: received, runsOutInSeconds: runsOut)
-        }
+        return ItemRate.all(for: building, tick: world.tick, rules: content.rules)
     }
 
     /// Events since the last call, oldest first.

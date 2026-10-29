@@ -41,7 +41,19 @@ public struct TraceLine: Equatable, Sendable {
 }
 
 public enum ModeTab: String, Equatable, Sendable, CaseIterable {
-    case build, trace, undo, demolish, speed
+    case build, trace, undo, demolish, rates, speed
+}
+
+/// One line of the Trace panel: a step in the chain, indented by depth.
+public struct TraceRow: Equatable, Sendable {
+    public var depth: Int
+    public var label: String
+    public var state: TraceState
+    public var reason: String
+    /// The building to centre the camera on when the row is tapped.
+    public var target: EntityID?
+    /// On the path from the top of the chain to the step to fix.
+    public var isBroken: Bool
 }
 
 /// Everything the SwiftUI overlay shows, worked out from the session in one place.
@@ -58,6 +70,8 @@ public struct HUDModel: Equatable, Sendable {
     /// A gentle nudge when a machine has been stuck a while and nobody is
     /// looking at it with Trace. Never shown during a tutorial step.
     public var hint: String?
+    /// The Trace chain as a list, top first, at most `traceRowLimit` rows.
+    public var tracePanel: [TraceRow]
     /// Above the top of the building Trace says to fix (or nearest to it).
     public var traceMarker: ScenePoint?
     public var levelComplete: Bool
@@ -95,8 +109,9 @@ public struct HUDModel: Equatable, Sendable {
         tabs = tutorialDone ? ModeTab.allCases : [.build, .trace, .undo]
 
         if let step = session.tutorialStep {
-            let outlined = step.highlight?.building.map { type in
-                world.buildings.filter { $0.type == type }.map(\.id)
+            // Point at one building, the first of its type, not every copy.
+            let outlined = step.highlight?.building.flatMap { type in
+                world.buildings.first { $0.type == type }.map { [$0.id] }
             } ?? []
             tutorial = TutorialBubble(id: step.id, text: step.text, tile: step.highlight?.tile,
                                       buildings: outlined, control: step.highlight?.ui)
@@ -108,6 +123,7 @@ public struct HUDModel: Equatable, Sendable {
             selection = Self.panel(for: building, session: session)
         }
         traceLines = input.trace.map { Self.lines(for: $0, world: world, content: content) } ?? []
+        tracePanel = input.trace.map(Self.rows) ?? []
         if tutorial == nil, input.trace == nil, Self.hasStuckMachine(world, content: content) {
             hint = "Something has stopped.\nTap Trace, then the dim building."
         }
@@ -171,6 +187,28 @@ public struct HUDModel: Equatable, Sendable {
             : def?.kind == .storage ? !building.input.isEmpty : false
         return SelectionPanel(id: building.id, title: def?.name ?? building.type.rawValue, status: status,
                               isBlocked: blocked, lines: lines, canPickUp: takeable)
+    }
+
+    public static let traceRowLimit = 12
+    public static let traceDepthLimit = 5
+
+    /// The chain flattened depth first. Running branches deeper than the
+    /// broken path are cut first, so the problem always fits on screen.
+    static func rows(for result: TraceResult) -> [TraceRow] {
+        var rows: [TraceRow] = []
+        func walk(_ node: TraceNode, depth: Int, onPath: Bool, parentTarget: EntityID?) {
+            guard rows.count < traceRowLimit, depth <= traceDepthLimit else { return }
+            let target = node.entity ?? parentTarget
+            let broken = onPath && depth < result.brokenPath.count && result.brokenPath[depth] == node
+            rows.append(TraceRow(depth: depth, label: node.label, state: node.state, reason: node.reason,
+                                 target: target, isBroken: broken))
+            // Broken children first, so the step to fix is never cut off.
+            let ordered = node.children.filter { broken && depth + 1 < result.brokenPath.count && $0 == result.brokenPath[depth + 1] }
+                + node.children.filter { !(broken && depth + 1 < result.brokenPath.count && $0 == result.brokenPath[depth + 1]) }
+            for child in ordered { walk(child, depth: depth + 1, onPath: broken, parentTarget: target) }
+        }
+        walk(result.root, depth: 0, onPath: !result.brokenPath.isEmpty, parentTarget: nil)
+        return rows
     }
 
     /// Lines from each building in the chain to the building it supplies.

@@ -297,6 +297,22 @@ final class GameStore {
 
     func closeCompleteCard() { completeDismissed = true }
 
+    func toggleRates() {
+        input.toggleRates()
+        refreshHUD()
+    }
+
+    /// Centres the camera on a building (a tapped Trace row).
+    func focus(on id: EntityID) {
+        guard let building = session?.world.building(id) else { return }
+        camera.focus(on: building.origin)
+    }
+
+    func closeTrace() {
+        input.cancel()
+        refreshHUD()
+    }
+
     func skipTutorial() {
         session?.skipTutorial()
         menuOpen = false

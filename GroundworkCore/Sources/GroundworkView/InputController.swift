@@ -43,6 +43,8 @@ public struct InputController: Sendable {
     public private(set) var dragStart: GridPoint?
     /// The chain shown by the Trace tool.
     public private(set) var trace: TraceResult?
+    /// Whether rate labels are drawn over buildings.
+    public private(set) var showRates = false
 
     public init() {}
 
@@ -73,6 +75,8 @@ public struct InputController: Sendable {
     }
 
     public mutating func clearSelection() { selection = nil }
+
+    public mutating func toggleRates() { showRates.toggle() }
 
     /// Drops a half-dragged belt without laying it (a second finger came down).
     public mutating func cancelDrag() {

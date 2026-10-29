@@ -15,6 +15,7 @@ final class WorldScene: SKScene {
     private let overlayLayer = SKNode()
     private let tintNode = SKSpriteNode(color: .white, size: CGSize(width: 2000, height: 1200))
     private var pools: [ObjectIdentifier: [String: SKSpriteNode]] = [:]
+    private var labels: [String: SKLabelNode] = [:]
     private var playing: [String: [String]] = [:]
 
     override init(size: CGSize) {
@@ -69,6 +70,8 @@ final class WorldScene: SKScene {
         if let hud = store.hud {
             apply(store.builder.overlayLayer(world, input: store.input, hud: hud, time: time), to: overlayLayer, atlas: atlas)
         }
+
+        applyRateLabels(store.input.showRates ? store.builder.rateLabels(world) : [])
 
         cameraNode.position = CGPoint(x: store.camera.center.x, y: store.camera.center.y)
         cameraNode.setScale(CGFloat(1 / store.camera.zoom))
@@ -131,6 +134,37 @@ final class WorldScene: SKScene {
         node.alpha = CGFloat(sprite.alpha)
         node.color = UIColor(red: CGFloat(sprite.tint.r), green: CGFloat(sprite.tint.g), blue: CGFloat(sprite.tint.b), alpha: 1)
         node.colorBlendFactor = CGFloat(sprite.tint.amount)
+    }
+
+    /// Small text under buildings while the rates view is on. One label node
+    /// per building, reused, with the warning line in brick red.
+    private func applyRateLabels(_ rateLabels: [RateLabel]) {
+        var seen = Set<String>()
+        for label in rateLabels {
+            seen.insert(label.id)
+            let node: SKLabelNode
+            if let existing = labels[label.id] {
+                node = existing
+            } else {
+                node = SKLabelNode(fontNamed: "Menlo-Bold")
+                node.fontSize = 6
+                node.numberOfLines = 0
+                node.verticalAlignmentMode = .top
+                node.zPosition = CGFloat(Layer.overlay)
+                overlayLayer.addChild(node)
+                labels[label.id] = node
+            }
+            let warning = label.warning.map { "\n" + $0 } ?? ""
+            node.text = label.lines.joined(separator: "\n") + warning
+            node.fontColor = label.warning == nil
+                ? UIColor(red: 1.0, green: 0.957, blue: 0.839, alpha: 1)
+                : UIColor(red: 1.0, green: 0.541, blue: 0.239, alpha: 1)
+            node.position = CGPoint(x: label.x, y: label.y)
+        }
+        for (id, node) in labels where !seen.contains(id) {
+            node.removeFromParent()
+            labels[id] = nil
+        }
     }
 
     // MARK: Effects

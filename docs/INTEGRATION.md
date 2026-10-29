@@ -54,7 +54,10 @@ The rule that keeps this working: **the app only reads `GameSession` and sends i
 - **Tap a building with no tool:** pick up what it has made, or drop what you're carrying. Its panel opens either way.
 - **Build palette:** tap a building, then tap the map; 2×2 buildings centre under your finger. Tap the selected button again to put the tool down.
 - **Belt:** choose it in the palette, then drag from a building to where the belt should go. A ghost shows the route before you let go.
-- **Trace tab:** tap a building to see its chain. Gold dots flow along working links, and a red marker bobs over the step to fix.
+- **Trace tab:** tap a building to see its chain. Gold dots flow along working links, a red marker bobs over the step to fix, and the right-hand panel lists every step with its state and reason. Tap a row to jump the camera there.
+- **Status bubbles** appear over stuck machines without opening anything: the missing item's icon, an up-arrow for a full output, a slashed circle for a used-up source, an hourglass for running slow.
+- **Rates tab** (after the tutorial): labels under each working building with made and used per minute, and a warning when an input will run out within a minute.
+- **Tutorial:** tap the bubble to tuck it away and "?" to bring it back. A gentle hint appears if a machine has been stuck for 30 seconds. **Skip tutorial** is in the pause menu.
 - **Long press:** open a building's panel. **One finger:** pan. **Pinch:** zoom.
 
 ## 3. Day-to-day commands

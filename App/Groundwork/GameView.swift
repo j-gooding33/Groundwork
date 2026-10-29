@@ -87,7 +87,9 @@ private struct HUD: View {
                     BuildPalette(entries: hud.palette, images: images)
                 }
                 Spacer()
-                if let panel = hud.selection {
+                if !hud.tracePanel.isEmpty {
+                    TracePanel(rows: hud.tracePanel)
+                } else if let panel = hud.selection {
                     SelectionCard(panel: panel)
                 }
             }
@@ -205,6 +207,66 @@ private struct SelectionCard: View {
     }
 }
 
+/// Trace's chain as a list: each step, how it is doing and why. Tap a row
+/// to centre the camera on that building.
+private struct TracePanel: View {
+    @Environment(GameStore.self) private var store
+    let rows: [TraceRow]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text("Trace").font(.pixel(13))
+                Spacer()
+                Button { store.closeTrace() } label: { Image(systemName: "xmark").frame(width: 32, height: 32) }
+            }
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 3) {
+                    ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                        Button { if let id = row.target { store.focus(on: id) } } label: {
+                            HStack(alignment: .top, spacing: 4) {
+                                Text(symbol(row.state)).font(.pixel(10)).foregroundStyle(colour(row.state))
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text(row.label).font(.pixel(10))
+                                    Text(row.reason).font(.pixel(9)).foregroundStyle(Palette.ink.opacity(0.75))
+                                }
+                            }
+                            .padding(.leading, CGFloat(row.depth) * 8)
+                            .padding(.vertical, 2)
+                            .frame(maxWidth: .infinity, minHeight: 30, alignment: .leading)
+                            .background(row.isBroken ? Palette.gold.opacity(0.35) : Color.clear)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+            .frame(maxHeight: 220)
+        }
+        .foregroundStyle(Palette.ink)
+        .frame(width: 230)
+        .paperCard()
+    }
+
+    /// Shapes as well as colours, for colour-blind players.
+    private func symbol(_ state: TraceState) -> String {
+        switch state {
+        case .running: return "●"
+        case .slow: return "◐"
+        case .blocked: return "✕"
+        case .notBuilt: return "○"
+        }
+    }
+
+    private func colour(_ state: TraceState) -> Color {
+        switch state {
+        case .running: return Palette.grass
+        case .slow: return Palette.ember
+        case .blocked: return Palette.brick
+        case .notBuilt: return Palette.stone
+        }
+    }
+}
+
 private struct Tabs: View {
     @Environment(GameStore.self) private var store
     let hud: HUDModel
@@ -237,6 +299,7 @@ private struct Tabs: View {
         case .trace: return "icon_trace"
         case .undo: return "icon_undo"
         case .demolish: return "icon_demolish"
+        case .rates: return "icon_rates"
         case .speed: return store.speed == 1 ? "icon_speed_1" : store.speed == 2 ? "icon_speed_2" : "icon_speed_4"
         }
     }
@@ -246,6 +309,7 @@ private struct Tabs: View {
         case .build: return store.showPalette
         case .trace: return store.input.tool == .trace
         case .demolish: return store.input.tool == .demolish
+        case .rates: return store.input.showRates
         default: return false
         }
     }
@@ -256,6 +320,7 @@ private struct Tabs: View {
         case .trace: store.choose(.trace)
         case .undo: store.undo()
         case .demolish: store.choose(.demolish)
+        case .rates: store.toggleRates()
         case .speed: store.cycleSpeed()
         }
     }

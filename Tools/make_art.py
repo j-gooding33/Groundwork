@@ -126,7 +126,7 @@ def expected_size(name, buildings):
     if owner:
         w, h = buildings[owner]["size"]
         return (w * TILE, h * TILE)
-    if name.startswith(("item_", "fx_smoke_")):
+    if name.startswith(("item_", "fx_smoke_", "status_")):
         return (8, 8)
     if name.startswith(("person_",)):
         return (8, 12)

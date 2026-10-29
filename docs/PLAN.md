@@ -147,6 +147,11 @@ The starter rules from the design, adapted for Linux: GroundworkCore uses only F
 - **GroundworkView**, the tested presentation layer: scene, camera, touches, tools, effects, HUD, day and night, autosave timing.
 - **The iPhone app code** (SwiftUI and SpriteKit), checked against stand-ins.
 - **Screenshots** rendered from the real code: `docs/screenshots/`.
+- **Tutorial upgrade:** Trace is now taught (time stops until the player traces the kiln). New Level 2 "First Belts". Level 3 rewritten. Stuck hints, tuck-away bubble and Skip tutorial.
+- **Insight features:** Trace panel (the chain as a list, tap to jump), status bubbles over stuck machines, and a rates view with shortage warnings.
+
+### Recommended next (from the 10-feature list)
+4 paper reveal, 5 splitter and merger, 6 belt bridges and reversing, 7 move a building, 8 fun-test overlay, 9 accessibility settings, 10 Sandbox. Power for Level 2's waterwheel needs your go-ahead.
 
 Performance (Linux, release build): 8,000 belt items cost 0.35 ms per tick.
 

@@ -77,6 +77,52 @@ func draw(_ sprites: [Sprite], camera: Camera, seconds: Double, into image: inou
     }
 }
 
+// A 3x5 pixel font for rate labels (the app uses a real font).
+let glyphs: [Character: String] = [
+    "a": "111101111101101", "b": "110101110101110", "c": "111100100100111", "d": "110101101101110",
+    "e": "111100110100111", "f": "111100110100100", "g": "111100101101111", "h": "101101111101101",
+    "i": "111010010010111", "j": "001001001101111", "k": "101101110101101", "l": "100100100100111",
+    "m": "101111111101101", "n": "110101101101101", "o": "111101101101111", "p": "111101111100100",
+    "q": "111101101111001", "r": "110101110101101", "s": "111100111001111", "t": "111010010010010",
+    "u": "101101101101111", "v": "101101101101010", "w": "101101111111101", "x": "101101010101101",
+    "y": "101101111010010", "z": "111001010100111", "0": "111101101101111", "1": "010110010010111",
+    "2": "111001111100111", "3": "111001111001111", "4": "101101111001001", "5": "111100111001111",
+    "6": "111100111101111", "7": "111001001001001", "8": "111101111101111", "9": "111101111001111",
+    "+": "000010111010000", "-": "000000111000000", "/": "001001010100100", " ": "000000000000000",
+]
+
+func text(_ string: String, centerX: Int, top: Int, color: (Double, Double, Double), into image: inout Image) {
+    let chars = Array(string.lowercased())
+    var x = centerX - chars.count * 4 / 2
+    for ch in chars {
+        if let g = glyphs[ch] {
+            for gy in 0..<5 {
+                for gx in 0..<3 where g[g.index(g.startIndex, offsetBy: gy * 3 + gx)] == "1" {
+                    // A dark outline pixel under each lit one keeps text readable on grass.
+                    image.blend(x + gx + 1, top + gy + 1, 26, 28, 44, 0.8)
+                    image.blend(x + gx, top + gy, color.0, color.1, color.2, 1)
+                }
+            }
+        }
+        x += 4
+    }
+}
+
+func drawLabels(_ labels: [RateLabel], camera: Camera, into image: inout Image) {
+    let v = camera.visible
+    for label in labels {
+        let cx = Int(((label.x - v.minX) * camera.zoom).rounded())
+        var top = Int(((v.maxY - label.y) * camera.zoom).rounded()) + 1
+        for line in label.lines {
+            text(line, centerX: cx, top: top, color: (255, 244, 214), into: &image)
+            top += 6
+        }
+        if let warning = label.warning {
+            text(warning, centerX: cx, top: top, color: (255, 138, 61), into: &image)
+        }
+    }
+}
+
 func shot(_ name: String, session: GameSession, camera: Camera, input: InputController = InputController(),
           fraction: Double = 0.5, seconds: Double = 0.3) throws {
     let world = session.world
@@ -95,6 +141,7 @@ func shot(_ name: String, session: GameSession, camera: Camera, input: InputCont
     }
     draw(dynamic.filter { $0.z >= Layer.tint }, camera: camera, seconds: seconds, into: &image)
     draw(builder.overlayLayer(world, input: input, hud: hud, time: time), camera: camera, seconds: seconds, into: &image)
+    if input.showRates { drawLabels(builder.rateLabels(world), camera: camera, into: &image) }
 
     var scaled = [UInt8](repeating: 0, count: viewW * scale * viewH * scale * 4)
     for y in 0..<(viewH * scale) {
@@ -200,13 +247,21 @@ belt((44, 23), (47, 25))
 belt((41, 28), (51, 28))
 belt((47, 25), (51, 28))
 townInput.cancel()
-town.advance(ticks: 7200)
+town.advance(ticks: 3600)
+var ratesInput = townInput
+ratesInput.toggleRates()
+let ratesCamera = Camera(mapWidth: town.world.map.width, mapHeight: town.world.map.height,
+                         focus: GridPoint(44, 27), zoom: 1)
+try shot("07_rates_view", session: town, camera: ratesCamera, input: ratesInput)
+town.advance(ticks: 3600)
 var townCamera = Camera(mapWidth: town.world.map.width, mapHeight: town.world.map.height,
                         focus: GridPoint(46, 28), zoom: 1)
-try shot("07_town_day", session: town, camera: townCamera, input: townInput)
+try shot("08_town_day", session: town, camera: townCamera, input: townInput)
 town.advance(ticks: 2100)
-try shot("08_town_night", session: town, camera: townCamera, input: townInput)
+try shot("09_town_night", session: town, camera: townCamera, input: townInput)
 townCamera.pinch(2, aroundView: ScenePoint(Camera.viewWidth / 2, Camera.viewHeight / 2))
-try shot("09_town_zoomed", session: town, camera: townCamera, input: townInput)
+try shot("10_town_zoomed", session: town, camera: townCamera, input: townInput)
+town.advance(ticks: 3000)
+try shot("11_town_stalls", session: town, camera: townCamera, input: townInput)
 let homes = town.world.buildings.filter { $0.type == "cottage" }
 print("Town: \(homes.filter(\.isBuilt).count) cottages built, \(homes.count - homes.filter(\.isBuilt).count) underway")

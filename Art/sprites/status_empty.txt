@@ -1,0 +1,10 @@
+size: 8x8
+---
+...xx...
+.xxxxxx.
+.x...xx.
+xx..x.xx
+xx.x..xx
+.xx...x.
+.xxxxxx.
+...xx...

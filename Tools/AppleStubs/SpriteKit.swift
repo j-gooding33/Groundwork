@@ -4,6 +4,7 @@
 public enum SKBlendMode: Int { case alpha, add, subtract, multiply, multiplyX2, screen, replace }
 public enum SKSceneScaleMode: Int { case fill, aspectFill, aspectFit, resizeFill }
 public enum SKTextureFilteringMode: Int { case nearest, linear }
+public enum SKLabelVerticalAlignmentMode: Int { case baseline, center, top, bottom }
 
 open class SKTexture: NSObject {
     public init(image: UIImage) {}
@@ -57,6 +58,8 @@ open class SKLabelNode: SKNode {
     open var text: String?
     open var fontSize: CGFloat = 32
     open var fontColor: UIColor?
+    open var numberOfLines: Int = 1
+    open var verticalAlignmentMode: SKLabelVerticalAlignmentMode = .baseline
     public convenience init(fontNamed fontName: String?) { self.init() }
 }
 
