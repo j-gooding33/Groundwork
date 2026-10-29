@@ -59,10 +59,14 @@ class ArtCheckTests(unittest.TestCase):
             self.assertTrue(all(ch in "qrs." for row in out for ch in row), "Stays in the brick ramp")
 
     def test_night_version_lights_windows(self):
-        sprite = self.sprite("cottage", ["B" * 32] * 32, variants="2", night="B=D")
+        sprite = self.sprite("cottage", ["Br" * 16] * 32, variants="2", night="B=D", flaws="no")
         names = dict(M.expand(sprite, self.palette))
-        self.assertEqual(sorted(names), ["cottage", "cottage_night", "cottage_v1", "cottage_v1_night"])
-        self.assertTrue(all(ch == "D" for row in names["cottage_night"] for ch in row))
+        self.assertEqual(sorted(names), ["cottage", "cottage_glow", "cottage_night", "cottage_v1",
+                                         "cottage_v1_glow", "cottage_v1_night"])
+        self.assertTrue(all(ch in "Dr" for row in names["cottage_night"] for ch in row))
+        # The glow holds only the pixels that light up, so it can sit above the night tint.
+        self.assertTrue(all(ch in "D." for row in names["cottage_glow"] for ch in row))
+        self.assertEqual(names["cottage_glow"][0][:2], "D.")
 
     def test_stage_names_take_their_buildings_size(self):
         self.assertEqual(M.expected_size("foundation_2", self.buildings), (32, 32))
