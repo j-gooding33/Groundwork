@@ -1,0 +1,6 @@
+[
+  { "id": "clay",  "name": "Clay",  "tier": "raw" },
+  { "id": "log",   "name": "Log",   "tier": "raw" },
+  { "id": "brick", "name": "Brick", "tier": "processed" },
+  { "id": "plank", "name": "Plank", "tier": "processed" }
+]

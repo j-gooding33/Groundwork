@@ -1,0 +1,20 @@
+[
+  { "id": "clay_pit", "name": "Clay Pit", "kind": "gatherer", "size": [1, 1], "recipes": ["gather_clay"],
+    "inputCapacity": 0, "outputCapacity": 10, "cost": [], "accepts": [], "level": 1, "placeOn": "source" },
+  { "id": "lumber_camp", "name": "Lumber Camp", "kind": "gatherer", "size": [1, 1], "recipes": ["gather_logs"],
+    "inputCapacity": 0, "outputCapacity": 10, "cost": [], "accepts": [], "level": 1, "placeOn": "source" },
+  { "id": "brick_kiln", "name": "Brick Kiln", "kind": "processor", "size": [2, 2], "recipes": ["brick"],
+    "inputCapacity": 10, "outputCapacity": 10, "cost": [], "accepts": [], "level": 1, "placeOn": "land" },
+  { "id": "sawmill", "name": "Sawmill", "kind": "processor", "size": [2, 2], "recipes": ["plank"],
+    "inputCapacity": 10, "outputCapacity": 10, "cost": [], "accepts": [], "level": 3, "placeOn": "land" },
+  { "id": "storage_crate", "name": "Storage Crate", "kind": "storage", "size": [1, 1], "recipes": [],
+    "inputCapacity": 50, "outputCapacity": 0, "cost": [], "accepts": [], "level": 1, "placeOn": "land" },
+  { "id": "foundation", "name": "Foundation", "kind": "construction", "size": [2, 2], "recipes": [],
+    "inputCapacity": 8, "outputCapacity": 0, "cost": [], "accepts": ["brick"], "level": 1, "placeOn": "land" },
+  { "id": "builders_yard", "name": "Builder's Yard", "kind": "yard", "size": [2, 2], "recipes": [],
+    "inputCapacity": 40, "outputCapacity": 0, "cost": [], "accepts": ["brick", "plank"], "level": 3, "placeOn": "land" },
+  { "id": "cottage", "name": "Cottage", "kind": "home", "size": [2, 2], "recipes": [],
+    "inputCapacity": 0, "outputCapacity": 0,
+    "cost": [ { "item": "brick", "count": 10 }, { "item": "plank", "count": 6 } ],
+    "accepts": [], "level": 3, "placeOn": "land" }
+]

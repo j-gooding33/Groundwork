@@ -127,7 +127,7 @@ public final class GameSession {
 
 ## Phases and acceptance tests (stop after each one, run `swift test`, commit, push, report)
 0. **Toolchain, plan, CLAUDE.md.** Swift installed via the script. `swift --version` works. CLAUDE.md, docs/PLAN.md and the moved DESIGN.md are committed.
-1. **Core.** Grid, content loaders and validation, tick loop, seeded RNG. Tests: content loads, unknown IDs are rejected, the map parses, and the tick count advances deterministically.
+1. **Core.** (Done.) Grid, content loaders and validation, tick loop, seeded RNG. The prototype content JSON and the Level 1 map also landed here, so phase 2 adds only the Trace search. Tests: content loads, unknown IDs are rejected, the map parses, and the tick count advances deterministically.
 2. **Trace.** Items, sources and recipes for clay, log, brick and plank, plus the reverse search. Tests: brick traces to clay and log. A kiln with no fuel reports exactly "Waiting for logs". An unbuilt step reports notBuilt. A slow input is flagged slow.
 3. **Production.** Gatherers (with depletion and regrowth), processors, the storage crate, hand carry and rates. Tests: a placed pit produces at the data rate, a full output blocks, the hand holds 10 of one item type, carrying fills the kiln, rates match produced counts, and undo plus refund works.
 4. **Belts, cottage and demand rule.** Tests: items arrive in order and the total count is conserved (no loss or duplication across 10,000 ticks). Auto-routing avoids obstacles and is deterministic. Side-load merges work. Save → load → run equals an uninterrupted run. 1000 single ticks equal `advance(1000)`. The yard orders a cottage only when supply is steady.

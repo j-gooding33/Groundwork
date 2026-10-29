@@ -1,0 +1,4 @@
+[
+  { "id": "clay_deposit", "name": "Clay deposit", "item": "clay", "startingAmount": 40, "regrowPerMinute": 0 },
+  { "id": "forest",       "name": "Forest",       "item": "log",  "startingAmount": 20, "regrowPerMinute": 2 }
+]

@@ -1,0 +1,11 @@
+{
+  ".": { "terrain": "grass" },
+  ":": { "terrain": "grassLight" },
+  ";": { "terrain": "grassDark" },
+  "~": { "terrain": "water" },
+  ",": { "terrain": "shore" },
+  "_": { "terrain": "dirt" },
+  "c": { "terrain": "clayGround", "source": "clay_deposit" },
+  "T": { "terrain": "forest", "source": "forest" },
+  "^": { "terrain": "rock" }
+}

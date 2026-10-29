@@ -1,0 +1,13 @@
+[
+  { "id": "gather_clay", "building": "clay_pit", "source": "clay_deposit", "durationTicks": 30, "power": 0, "level": 1,
+    "inputs": [], "outputs": [ { "item": "clay", "count": 1 } ] },
+  { "id": "gather_logs", "building": "lumber_camp", "source": "forest", "durationTicks": 40, "power": 0, "level": 1,
+    "inputs": [], "outputs": [ { "item": "log", "count": 1 } ] },
+  { "id": "brick", "building": "brick_kiln", "durationTicks": 50, "power": 0, "level": 1,
+    "inputs": [ { "item": "clay", "count": 2, "role": "material" },
+                { "item": "log",  "count": 1, "role": "fuel" } ],
+    "outputs": [ { "item": "brick", "count": 1 } ] },
+  { "id": "plank", "building": "sawmill", "durationTicks": 40, "power": 0, "level": 3,
+    "inputs": [ { "item": "log", "count": 1, "role": "material" } ],
+    "outputs": [ { "item": "plank", "count": 2 } ] }
+]
