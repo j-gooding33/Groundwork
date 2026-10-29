@@ -31,6 +31,19 @@ public struct TraceNode: Equatable, Sendable {
     public var state: TraceState
     public var reason: String
     public var children: [TraceNode]
+    /// The child that causes this step's problem, when it is known
+    /// (a kiln waiting for logs blames its log child).
+    public var blame: Int?
+
+    public init(subject: Subject, label: String, state: TraceState, reason: String,
+                children: [TraceNode], blame: Int? = nil) {
+        self.subject = subject
+        self.label = label
+        self.state = state
+        self.reason = reason
+        self.children = children
+        self.blame = blame
+    }
 
     /// The placed building this node stands for, if any.
     public var entity: EntityID? {
@@ -83,17 +96,31 @@ public enum Trace {
         return TraceResult(root: root, brokenPath: brokenPath(from: root))
     }
 
-    /// Walks down from the root through unhealthy children to the deepest
-    /// step that is itself the problem.
+    /// Walks down from the root to the first step that is itself the problem:
+    /// follows the blamed child where one is known, otherwise the first
+    /// unhealthy child, and stops at a building that has not been built yet,
+    /// since that is what the player has to do next.
     static func brokenPath(from root: TraceNode) -> [TraceNode] {
         guard root.state != .running else { return [] }
         var path = [root]
         var node = root
-        while let worst = node.children.filter({ $0.state != .running }).min(by: { $0.state.health < $1.state.health }) {
-            path.append(worst)
-            node = worst
+        while !isMissingBuilding(node) {
+            let next: TraceNode?
+            if let blame = node.blame, node.children.indices.contains(blame), node.children[blame].state != .running {
+                next = node.children[blame]
+            } else {
+                next = node.children.first { $0.state != .running }
+            }
+            guard let next else { break }
+            path.append(next)
+            node = next
         }
         return path
+    }
+
+    private static func isMissingBuilding(_ node: TraceNode) -> Bool {
+        if case .missingBuilding = node.subject { return true }
+        return false
     }
 }
 
@@ -206,54 +233,63 @@ private struct Tracer {
             break
         }
 
-        let (state, reason) = condition(of: building, def: def, recipe: recipe)
+        let (state, reason, blamed) = condition(of: building, def: def, recipe: recipe)
+        let blame = blamed.flatMap { item in children.firstIndex { $0.subject == .item(item) } }
         return TraceNode(subject: .building(building.id, type), label: name, state: state,
-                         reason: reason, children: children)
+                         reason: reason, children: children, blame: blame)
     }
 
-    private func condition(of building: Building, def: BuildingDef, recipe: RecipeDef?) -> (TraceState, String) {
+    /// The building's state, its reason, and the input to blame, if any.
+    private func condition(of building: Building, def: BuildingDef,
+                           recipe: RecipeDef?) -> (TraceState, String, ItemID?) {
         switch building.status {
         case let .blocked(reason):
-            return (.blocked, reason.text(content))
+            return (.blocked, reason.text(content), reason.waitingItem)
         case .constructing:
-            return (.running, "Being built")
+            return (.running, "Being built", nil)
         case .complete:
-            return (.running, def.kind == .home ? "Built" : "Complete")
+            return (.running, def.kind == .home ? "Built" : "Complete", nil)
         case .idle where def.kind == .gatherer || def.kind == .processor:
-            if let reason = building.waitReason { return (.blocked, reason.text(content)) }
-            return (.running, "Starting up")
+            if let reason = building.waitReason { return (.blocked, reason.text(content), reason.waitingItem) }
+            return (.running, "Starting up", nil)
         case .idle:
             switch def.kind {
             case .storage:
-                return (.running, building.input.isEmpty ? "Empty" : "Holding \(building.input.total) items")
+                return (.running, building.input.isEmpty ? "Empty" : "Holding \(building.input.total) items", nil)
             case .construction:
-                return (.running, "Has \(building.input.total) of \(def.inputCapacity)")
+                return (.running, "Has \(building.input.total) of \(def.inputCapacity)", nil)
             case .yard:
-                return (.running, building.job != nil ? "Building a home" : "Waiting for steady supply")
+                return (.running, building.job != nil ? "Building a home" : "Waiting for steady supply", nil)
             default:
-                return (.running, "Idle")
+                return (.running, "Idle", nil)
             }
         case .running:
-            guard let recipe else { return (.running, "Working") }
-            if let slow = slowInput(building, recipe: recipe) { return (.slow, slow) }
-            guard let output = recipe.outputs.first else { return (.running, "Working") }
+            guard let recipe else { return (.running, "Working", nil) }
+            if let (item, text) = slowInput(building, recipe: recipe) { return (.slow, text, item) }
+            guard let output = recipe.outputs.first else { return (.running, "Working", nil) }
             let perMinute = building.rates.perMinute(.made, output.item, tick: tick, rules: rules)
             return (.running, perMinute > 0
                 ? "Making \(perMinute) \(content.plural(output.item)) per minute"
-                : "Producing as expected")
+                : "Producing as expected", nil)
         }
     }
 
-    /// An input arriving more slowly than the recipe uses it, judged once the
-    /// building has been running for a full rate window.
-    private func slowInput(_ building: Building, recipe: RecipeDef) -> String? {
-        guard tick >= building.placedAtTick + UInt64(rules.rateWindowTicks) else { return nil }
+    /// An input arriving more slowly than the recipe uses it, while the
+    /// building runs below full speed. Judged once it has run for a full rate
+    /// window. A machine with a full input buffer receives less than it "needs"
+    /// only because it has no room, so full speed rules that out.
+    private func slowInput(_ building: Building, recipe: RecipeDef) -> (ItemID, String)? {
+        guard tick >= building.placedAtTick + UInt64(rules.rateWindowTicks),
+              let output = recipe.outputs.first else { return nil }
+        let fullSpeed = output.count * Simulation.ticksPerMinute / recipe.durationTicks
+        let made = building.rates.perMinute(.made, output.item, tick: tick, rules: rules)
+        guard made * 10 < fullSpeed * 9 else { return nil }
         for input in recipe.inputs {
             let needed = input.count * Simulation.ticksPerMinute / recipe.durationTicks
             let arriving = building.rates.perMinute(.received, input.item, tick: tick, rules: rules)
             if arriving < needed {
                 let what = content.item(input.item)?.name ?? input.item.rawValue
-                return "\(what) delivery is too slow (\(arriving) of \(needed) per minute)"
+                return (input.item, "\(what) delivery is too slow (\(arriving) of \(needed) per minute)")
             }
         }
         return nil
@@ -291,10 +327,13 @@ private struct Tracer {
 }
 
 extension BlockReason {
-    func waitsFor(_ item: ItemID) -> Bool {
+    /// The item a machine is waiting for, if that is why it is blocked.
+    var waitingItem: ItemID? {
         switch self {
-        case let .missingInput(waiting), let .missingFuel(waiting): return waiting == item
-        default: return false
+        case let .missingInput(item), let .missingFuel(item): return item
+        default: return nil
         }
     }
+
+    func waitsFor(_ item: ItemID) -> Bool { waitingItem == item }
 }

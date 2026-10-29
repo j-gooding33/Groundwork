@@ -45,9 +45,19 @@ public struct RateTracker: Codable, Equatable, Sendable {
     /// Items per minute over the window, or over the building's lifetime if it is younger.
     public func perMinute(_ kind: Kind, _ item: ItemID, tick: UInt64, rules: GameRules) -> Int {
         let count = countInWindow(kind, item, tick: tick, rules: rules)
-        // Ticks the building has run: placed at tick t, it first works on tick t + 1.
-        let covered = min(UInt64(rules.rateWindowTicks), tick > startTick ? tick - startTick : 1)
-        return Int(UInt64(count) * UInt64(Simulation.ticksPerMinute) / max(covered, 1))
+        let covered = coveredTicks(tick: tick, rules: rules)
+        return Int(UInt64(count) * UInt64(Simulation.ticksPerMinute) / covered)
+    }
+
+    /// How many ticks the window's counts actually span: from the start of the
+    /// oldest bucket in the window (or the building's first working tick) to now.
+    func coveredTicks(tick: UInt64, rules: GameRules) -> UInt64 {
+        let bucketTicks = UInt64(rules.rateBucketTicks)
+        let current = tick / bucketTicks
+        let oldest = current >= UInt64(bucketIDs.count - 1) ? current - UInt64(bucketIDs.count - 1) : 0
+        let sinceWindow = tick - oldest * bucketTicks + 1
+        let sincePlaced = tick > startTick ? tick - startTick : 1
+        return max(1, min(sinceWindow, sincePlaced))
     }
 
     /// Raw count over the whole window.
