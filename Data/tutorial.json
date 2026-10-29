@@ -26,9 +26,13 @@
       "text": "Clay becomes brick in a kiln.",
       "highlight": {
         "tile": {
-          "x": 41,
+          "x": 40,
           "y": 28
-        }
+        },
+        "size": [
+          2,
+          2
+        ]
       },
       "grant": {
         "unlock": [
@@ -55,7 +59,7 @@
     },
     {
       "id": "l1_belt",
-      "text": "Pick Belt, then drag from\nthe pit to the kiln.",
+      "text": "Pick Belt. Drag from the pit\nto the kiln, or tap one then the other.",
       "highlight": {
         "building": "clay_pit",
         "ui": "build"
@@ -63,7 +67,7 @@
       "grant": {
         "beltTiles": 12
       },
-      "when": "delivered:clay:belt"
+      "when": "linked:clay_pit:brick_kiln"
     },
     {
       "id": "l1_look",
@@ -122,7 +126,7 @@
       "highlight": {
         "building": "lumber_camp"
       },
-      "when": "delivered:log:belt"
+      "when": "linked:lumber_camp:brick_kiln"
     },
     {
       "id": "l1_finish",
@@ -140,7 +144,7 @@
       "highlight": {
         "building": "storage_crate"
       },
-      "when": "delivered:brick:storage_crate"
+      "when": "linked:brick_kiln:storage_crate"
     },
     {
       "id": "c2_trace",
@@ -214,7 +218,7 @@
           "y": 23
         }
       },
-      "when": "delivered:log:sawmill"
+      "when": "linked:lumber_camp:sawmill"
     },
     {
       "id": "c3_yard",
@@ -233,7 +237,7 @@
       "highlight": {
         "building": "builders_yard"
       },
-      "when": "delivered:brick:builders_yard"
+      "when": "linked:brick_kiln:builders_yard"
     },
     {
       "id": "c3_planks",
@@ -241,7 +245,7 @@
       "highlight": {
         "building": "sawmill"
       },
-      "when": "delivered:plank:builders_yard"
+      "when": "linked:sawmill:builders_yard"
     },
     {
       "id": "c3_steady",

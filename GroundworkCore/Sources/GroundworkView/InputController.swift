@@ -95,8 +95,22 @@ public struct InputController: Sendable {
             return result(session.place(type, at: origin), success: .light)
 
         case .belt:
-            // A tap with the belt tool lays nothing; say how to use it.
-            return Feedback(toast: "Drag from a building to lay a belt")
+            // Tap one building, then another: the same belt as dragging between them.
+            let point = Self.snap(tile, session: session)
+            guard let start = dragStart else {
+                guard session.world.building(at: point) != nil else {
+                    return Feedback(toast: "Tap a building to start a belt, or drag from it")
+                }
+                dragStart = point
+                ghost = session.previewBelt(from: point, to: point) ?? []
+                return Feedback(toast: "Now tap where the belt should go", haptic: .light)
+            }
+            dragStart = nil
+            ghost = []
+            if session.world.building(at: point).map({ $0.id }) == session.world.building(at: start)?.id {
+                return .none   // tapped the same building again: never mind
+            }
+            return layBelt(from: start, to: point, session: session)
 
         case .demolish:
             if let building = session.world.building(at: tile) {
@@ -157,23 +171,48 @@ public struct InputController: Sendable {
 
     public mutating func dragBegan(_ tile: GridPoint, session: GameSession) {
         guard tool == .belt else { return }
-        dragStart = tile
-        ghost = session.previewBelt(from: tile, to: tile) ?? []
+        let start = Self.snap(tile, session: session)
+        dragStart = start
+        ghost = session.previewBelt(from: start, to: start) ?? []
     }
 
     public mutating func dragMoved(_ tile: GridPoint, session: GameSession) {
         guard tool == .belt, let start = dragStart else { return }
-        ghost = session.previewBelt(from: start, to: tile) ?? []
+        ghost = session.previewBelt(from: start, to: Self.snap(tile, session: session)) ?? []
     }
 
     public mutating func dragEnded(_ tile: GridPoint, session: GameSession) -> Feedback {
         guard tool == .belt, let start = dragStart else { return .none }
         dragStart = nil
         ghost = []
-        guard start != tile else { return Feedback(toast: "Drag from a building to lay a belt") }
-        let feedback = result(session.layBelt(from: start, to: tile), success: .light)
+        let end = Self.snap(tile, session: session)
+        guard start != end else { return Feedback(toast: "Drag from a building to lay a belt") }
+        return layBelt(from: start, to: end, session: session)
+    }
+
+    private mutating func layBelt(from start: GridPoint, to end: GridPoint, session: GameSession) -> Feedback {
+        let deadBefore = SceneBuilder.deadEnds(session.world)
+        var feedback = result(session.layBelt(from: start, to: end), success: .light)
+        if feedback.toast == nil, SceneBuilder.deadEnds(session.world).contains(where: { !deadBefore.contains($0) }) {
+            feedback.toast = "That belt doesn't reach anything yet"
+        }
         if session.world.beltsAvailable == 0 { tool = .none }
         return feedback
+    }
+
+    /// Where a finger "means": the building or belt under it, or else the
+    /// building it is next to. Buildings are drawn standing up, so a finger on
+    /// the top of a kiln is really on the tile above it; letting go there
+    /// should still reach the kiln, not leave the belt stopped on the grass.
+    public static func snap(_ tile: GridPoint, session: GameSession) -> GridPoint {
+        let world = session.world
+        if world.building(at: tile) != nil || world.belt(at: tile) != nil { return tile }
+        let order = [(0, 1), (0, -1), (-1, 0), (1, 0), (-1, 1), (1, 1), (-1, -1), (1, -1)]
+        for (dx, dy) in order {
+            let p = GridPoint(tile.x + dx, tile.y + dy)
+            if world.building(at: p) != nil { return p }
+        }
+        return tile
     }
 
     private func result(_ result: CommandResult, success: Haptic) -> Feedback {

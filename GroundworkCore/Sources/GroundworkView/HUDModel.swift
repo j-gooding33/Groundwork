@@ -18,6 +18,9 @@ public struct TutorialBubble: Equatable, Sendable {
     public var id: String
     public var text: String
     public var tile: GridPoint?
+    /// How many tiles the outline at `tile` covers.
+    public var tileSize: (w: Int, h: Int) { (size.first ?? 1, size.count > 1 ? size[1] : 1) }
+    public var size: [Int] = [1, 1]
     /// Buildings to outline.
     public var buildings: [EntityID]
     /// A control to pulse: "build", "trace" or "undo".
@@ -141,7 +144,17 @@ public struct HUDModel: Equatable, Sendable {
                 world.buildings.first { $0.type == type }.map { [$0.id] }
             } ?? []
             tutorial = TutorialBubble(id: step.id, text: step.text, tile: step.highlight?.tile,
-                                      buildings: outlined, control: step.highlight?.ui)
+                                      size: step.highlight?.size ?? [1, 1], buildings: outlined,
+                                      control: step.highlight?.ui)
+            // A belt this chapter already taught has gone: ask for it again first.
+            if let link = session.brokenTutorialLink {
+                let from = content.building(link.from)?.name ?? link.from.rawValue
+                let to = content.building(link.to)?.name ?? link.to.rawValue
+                let source = world.buildings.first { $0.type == link.from }.map { [$0.id] } ?? []
+                tutorial = TutorialBubble(id: "repair:\(link.from):\(link.to)",
+                                          text: "The belt from the \(from)\nto the \(to) is gone. Lay it again.",
+                                          tile: nil, buildings: source, control: "build")
+            }
         }
 
         hand = world.hand.map { "Carrying \($0.count) \(content.plural($0.item))" }
@@ -191,6 +204,9 @@ public struct HUDModel: Equatable, Sendable {
                 lines.append(seconds < 5 ? "Out of \(plural) now" : "\(plural.capitalizedFirst) run out in \(seconds) s")
             }
         }
+        let io = SceneBuilder.io(of: building.type, content: content)
+        if !io.takes.isEmpty { lines.append("Takes " + io.takes.map(content.plural).joined(separator: ", ")) }
+        if !io.gives.isEmpty { lines.append("Makes " + io.gives.map(content.plural).joined(separator: ", ")) }
         let held = building.input.stacks + building.output.stacks
         if !held.isEmpty {
             lines.append("Holding " + held.map { "\($0.count) \(content.plural($0.item))" }.joined(separator: ", "))

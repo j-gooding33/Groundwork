@@ -93,4 +93,29 @@ final class TutorialTests: XCTestCase {
             XCTAssertTrue(problems.contains { $0.contains("pauses time") }, "\(problems)")
         }
     }
+
+    func testTheBeltStepNeedsABeltThatIsStillThere() throws {
+        let session = try GameSession(content: content())
+        session.place("clay_pit", at: GridPoint(37, 29))
+        waitUntil(session) { session.tutorialStep?.id == "l1_kiln" }
+        session.place("brick_kiln", at: GridPoint(40, 28))
+        let pit = try id("clay_pit", session), kiln = try id("brick_kiln", session)
+        waitUntil(session) { (session.world.building(pit)?.output.count(of: "clay") ?? 0) >= 2 }
+        session.pickUp(from: pit)
+        session.drop(into: kiln)
+        waitUntil(session) { session.tutorialStep?.id == "l1_belt" }
+        session.advance(ticks: 300)
+        XCTAssertEqual(session.tutorialStep?.id, "l1_belt", "No belt, no moving on")
+        XCTAssertEqual(session.layBelt(from: GridPoint(37, 29), to: GridPoint(40, 28)), .ok)
+        session.advance(ticks: 1)
+        XCTAssertEqual(session.tutorialStep?.id, "l1_look")
+        XCTAssertNil(session.brokenTutorialLink)
+
+        // Undo the belt: the tutorial notices and asks for it again.
+        session.undo()
+        XCTAssertEqual(session.brokenTutorialLink?.from, "clay_pit")
+        XCTAssertEqual(session.brokenTutorialLink?.to, "brick_kiln")
+        session.layBelt(from: GridPoint(37, 29), to: GridPoint(40, 28))
+        XCTAssertNil(session.brokenTutorialLink)
+    }
 }

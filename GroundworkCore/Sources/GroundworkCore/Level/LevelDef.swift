@@ -89,6 +89,9 @@ public struct TutorialStep: Codable, Equatable, Sendable {
     public struct Highlight: Codable, Equatable, Sendable {
         /// A tile to outline, usually where to place something.
         public var tile: GridPoint?
+        /// How many tiles the outline covers from `tile`, as [width, height],
+        /// so a 2x2 building's spot is shown whole. Nil means one tile.
+        public var size: [Int]?
         /// Outline every building of this type.
         public var building: BuildingTypeID?
         /// A UI control to pulse: "build", "trace" or "undo".
@@ -125,6 +128,8 @@ public struct TutorialStep: Codable, Equatable, Sendable {
 /// - `traced:<building>` the player used Trace on a building of that type
 /// - `ui:<name>` the app reported a UI action, such as `ui:panned`
 /// - `count:<building>:<n>` there are at least n finished buildings of that type
+/// - `linked:<from>:<to>` a belt runs from a building of the first type into
+///   one of the second right now (checked live, so undoing the belt undoes it)
 /// - `wait` nothing: the step finishes after its `waitTicks` (a tip)
 /// - `goal` the level goal is reached
 public enum TutorialCondition: Equatable, Sendable {
@@ -136,6 +141,7 @@ public enum TutorialCondition: Equatable, Sendable {
     case traced(BuildingTypeID)
     case ui(String)
     case count(BuildingTypeID, Int)
+    case linked(BuildingTypeID, BuildingTypeID)
     case wait
     case goal
 
@@ -153,6 +159,8 @@ public enum TutorialCondition: Equatable, Sendable {
         case ("count", 3):
             guard let n = Int(parts[2]), n > 0 else { return nil }
             self = .count(BuildingTypeID(rawValue: parts[1]), n)
+        case ("linked", 3):
+            self = .linked(BuildingTypeID(rawValue: parts[1]), BuildingTypeID(rawValue: parts[2]))
         case ("wait", 1): self = .wait
         case ("goal", 1): self = .goal
         default: return nil
@@ -171,6 +179,7 @@ public enum TutorialCondition: Equatable, Sendable {
         case let .traced(type): return "traced:\(type)"
         case let .ui(name): return "ui:\(name)"
         case let .count(type, n): return "count:\(type):\(n)"
+        case let .linked(from, to): return "linked:\(from):\(to)"
         case .wait: return "wait"
         case .goal: return "goal"
         }

@@ -189,6 +189,8 @@ enum LevelRunner {
             return true
         case let .count(type, n):
             return world.buildings.filter { $0.type == type && $0.isBuilt }.count >= n
+        case let .linked(from, to):
+            return isLinked(from, to, world: world, content: content)
         case let .slow(type):
             return world.buildings.contains { b in
                 b.type == type && Trace.run(.building(b.id), world: world, content: content).root.state == .slow
@@ -196,6 +198,28 @@ enum LevelRunner {
         default:
             return state.hasSeen(condition.key)
         }
+    }
+
+    /// True if a belt runs from a building of type `from` into one of type `to`.
+    static func isLinked(_ from: BuildingTypeID, _ to: BuildingTypeID, world: World, content: ContentDatabase) -> Bool {
+        world.buildings.contains { target in
+            target.type == to && BeltSystem.feeders(of: target, in: world, content: content).contains {
+                world.building($0)?.type == from
+            }
+        }
+    }
+
+    /// A belt an earlier step of this chapter asked for that is gone now (the
+    /// player undid or removed it), so the tutorial can ask for it again.
+    static func brokenLink(world: World, content: ContentDatabase) -> (from: BuildingTypeID, to: BuildingTypeID)? {
+        guard let state = world.level, state.step < currentSteps(world: world, content: content).count else { return nil }
+        for step in currentSteps(world: world, content: content).prefix(state.step) {
+            if case let .linked(from, to)? = TutorialCondition(step.when),
+               !isLinked(from, to, world: world, content: content) {
+                return (from, to)
+            }
+        }
+        return nil
     }
 
     /// Records something the player did outside the simulation (used Trace,

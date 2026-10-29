@@ -270,6 +270,11 @@ public final class GameSession {
     public var goal: GoalProgress? { LevelRunner.goalProgress(world: world, content: content) }
 
     public var isGoalReached: Bool { world.level?.goalReached ?? false }
+    /// A belt the tutorial already taught that has since been removed, so the
+    /// HUD can ask for it again instead of carrying on as if it were there.
+    public var brokenTutorialLink: (from: BuildingTypeID, to: BuildingTypeID)? {
+        LevelRunner.brokenLink(world: world, content: content)
+    }
 
     /// Fun-test numbers for the debug overlay.
     public var funTest: FunTestLog { world.funTest }

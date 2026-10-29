@@ -225,35 +225,9 @@ final class GameStore {
         for g in touches.cancelled(id) { handle(g) }
     }
 
-    private func tile(_ p: ViewPoint) -> GridPoint {
-        camera.tile(at: camera.scenePoint(fromView: mapping.toView(p)))
-    }
-
     private func handle(_ gesture: Gesture) {
         guard let session, !menuOpen else { return }
-        switch gesture {
-        case let .tap(p):
-            respond(input.tap(tile(p), session: session))
-        case let .longPress(p):
-            respond(input.longPress(tile(p), session: session))
-        case let .dragBegan(p):
-            if input.dragDraws { input.dragBegan(tile(p), session: session) }
-        case let .dragMoved(p):
-            if input.dragDraws { input.dragMoved(tile(p), session: session) }
-        case let .dragEnded(p):
-            if input.dragDraws { respond(input.dragEnded(tile(p), session: session)) }
-        case .dragCancelled:
-            input.cancelDrag()
-        case let .pan(dx, dy):
-            if !input.dragDraws {
-                let d = mapping.toView(dx: dx, dy: dy)
-                camera.pan(byView: d.dx, d.dy)
-                session.noteUI("panned")
-            }
-        case let .pinch(factor, center):
-            camera.pinch(factor, aroundView: mapping.toView(center))
-            session.noteUI("zoomed")
-        }
+        respond(GestureRouter.apply(gesture, input: &input, camera: &camera, mapping: mapping, session: session))
         refreshHUD()
     }
 

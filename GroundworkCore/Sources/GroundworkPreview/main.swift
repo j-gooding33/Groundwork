@@ -132,6 +132,54 @@ func drawMapLabels(_ labels: [MapLabel], camera: Camera, into image: inout Image
     }
 }
 
+func save(_ image: Image, as name: String) throws {
+    var scaled = [UInt8](repeating: 0, count: viewW * scale * viewH * scale * 4)
+    for y in 0..<(viewH * scale) {
+        for x in 0..<(viewW * scale) {
+            let s = ((y / scale) * viewW + x / scale) * 4, d = (y * viewW * scale + x) * 4
+            scaled[d..<d + 4] = image.px[s..<s + 4]
+        }
+    }
+    let file = outDir.appendingPathComponent("\(name)_\(viewW * scale)x\(viewH * scale).rgba")
+    try Data(scaled).write(to: file)
+}
+
+/// The title intro at time `t`: bricks as plain rectangles and the builders
+/// from the atlas, the way the app's Canvas draws them.
+func introShot(_ name: String, at t: Double) throws {
+    var image = Image(w: viewW, h: viewH)
+    for y in 0..<viewH { for x in 0..<viewW { image.blend(x, y, 255, 244, 214, 1) } }
+    let cell = 7, originX = (viewW - IntroAnimation.width * cell) / 2, groundY = viewH / 2 + 30
+    for brick in IntroAnimation.bricks(at: t) {
+        let left = originX + Int((brick.x * Double(cell)).rounded())
+        let top = groundY - Int(((brick.y + 1) * Double(cell)).rounded())
+        for dy in 0..<(cell - 1) {
+            for dx in 0..<(cell - 1) {
+                let dark = dy >= cell - 2
+                image.blend(left + dx, top + dy, dark ? 90 : 142, dark ? 30 : 47, dark ? 30 : 42, 1)
+            }
+        }
+    }
+    for builder in IntroAnimation.builders(at: t) {
+        let r = manifest.sprites[builder.sprite]!
+        let w = r.w * 2, h = r.h * 2
+        let left = originX + Int(((builder.x + 0.5) * Double(cell)).rounded()) - w / 2
+        let foot = groundY - Int((builder.y * Double(cell)).rounded())
+        for dy in 0..<h {
+            for dx in 0..<w {
+                var sx = dx / 2
+                if builder.facingLeft { sx = r.w - 1 - sx }
+                let i = ((r.y + dy / 2) * manifest.width + r.x + sx) * 4
+                guard atlasPixels[i + 3] > 0 else { continue }
+                image.blend(left + dx, foot - h + dy, Double(atlasPixels[i]), Double(atlasPixels[i + 1]),
+                            Double(atlasPixels[i + 2]), 1)
+            }
+        }
+    }
+    try save(image, as: name)
+    print("\(name): \(IntroAnimation.bricks(at: t).filter(\.placed).count) bricks down")
+}
+
 func shot(_ name: String, session: GameSession, camera: Camera, input: InputController = InputController(),
           fraction: Double = 0.5, seconds: Double = 0.3) throws {
     let world = session.world
@@ -153,15 +201,7 @@ func shot(_ name: String, session: GameSession, camera: Camera, input: InputCont
     if input.showRates { drawLabels(builder.rateLabels(world), camera: camera, into: &image) }
     drawMapLabels(builder.mapLabels(world), camera: camera, into: &image)
 
-    var scaled = [UInt8](repeating: 0, count: viewW * scale * viewH * scale * 4)
-    for y in 0..<(viewH * scale) {
-        for x in 0..<(viewW * scale) {
-            let s = ((y / scale) * viewW + x / scale) * 4, d = (y * viewW * scale + x) * 4
-            scaled[d..<d + 4] = image.px[s..<s + 4]
-        }
-    }
-    let file = outDir.appendingPathComponent("\(name)_\(viewW * scale)x\(viewH * scale).rgba")
-    try Data(scaled).write(to: file)
+    try save(image, as: name)
     let goal = session.goal.map { "\($0.current)/\($0.target)" } ?? "-"
     print("\(name): tick \(world.tick), \(DayNight(tick: world.tick).clockText), goal \(goal), "
           + "step \(session.tutorialStep?.id ?? "done"), hud: \(hud.tutorial?.text.replacingOccurrences(of: "\n", with: " ") ?? "")")
@@ -179,6 +219,11 @@ func waitUntil(_ session: GameSession, limit: Int = 6000, _ condition: () -> Boo
 func check(_ feedback: Feedback, _ what: String) {
     if let toast = feedback.toast { print("  \(what): \(toast)") }
 }
+
+// MARK: The title intro
+
+try introShot("00a_intro_laying", at: 0.8)
+try introShot("00b_intro_done", at: IntroAnimation.duration)
 
 // MARK: Level 1, played through the input controller
 

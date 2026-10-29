@@ -1,0 +1,10 @@
+size: 8x8
+---
+KK....KK
+KssKKssK
+.KssssK.
+..KssK..
+..KssK..
+.KssssK.
+KssKKssK
+KK....KK

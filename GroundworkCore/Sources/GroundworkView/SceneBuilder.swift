@@ -466,6 +466,7 @@ public struct SceneBuilder: Sendable {
             let frames = atlas.frames(piece.name)
             if frames.count > 1 { sprite.name = frames[animFrame % frames.count] }
             sprites.append(sprite)
+            sprites += connectionSprites(tile, piece: piece.name, center: c, world: world)
 
             let entry = Self.entry(of: tile, in: world) ?? tile.direction
             let n = tile.slots.count
@@ -480,6 +481,57 @@ public struct SceneBuilder: Sendable {
             }
         }
         return sprites
+    }
+
+    /// Where a belt meets something, made visible: a junction where another
+    /// belt joins from the side, an arrow where items leave a building or go
+    /// into one, and a red cross where a belt runs into nothing.
+    private func connectionSprites(_ tile: BeltTile, piece: String, center c: ScenePoint, world: World) -> [Sprite] {
+        var sprites: [Sprite] = []
+        let key = "\(tile.point.x),\(tile.point.y)"
+        let straight = piece == "belt_h" || piece == "belt_v"
+        let horizontal = tile.direction == .east || tile.direction == .west
+        for side in Direction.allCases where side != tile.direction && side != tile.direction.opposite {
+            guard straight, let feeder = world.belt(at: tile.point.moved(side)), feeder.next == tile.point else { continue }
+            var join = Sprite(id: "join:\(key):\(side)", name: horizontal ? "belt_join_n" : "belt_join_w",
+                              x: c.x, y: c.y, z: Layer.belts + 0.01)
+            join.flipY = side == .south
+            join.flipX = side == .east
+            sprites.append(join)
+        }
+        func edge(_ d: Direction) -> ScenePoint {
+            let half = Camera.tile / 2
+            switch d {
+            case .north: return ScenePoint(c.x, c.y + half)
+            case .south: return ScenePoint(c.x, c.y - half)
+            case .east: return ScenePoint(c.x + half, c.y)
+            case .west: return ScenePoint(c.x - half, c.y)
+            }
+        }
+        func arrow(_ id: String, at p: ScenePoint, pointing d: Direction) -> Sprite {
+            var a = Sprite(id: id, name: d == .east || d == .west ? "status_arrow" : "status_arrow_v",
+                           x: p.x, y: p.y, z: Layer.belts + 0.02)
+            a.flipX = d == .west
+            a.flipY = d == .north
+            return a
+        }
+        if let source = tile.pullsFrom, let b = world.building(source), let def = content.building(b.type),
+           let side = Direction.allCases.first(where: { b.covers(tile.point.moved($0), def) }) {
+            sprites.append(arrow("port:out:\(key)", at: edge(side), pointing: side.opposite))
+        }
+        if world.building(at: tile.next) != nil {
+            sprites.append(arrow("port:in:\(key)", at: edge(tile.direction), pointing: tile.direction))
+        } else if world.isDeadEnd(tile) {
+            let p = edge(tile.direction)
+            sprites.append(Sprite(id: "deadend:\(key)", name: "status_dead_end", x: (p.x + c.x) / 2, y: (p.y + c.y) / 2,
+                                  z: Layer.belts + 0.02))
+        }
+        return sprites
+    }
+
+    /// Belt tiles that lead nowhere: not into a building, not onto another belt.
+    public static func deadEnds(_ world: World) -> [GridPoint] {
+        world.belts.filter(world.isDeadEnd).map(\.point).sorted()
     }
 
     /// A point `progress` (0 to 1) of the way through a belt tile: from the edge
@@ -521,10 +573,19 @@ public struct SceneBuilder: Sendable {
             sprites.append(sprite)
         }
         let pulse = 0.55 + 0.45 * sin(time.seconds * 2 * .pi / 1.1)
+        // The building a belt starts from, outlined while the player picks the other end.
+        if let start = input.dragStart, let b = world.building(at: start), let def = content.building(b.type) {
+            let c = Camera.center(of: b.origin, w: def.width, h: def.height, mapHeight: mapHeight)
+            var sprite = Sprite(id: "beltstart", name: "ui_highlight", x: c.x, y: c.y, z: Layer.overlay + 1)
+            sprite.scale = Double(max(def.width, def.height))
+            sprite.tint = Tint(1, 0.85, 0.3, 1)
+            sprites.append(sprite)
+        }
         if let bubble = hud.tutorial {
             if let tile = bubble.tile {
-                let c = Camera.center(of: tile, w: 1, h: 1, mapHeight: mapHeight)
+                let c = Camera.center(of: tile, w: bubble.tileSize.w, h: bubble.tileSize.h, mapHeight: mapHeight)
                 var sprite = Sprite(id: "hl:tile", name: "ui_highlight", x: c.x, y: c.y, z: Layer.overlay + 1)
+                sprite.scale = Double(max(bubble.tileSize.w, bubble.tileSize.h))
                 sprite.alpha = pulse
                 sprites.append(sprite)
             }
@@ -537,6 +598,7 @@ public struct SceneBuilder: Sendable {
                 sprites.append(sprite)
             }
         }
+        if input.tool == .belt { sprites += ioBadges(world) }
         // A red marker bobbing over the step Trace says to fix.
         if let marker = hud.traceMarker {
             var dot = Sprite(id: "trace:marker", name: "ui_trace_dot", x: marker.x,
@@ -560,6 +622,38 @@ public struct SceneBuilder: Sendable {
                 case .blocked, .notBuilt: dot.tint = Tint(0.9, 0.15, 0.1, 0.85)
                 }
                 sprites.append(dot)
+            }
+        }
+        return sprites
+    }
+
+    /// What each building takes and gives, shown above it while the belt tool
+    /// is out: "clay log ▸ brick" in item icons, so the player can see where
+    /// a belt should start and end.
+    public static func io(of type: BuildingTypeID, content: ContentDatabase) -> (takes: [ItemID], gives: [ItemID]) {
+        guard let def = content.building(type) else { return ([], []) }
+        let recipes = def.recipes.compactMap(content.recipe)
+        var takes: [ItemID] = [], gives: [ItemID] = []
+        for item in recipes.flatMap({ $0.inputs.map(\.item) }) + def.accepts where !takes.contains(item) {
+            takes.append(item)
+        }
+        for item in recipes.flatMap({ $0.outputs.map(\.item) }) where !gives.contains(item) { gives.append(item) }
+        return (takes, gives)
+    }
+
+    func ioBadges(_ world: World) -> [Sprite] {
+        var sprites: [Sprite] = []
+        for building in world.buildings {
+            guard let def = content.building(building.type) else { continue }
+            let (takes, gives) = Self.io(of: building.type, content: content)
+            guard !takes.isEmpty || !gives.isEmpty else { continue }
+            let names = takes.map { "item_\($0)" } + ["status_arrow"] + gives.map { "item_\($0)" }
+            let c = Camera.center(of: building.origin, w: def.width, h: def.height, mapHeight: world.map.height)
+            let y = c.y + Double(def.height) * Camera.tile / 2 + 8
+            let left = c.x - Double(names.count - 1) * 4.5
+            for (k, name) in names.enumerated() {
+                sprites.append(Sprite(id: "io:\(building.id):\(k)", name: name, x: left + Double(k) * 9, y: y,
+                                      z: Layer.overlay + 1))
             }
         }
         return sprites

@@ -24,6 +24,7 @@ Phase 0 of the no-Mac track (see "No Mac yet" in docs/DESIGN.md): check the tool
 12. **Trace states.** The table shows "Normal", while the rules say running, slow and blocked. → Use `running`, `slow`, `blocked`, plus `notBuilt` for recipe steps that have no building yet.
 13. **One world, not a level list (owner's call, 2026-10-29).** A new player can't choose between level names they don't understand. → There is one world, `"world"` in `levels.json`, on the Level 1 map. The design's Levels 1 to 3 are its first three **chapters** (Bare Ground, First Belts, Stone to Roof), followed by Free Build. Buildings carry over. Each chapter draws more of the map (a reveal radius around the start; nothing can be built on undrawn paper) and opens the next when the player taps Continue on the chapter card. Every building, item and source has a one-line description, and landmarks ("Clay", "Forest") are named on the map until used. Level 2's separate map is retired.
 14. **Demand rule when the yard is full.** A full yard receives nothing, so "received a cottage's worth this minute" could never hold again and the yard stalled for good. → A yard holding its full capacity of a material counts as steadily supplied with it.
+15. **Tutorial belts must stay built.** A step that teaches a belt finishes on `linked:<from>:<to>`, checked live, rather than on the first item delivered. If the player later undoes or removes a belt an earlier step taught, the tutorial asks for it again before carrying on.
 
 ## Folder layout
 ```

@@ -349,6 +349,10 @@ public struct ContentDatabase: Sendable {
             }
         case let .traced(type), let .count(type, _), let .slow(type):
             if building(type) == nil { problems.append("\(name) waits for unknown building '\(type)'") }
+        case let .linked(from, to):
+            for type in [from, to] where building(type) == nil {
+                problems.append("\(name) waits for unknown building '\(type)'")
+            }
         case .ui, .goal:
             break
         case .wait:

@@ -60,6 +60,7 @@ TARGET = {
     "DEVELOPMENT_TEAM": '""',
     "ENABLE_PREVIEWS": "YES",
     "GENERATE_INFOPLIST_FILE": "YES",
+    "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
     "INFOPLIST_KEY_CFBundleDisplayName": "Groundwork",
     "INFOPLIST_KEY_LSApplicationCategoryType": '"public.app-category.simulation-games"',
     "INFOPLIST_KEY_UIApplicationSceneManifest_Generation": "YES",

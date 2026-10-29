@@ -112,3 +112,11 @@ enum BeltSystem {
         return found.sorted()
     }
 }
+
+extension World {
+    /// True if a belt tile leads nowhere: not into a building, not onto
+    /// another belt it can join. Items pile up at its end.
+    public func isDeadEnd(_ tile: BeltTile) -> Bool {
+        building(at: tile.next) == nil && BeltSystem.downstream(of: tile, in: self) == nil
+    }
+}

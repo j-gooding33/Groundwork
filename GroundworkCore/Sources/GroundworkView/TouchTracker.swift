@@ -20,6 +20,8 @@ public enum Gesture: Equatable, Sendable {
     /// A drag that turned into a pinch: drop any half-laid belt.
     case dragCancelled
     case pan(dx: Double, dy: Double)
+    /// Two fingers moving together: always moves the map, whatever the tool.
+    case twoFingerPan(dx: Double, dy: Double)
     case pinch(factor: Double, center: ViewPoint)
 }
 
@@ -81,7 +83,7 @@ public struct TouchTracker: Sendable {
             defer { (lastPinchDistance, lastPinchCenter) = (d, center) }
             var gestures: [Gesture] = []
             if lastPinchDistance > 0, d > 0 { gestures.append(.pinch(factor: d / lastPinchDistance, center: center)) }
-            gestures.append(.pan(dx: center.x - lastPinchCenter.x, dy: center.y - lastPinchCenter.y))
+            gestures.append(.twoFingerPan(dx: center.x - lastPinchCenter.x, dy: center.y - lastPinchCenter.y))
             return gestures
         case .idle, .finished:
             return []
