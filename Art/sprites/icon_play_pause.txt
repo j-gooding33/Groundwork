@@ -1,0 +1,18 @@
+size: 16x16
+---
+................
+................
+..K.......KK.KK.
+.KFK.....KFFKFFK
+.KFFK....KFFKFFK
+.KFFFK...KFFKFFK
+.KFFFFK..KFFKFFK
+.KFFFFFK.KFFKFFK
+.KFFFFFFKKFFKFFK
+.KFFFFFK.KFFKFFK
+.KFFFFK..KFFKFFK
+.KFFFK...KFFKFFK
+.KFFK....KFFKFFK
+..KK......KK.KK.
+................
+................

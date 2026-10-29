@@ -1,0 +1,18 @@
+size: 16x16
+---
+oonooooooooooooo
+oooooopoonooooop
+poooonoooooooono
+opoooooooooooooo
+ppnooonooooooooo
+ooonooooooopoono
+opnoponoopoopnpo
+oooooooooooooooo
+nnoopooooooonooo
+ooooooonpopoonpn
+nooooooooooooooo
+oooooopooooooooo
+oonooooooooooooo
+ooopponoooooonoo
+noonooooooonopoo
+nnopooonooooonoo

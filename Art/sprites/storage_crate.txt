@@ -1,0 +1,19 @@
+size: 16x16
+variants: 2
+---
+................
+................
+..tttttttttttt..
+.twwwwwwwwwwwut.
+.twuuuuuuuuutut.
+.twvvvvvvvvtvut.
+.twvvvvvvvtvvut.
+.twuuuuuutuuuut.
+.twvvvvvtvvvvut.
+.twvvvvtvvvvvut.
+.twuuutuuuuuuut.
+.twvvtvvvvvvvut.
+.twvtvvvvvvvvut.
+.twtuuuuuuuuuut.
+.tuuuuuuuuuuuut.
+..tttttttttttt..

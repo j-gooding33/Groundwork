@@ -1,0 +1,18 @@
+size: 16x16
+---
+mmlmmmmmmmmmmlmm
+mmmmmmmmmlmmmmmm
+mmmmmmmmmkmmmmmm
+mllmmlmmlmmmmmmm
+mmmmmmmlmmmmmmmm
+mmmmmmmmmlmmmlkm
+mmmmmmllmmmmlmlm
+mmmmmmmmmmmmmmkm
+mmmmmmmmmmmmmlmm
+mmlmmmllmmmmmmmm
+mmmmmmmmmkmmmmlm
+mmmmmmmmmmmlmlmm
+mmmmmmmmmmmkkmmm
+mmmmmmmmmmlmmmmm
+mmmmlmmmlmmmkmkm
+mmmmmmmmmmlmmmmm

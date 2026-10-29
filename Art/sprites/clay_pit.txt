@@ -1,0 +1,19 @@
+size: 16x16
+variants: 3
+---
+...........jvutj
+............juj.
+............juj.
+.jjjjjjjjjjjjuj.
+jmmmmmmmmmmmmumj
+jmllllllllllzzzj
+jmlnnnnnnnnnzzyj
+jmlnnnnnnnnnnlkj
+jmlnooooooopnlkj
+jmlnoopoooopnlkj
+jmlnooooonopnlkj
+jmlnppppppppnlkj
+jmlnnnnnnnnnnlkj
+jmllllllllllllkj
+jmkkkkkkkkkkkkkj
+.jjjjjjjjjjjjjj.

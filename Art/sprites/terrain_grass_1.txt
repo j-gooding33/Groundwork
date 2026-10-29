@@ -1,0 +1,18 @@
+size: 16x16
+---
+ccccbbcdccdbccdc
+cccbcccccccccdbc
+ccccccbbccccccbc
+cbccccbcccccdccc
+ccbbbcccccccbbcc
+cdbccccccccbcccc
+cbdccccdcccccdcc
+ccccccbcbccccccb
+bcccccccccbccbcc
+ccccccdbcccccccc
+ccbcccccccccbccb
+ccccbccccccdcccc
+cccccccdccccccdc
+cccccccbbccccccc
+cccccccbcccccccc
+ccccccdcbccccccc

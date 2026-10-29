@@ -16,6 +16,13 @@ public struct TickClock: Sendable {
         self.maxTicksPerFrame = maxTicksPerFrame
     }
 
+    /// How far the next tick has progressed, from 0 up to 1. The renderer uses
+    /// this to glide belt items between slots instead of jumping 10 times a
+    /// second. It never feeds back into the simulation.
+    public var fraction: Double {
+        min(1, carriedSeconds * Double(Simulation.ticksPerSecond))
+    }
+
     public mutating func ticks(forElapsed seconds: Double) -> Int {
         guard speed > 0, seconds > 0 else { return 0 }
         carriedSeconds += seconds * Double(speed)

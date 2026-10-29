@@ -1,0 +1,10 @@
+size: 8x8
+---
+........
+........
+.tttttt.
+twwvvvvt
+wvwuuuut
+twwuuuut
+.tttttt.
+........

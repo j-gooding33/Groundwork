@@ -29,6 +29,14 @@ final class TickClockTests: XCTestCase {
         XCTAssertEqual(clock.ticks(forElapsed: 1.0), 0)
     }
 
+    func testFractionTracksTheNextTick() {
+        var clock = TickClock()
+        XCTAssertEqual(clock.ticks(forElapsed: 0.025), 0)
+        XCTAssertEqual(clock.fraction, 0.25, accuracy: 1e-9)
+        XCTAssertEqual(clock.ticks(forElapsed: 0.1), 1)
+        XCTAssertEqual(clock.fraction, 0.25, accuracy: 1e-6)
+    }
+
     func testLongStallIsCapped() {
         var clock = TickClock(maxTicksPerFrame: 40)
         XCTAssertEqual(clock.ticks(forElapsed: 30), 40)

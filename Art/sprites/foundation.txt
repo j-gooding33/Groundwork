@@ -1,0 +1,35 @@
+size: 32x32
+variants: 2
+---
+.j............................j.
+juj.j.j.j.j.j.j.j.j.j.j.j.j..juj
+jujjFjFjFjFjFjFjFjFjFjFjFjFj.juj
+jujjjjjjjjjjjjjjjjjjjjjjjjjjjjuj
+.jzyzAzzzAzzzAzzzAzzzAzzzAzzyxj.
+.jzyyyyyyyyyyyyyyyyyyyyyyyyyyxj.
+.jzylklklkkkllkkkkkkjkkkkkkkyxj.
+.jzykkkkkkkkkklkkkkkkklkjkkkyxj.
+.jzykkkkkkkklklkkkllklkkkkkkyxj.
+.jzykkkkkkkkkkkkkkkkkjklkklkyxj.
+.jzykkklkkkkkkkkkkkkkkkkkkkkyxj.
+.jzylkkkkkkkkkkkkkkkkkkkkkkkyxj.
+.jzykkkkkkkkkkkkkkkkkkkkkkkkyxj.
+.jzykkkkkkkkkkkkkkkjkkkkkkklyxj.
+.jzykkkkkklkkkkkkkkkjlkkkkkkyxj.
+.jzykkkkjkklkkklkkkklkkkkkkkyxj.
+.jzylkkkklkkkkkkkkkkkkkkkjkkyxj.
+.jzyklkkkklkjkkkkkkklkkkkkkkyxj.
+.jzylklkkkkkkkkkkkkkkkkkkjkkyxj.
+.jzykkkkkkkkkkjkklkkkljklkkkyxj.
+.jzykkkklkkkkkkkkkkkkkkjkkkkyxj.
+.jzykkkkkklklkkjklkklkkkkkkkyxj.
+.jzykkklkkkkklkkkkkkkkkkkklkyxj.
+.jzykkkkkkkkkkkkkkkkkkkkkkkkyxj.
+.jzykklkkkkkkkkkjjkkkkkkkkllyxj.
+.jzykklkkkkkkkkkkkklkkkkkklkyxj.
+.jzykkkkkkkkkkkkkkkkkkkkkkkkyxj.
+.jzykklkkkkkkkkkkkkkkklkkkkkyxj.
+.jzyyyyyyyyyyyyyyyyyyyyyyyyyyxj.
+juzyxxxxxxxxxxxxxxxxxxxxxxxxyxuj
+jujjjjjjjjjjjjjjjjjjjjjjjjjjjjuj
+juj..........................juj

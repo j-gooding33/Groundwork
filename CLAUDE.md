@@ -2,10 +2,11 @@
 iOS landscape pixel-art factory and town builder. Swift, SpriteKit for the world, SwiftUI for menus, iOS 17+.
 
 - Design: docs/DESIGN.md. Read the relevant section before each task.
+- App hand-over: docs/INTEGRATION.md explains how SpriteKit and SwiftUI plug into GameSession.
 - Build plan, data formats, GameSession API and design decisions: docs/PLAN.md. Follow it; if it conflicts with DESIGN.md, PLAN.md's "Contradictions" section wins.
 
 ## Current track
-No Mac yet. This is a Linux cloud session, so we build phases 0 to 5 only: GroundworkCore, data, Trace, belts, Level 1 as data, the art pipeline and docs/INTEGRATION.md. Rendering, touch UI and sound wait for the Mac (master prompt phases 6 to 11).
+No Mac yet. Linux cloud sessions cover phases 0 to 5: GroundworkCore, data, Trace, belts, Level 1 as data, the art pipeline and docs/INTEGRATION.md. These are done. Rendering, touch UI and sound wait for the Mac (master prompt phases 6 to 11, starting from docs/INTEGRATION.md). Without a Mac, work is limited to the simulation, data, art and tests.
 
 Scope is Prototype 1 only: clay pit, lumber camp, brick kiln, sawmill, storage crate, foundation, builder's yard, cottage, hand carry, belts, one demand rule, Trace, saving, the Level 1 script. No citizens, shops, taxes, roads, rail, power grids, data networks, islands, Walk Mode or character creator. Ask before going outside this.
 
@@ -25,7 +26,9 @@ Scope is Prototype 1 only: clay pit, lumber camp, brick kiln, sawmill, storage c
 ## Commands
 - Install Swift (once per new cloud container): `bash Tools/install_swift_linux.sh`, then `export PATH=/opt/swift-image/usr/bin:$PATH`
 - Test: `cd GroundworkCore && swift test`
-- Art: `python3 Tools/make_art.py` (from phase 5)
+- Art: `python3 Tools/make_art.py` (checks sprites, builds Art/generated/atlas.png, atlas.json and Art/contact_sheet.png); `--check` only validates
+- New sprites: draw them as text grids in Art/sprites, or add them to Tools/draw_sprites.py (it never overwrites existing grids)
+- Art tests: `cd Tools && python3 -m unittest test_make_art`
 
 ## How to work
 - One phase at a time. After each phase: run `swift test`, fix failures, commit with a clear message, push, then stop and report (what works, what was tested, what to check, what is uncertain). Wait for "go" before the next phase.
