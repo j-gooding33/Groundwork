@@ -85,6 +85,12 @@ final class ScriptedPlayerTests: XCTestCase {
         let beltTick = try XCTUnwrap(firstBeltTick)
         XCTAssertLessThan(beltTick, UInt64(2 * Simulation.ticksPerMinute), "First belt by 2:00")
         XCTAssertLessThan(session.world.tick, UInt64(10 * Simulation.ticksPerMinute), "Level done inside 10 minutes")
-        print("Scripted Level 1: first belt at tick \(beltTick), goal at tick \(session.world.tick)")
+        let log = session.funTest
+        XCTAssertLessThan(try XCTUnwrap(log.secondsToFirstBelt), 120, "Fun test: first belt running inside 2 minutes")
+        XCTAssertGreaterThanOrEqual(log.bottlenecksFixed, 1, "Fun test: the log shortage was found and fixed")
+        XCTAssertNotNil(log.secondsToFirstFix)
+        print("Scripted Level 1: first belt at tick \(beltTick), goal at tick \(session.world.tick), "
+              + "fun test \(log.secondsToFirstBelt ?? -1) s to first belt, \(log.bottlenecksFixed) fixes, "
+              + "\(log.commands) commands")
     }
 }

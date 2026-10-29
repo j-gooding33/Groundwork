@@ -44,7 +44,7 @@ public final class GameSession {
         }
         self.init(content: content, map: try content.map(for: level), seed: seed)
         LevelRunner.start(level, world: &world, content: content, events: &events)
-        runLevel(since: 0)
+        afterEvents(since: 0, byPlayer: false, succeeded: true)
     }
 
     private init(content: ContentDatabase, world: World) {
@@ -63,23 +63,25 @@ public final class GameSession {
             if isPausedByTutorial { return }
             let mark = events.count
             Simulation.step(&world, content: content, events: &events)
-            runLevel(since: mark)
+            afterEvents(since: mark, byPlayer: false, succeeded: true)
         }
     }
 
     public var isPausedByTutorial: Bool { tutorialStep?.pauseSim == true }
 
-    private func runLevel(since mark: Int) {
-        guard world.level != nil else { return }
-        let fresh = events[mark...]
-        LevelRunner.update(&world, content: content, newEvents: fresh, events: &events)
+    /// Lets the level and the fun-test log react to new events.
+    private func afterEvents(since mark: Int, byPlayer: Bool, succeeded: Bool) {
+        if world.level != nil {
+            LevelRunner.update(&world, content: content, newEvents: events[mark...], events: &events)
+        }
+        world.funTest.record(events[mark...], tick: world.tick, byPlayer: byPlayer, succeeded: succeeded)
     }
 
     /// Runs a command, then lets the level react to what it did.
     private func command(_ body: () -> CommandResult) -> CommandResult {
         let mark = events.count
         let result = body()
-        runLevel(since: mark)
+        afterEvents(since: mark, byPlayer: true, succeeded: result.isOK)
         return result
     }
 
@@ -143,6 +145,10 @@ public final class GameSession {
 
     @discardableResult
     public func removeBelt(at point: GridPoint) -> CommandResult {
+        command { removeBeltNow(at: point) }
+    }
+
+    private func removeBeltNow(at point: GridPoint) -> CommandResult {
         let removed = Commands.removeBelts(at: [point], world: &world, content: content)
         guard !removed.isEmpty else { return .rejected(.unknown("There is no belt there")) }
         undoStack.append(.beltRemoved(removed))
@@ -154,6 +160,10 @@ public final class GameSession {
     /// the hands already hold, or else the first thing available.
     @discardableResult
     public func pickUp(from id: EntityID, item: ItemID? = nil, count: Int = .max) -> CommandResult {
+        command { pickUpNow(from: id, item: item, count: count) }
+    }
+
+    private func pickUpNow(from id: EntityID, item: ItemID?, count: Int) -> CommandResult {
         switch Commands.pickUp(from: id, item: item, count: count, world: &world, content: content) {
         case .success: return .ok
         case let .failure(error): return .rejected(error)
@@ -220,6 +230,9 @@ public final class GameSession {
     public var goal: GoalProgress? { LevelRunner.goalProgress(world: world, content: content) }
 
     public var isGoalReached: Bool { world.level?.goalReached ?? false }
+
+    /// Fun-test numbers for the debug overlay.
+    public var funTest: FunTestLog { world.funTest }
 
     // MARK: Queries
 

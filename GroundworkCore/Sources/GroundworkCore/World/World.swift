@@ -24,6 +24,8 @@ public struct World: Codable, Equatable, Sendable {
     public internal(set) var housingPlots: [GridPoint] = []
     /// Progress through the current level, if playing one.
     public internal(set) var level: LevelState?
+    /// Fun-test numbers: time to first belt, bottlenecks fixed.
+    public internal(set) var funTest = FunTestLog()
 
     /// Tile lookups, rebuilt from the fields above. Never saved.
     var index = WorldIndex()
@@ -36,7 +38,7 @@ public struct World: Codable, Equatable, Sendable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case tick, rng, map, nextEntityID, buildings, belts, hand, beltsAvailable, unlocked, housingPlots, level
+        case tick, rng, map, nextEntityID, buildings, belts, hand, beltsAvailable, unlocked, housingPlots, level, funTest
     }
 
     public init(from decoder: Decoder) throws {
@@ -52,6 +54,7 @@ public struct World: Codable, Equatable, Sendable {
         unlocked = try c.decodeIfPresent([BuildingTypeID].self, forKey: .unlocked)
         housingPlots = try c.decode([GridPoint].self, forKey: .housingPlots)
         level = try c.decodeIfPresent(LevelState.self, forKey: .level)
+        funTest = try c.decodeIfPresent(FunTestLog.self, forKey: .funTest) ?? FunTestLog()
         // The index needs building sizes from content, so the session rebuilds it after loading.
     }
 
@@ -68,6 +71,7 @@ public struct World: Codable, Equatable, Sendable {
         try c.encode(unlocked, forKey: .unlocked)
         try c.encode(housingPlots, forKey: .housingPlots)
         try c.encode(level, forKey: .level)
+        try c.encode(funTest, forKey: .funTest)
     }
 
     public static func == (lhs: World, rhs: World) -> Bool {
@@ -75,6 +79,7 @@ public struct World: Codable, Equatable, Sendable {
             && lhs.nextEntityID == rhs.nextEntityID && lhs.buildings == rhs.buildings
             && lhs.belts == rhs.belts && lhs.hand == rhs.hand && lhs.beltsAvailable == rhs.beltsAvailable
             && lhs.unlocked == rhs.unlocked && lhs.housingPlots == rhs.housingPlots && lhs.level == rhs.level
+            && lhs.funTest == rhs.funTest
     }
 
     // MARK: Lookups
