@@ -213,6 +213,11 @@ def variant(grid, seed, palette):
     return ["".join(r) for r in rows]
 
 
+def glow(day, night):
+    """The pixels that change at night, taken from the night version."""
+    return ["".join(n if n != d else "." for d, n in zip(dr, nr)) for dr, nr in zip(day, night)]
+
+
 def recolour(grid, mapping):
     return ["".join(mapping.get(ch, ch) for ch in row) for row in grid]
 
@@ -241,7 +246,9 @@ def expand(sprite, palette):
       variants: N        N versions, each extra one with a seeded flaw pixel or two
       recolor: A=B,C=D | E=F   extra versions with colours swapped (plus a flaw pixel)
       flaws: no          skip the flaw pixels (people, where one pixel matters)
-      night: A=B         a _night copy of every version with colours swapped (lit windows)
+      night: A=B         a _night copy of every version with colours swapped (lit windows),
+                         plus a _glow sprite of only the lit pixels
+      glow: A,B          a _glow sprite of only these colours (fire that glows at night)
       frames: roll-x STEP N | roll-y STEP N | swap A=B,C=D N | sway ROWS N
                          animation frames _f1.._f(N-1) for every version above
     """
@@ -255,7 +262,14 @@ def expand(sprite, palette):
         out.append((f"{name}_v{v}", base))
     if "night" in header:
         mapping = parse_mapping(header["night"])
-        out += [(f"{n}_night", recolour(g, mapping)) for n, g in list(out)]
+        days = list(out)
+        out += [(f"{n}_night", recolour(g, mapping)) for n, g in days]
+        # Just the lit pixels, drawn above the night tint so windows glow.
+        out += [(f"{n}_glow", glow(g, recolour(g, mapping))) for n, g in days]
+    if "glow" in header:
+        keep = set(header["glow"].replace(",", " ").split())
+        out += [(f"{n}_glow", ["".join(ch if ch in keep else "." for ch in row) for row in g])
+                for n, g in list(out) if not n.endswith(("_night", "_glow"))]
     if "frames" in header:
         parts = header["frames"].split()
         kind, count = parts[0], int(parts[-1])

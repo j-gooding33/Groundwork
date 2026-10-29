@@ -1,6 +1,7 @@
 size: 32x32
 recolor: q=n,r=o,s=p | y=k,z=l,x=j
 frames: swap E=D,D=E 2
+glow: E,D
 ---
 ...................qqqqqqq......
 ..................qAzzzzzzq.....

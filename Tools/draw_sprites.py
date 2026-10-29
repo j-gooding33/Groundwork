@@ -779,7 +779,7 @@ SPRITES = {
     "nature_rock": (rock, {"variants": "2"}),
     "clay_pit": (clay_pit, {"variants": "3", "recolor": "l=m,m=F"}),
     "lumber_camp": (lumber_camp, {"variants": "3"}),
-    "brick_kiln": (brick_kiln, {"recolor": "q=n,r=o,s=p | y=k,z=l,x=j", "frames": "swap E=D,D=E 2"}),
+    "brick_kiln": (brick_kiln, {"recolor": "q=n,r=o,s=p | y=k,z=l,x=j", "frames": "swap E=D,D=E 2", "glow": "E,D"}),
     "sawmill": (sawmill, {"recolor": "C=u,B=t | u=l,v=m,t=k", "night": "e=D,h=F"}),
     "storage_crate": (storage_crate, {"variants": "2"}),
     "foundation": (foundation, {"variants": "2"}),
