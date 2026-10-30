@@ -4,10 +4,10 @@ import XCTest
 final class ContentLoadingTests: XCTestCase {
     func testRealContentLoadsWithoutProblems() throws {
         let content = try TestSupport.content()
-        XCTAssertEqual(content.items.map(\.id), ["brick", "clay", "log", "plank"])
-        XCTAssertEqual(content.recipes.count, 4)
-        XCTAssertEqual(content.sources.count, 2)
-        XCTAssertEqual(content.buildings.count, 10)
+        XCTAssertEqual(content.items.map(\.id), ["brick", "clay", "log", "plank", "stone"])
+        XCTAssertEqual(content.recipes.count, 5)
+        XCTAssertEqual(content.sources.count, 3)
+        XCTAssertEqual(content.buildings.count, 15)
     }
 
     func testEverythingHasAShortDescription() throws {

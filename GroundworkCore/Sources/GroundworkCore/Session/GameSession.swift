@@ -52,6 +52,8 @@ public final class GameSession {
         case roadLaid([GridPoint])
         case roadRemoved([GridPoint])
         case truckAdded(EntityID)
+        case pipeLaid([GridPoint])
+        case pipeRemoved([GridPoint])
     }
 
     public init(content: ContentDatabase, map: TileMap, seed: UInt64) {
@@ -248,6 +250,37 @@ public final class GameSession {
         }
     }
 
+    /// Where a pipe dragged between two tiles would go, for the ghost preview.
+    public func previewPipe(from: GridPoint, to: GridPoint) -> [GridPoint]? {
+        Utilities.planPipe(from: from, to: to, world: world)
+    }
+
+    /// Lays water pipe underground: it may pass under roads and belts.
+    @discardableResult
+    public func layPipe(from: GridPoint, to: GridPoint) -> CommandResult {
+        command {
+            switch Utilities.layPipe(from: from, to: to, world: &world, content: content) {
+            case let .success(points):
+                undoStack.append(.pipeLaid(points))
+                events.append(.pipeLaid(points))
+                return .ok
+            case let .failure(error):
+                return .rejected(error)
+            }
+        }
+    }
+
+    @discardableResult
+    public func removePipe(at point: GridPoint) -> CommandResult {
+        command {
+            let removed = Utilities.removePipes([point], world: &world, content: content)
+            guard !removed.isEmpty else { return .rejected(.unknown("There is no pipe there")) }
+            undoStack.append(.pipeRemoved(removed))
+            events.append(.pipeRemoved(removed))
+            return .ok
+        }
+    }
+
     /// Sends a truck back and forth between two buildings joined by road.
     /// Asking for the same route again takes that truck away.
     @discardableResult
@@ -338,6 +371,14 @@ public final class GameSession {
             world.index = WorldIndex(world: world, content: content)
             Roads.rerouteTrucks(&world, content: content)
             events.append(.roadLaid(points))
+        case let .pipeLaid(points):
+            let removed = Utilities.removePipes(points, world: &world, content: content)
+            if removed.isEmpty { return undoNow() }
+            events.append(.pipeRemoved(removed))
+        case let .pipeRemoved(points):
+            world.pipes = (world.pipes + points.filter { !world.hasPipe($0) }).sorted()
+            world.index = WorldIndex(world: world, content: content)
+            events.append(.pipeLaid(points))
         case let .truckAdded(id):
             guard world.truck(id) != nil else { return undoNow() }
             world.trucks.removeAll { $0.id == id }
@@ -478,6 +519,12 @@ public final class GameSession {
     public func stock(_ id: EntityID, with item: ItemID, count: Int) {
         guard let i = world.buildingIndex(id) else { return }
         world.buildings[i].input.add(item, count)
+    }
+
+    /// Puts a building down without the player's rules (tests: homes the yard would build).
+    @discardableResult
+    func insert(_ type: BuildingTypeID, at origin: GridPoint) -> EntityID {
+        Commands.insertBuilding(type, at: origin, facing: .south, world: &world, content: content)
     }
 
     public func setBeltsAvailable(_ count: Int?) { world.beltsAvailable = count }

@@ -1,0 +1,35 @@
+size: 32x32
+variants: 2
+---
+................................
+................................
+................................
+................................
+................................
+................................
+................................
+...........t....................
+.......ttttttttt..KKKKKKKKKKKKK.
+.....ttvvvvuvvvvttKrrsrrsrrsrrK.
+....ttvv...u...vvtKrsrrsrrsrrsK.
+...ttu.....u.....uKsrrsrrsrrsrK.
+...tv.u....u....u.KrrsrrsrrsrrK.
+..tvv..u...u...u..KrsrrsrrsrrsK.
+..tv....u..u..u...tvvuuuuuuuuut.
+..tv.....u.u.u....tuuuuuuuuvvvt.
+..tv......uuu.....tuuuuuvvvuuut.
+.ttuuuuuuuuuuuuuuutuuvvvuuuuuut.
+..tv......uuu.....tvvuuuuuuuuut.
+..tv.....u.u.u....tuuuuuuuuvvvt.
+..tv....u..u..u...tuuuKKKKKuuut.
+..tvv..u...u...u..tuuvKjjjKuuut.
+...tv.u....u....u.tvvuKjjjKuuut.
+...ttu.....u.....utuuuKjjjKvvvt.
+....ttvv...u...vvttuuuKjjjKuuut.
+.....ttvvvvuvvvvtttuuvKjjjKuuut.
+.......ttttttttt..tvvuKjjjKuuut.
+...........t......tuuuKjjjKvvvt.
+..................tuuuKjjjKuuut.
+..................ttttttttttttt.
+................................
+................................

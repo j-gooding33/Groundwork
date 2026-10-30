@@ -68,6 +68,8 @@ public enum PlacementRule: String, Codable, Sendable {
     case source
     /// Any tile that is not water.
     case land
+    /// Land with at least one tile right beside water (waterwheels, pumps).
+    case waterside
 }
 
 public struct BuildingDef: Codable, Equatable, Sendable {
@@ -90,6 +92,19 @@ public struct BuildingDef: Codable, Equatable, Sendable {
     /// For a yard: the building it constructs, and how long each one takes.
     public var builds: BuildingTypeID?
     public var buildTicks: Int?
+    /// Mechanical power: how many machines it can drive, and how far (tiles).
+    public var powerOutput: Int?
+    public var powerRadius: Int?
+    /// Power it needs to work (recipes say their own with `power`).
+    public var powerUse: Int?
+    /// Water it gives, per minute: a pump into its pipes, a well to homes nearby.
+    public var waterOutput: Int?
+    /// Homes within this many tiles get water from it (a well, a water tower).
+    public var waterRadius: Int?
+    /// Water a tower holds for when supply dips.
+    public var waterStorage: Int?
+    /// Water a home uses per minute.
+    public var waterUse: Int?
 
     public var width: Int { size.first ?? 1 }
     public var height: Int { size.count > 1 ? size[1] : 1 }

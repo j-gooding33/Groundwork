@@ -11,6 +11,10 @@ public enum GameEvent: Equatable, Sendable {
     case roadRemoved([GridPoint])
     case truckRouteSet(EntityID)
     case truckRouteRemoved(EntityID)
+    case pipeLaid([GridPoint])
+    case pipeRemoved([GridPoint])
+    /// A home got running water (true) or lost it (false).
+    case waterChanged(EntityID, Bool)
     case itemProduced(EntityID, ItemID, count: Int)
     case itemDelivered(EntityID, ItemID, via: Carrier)
     case statusChanged(EntityID, MachineStatus)

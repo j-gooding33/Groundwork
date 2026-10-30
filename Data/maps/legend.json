@@ -7,5 +7,5 @@
   "_": { "terrain": "dirt" },
   "c": { "terrain": "clayGround", "source": "clay_deposit" },
   "T": { "terrain": "forest", "source": "forest" },
-  "^": { "terrain": "rock" }
+  "^": { "terrain": "rock", "source": "stone_deposit" }
 }

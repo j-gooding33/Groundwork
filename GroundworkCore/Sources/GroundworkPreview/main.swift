@@ -358,3 +358,42 @@ do {
     let view = Camera(mapWidth: 64, mapHeight: 64, focus: s, zoom: 2)
     try shot("13_roads_and_trucks", session: made, camera: view)
 }
+
+// MARK: Power and water
+
+do {
+    let made = try GameSession.newWorld(content: content, options: WorldOptions(name: "Water", seed: 77, water: .lots))
+    let map = made.world.map
+    // Find a stretch of shore near the start for a wheel and a pump.
+    let s = made.startPoint!
+    var wheelAt: GridPoint?
+    search: for r in 0...20 { for dy in -r...r { for dx in -r...r where max(abs(dx), abs(dy)) == r {
+        let p = GridPoint(s.x + dx, s.y + dy)
+        if made.place("waterwheel", at: p) == .ok { wheelAt = p; break search }
+    } } }
+    _ = map
+    if let w = wheelAt {
+        let wheel = made.world.building(at: w)!.id
+        made.stock(wheel, with: "plank", count: 12)
+        var pumpAt: GridPoint?
+        pumpSearch: for r in 1...6 { for dy in -r...r { for dx in -r...r where max(abs(dx), abs(dy)) == r {
+            let p = GridPoint(w.x + dx, w.y + dy)
+            if made.place("water_pump", at: p) == .ok { pumpAt = p; break pumpSearch }
+        } } }
+        if let p = pumpAt {
+            made.stock(made.world.building(at: p)!.id, with: "brick", count: 8)
+            var towerAt: GridPoint?
+            towerSearch: for r in 4...12 { for dy in -r...r { for dx in -r...r where max(abs(dx), abs(dy)) == r {
+                let t = GridPoint(p.x + dx, p.y + dy)
+                if made.place("water_tower", at: t) == .ok { towerAt = t; break towerSearch }
+            } } }
+            if let t = towerAt {
+                made.stock(made.world.building(at: t)!.id, with: "stone", count: 30)
+                print("pipe: \(made.layPipe(from: p, to: GridPoint(t.x - 1, t.y)))")
+            }
+        }
+        made.advance(ticks: 130)
+        let view = Camera(mapWidth: 64, mapHeight: 64, focus: w, zoom: 2)
+        try shot("14_power_and_water", session: made, camera: view)
+    }
+}

@@ -9,10 +9,14 @@ public enum Simulation {
     public static func step(_ world: inout World, content: ContentDatabase, events: inout [GameEvent]) {
         world.tick += 1
         regrowSources(&world, content: content)
+        Utilities.updatePower(&world, content: content)
         Production.step(&world, content: content, events: &events)
         BeltSystem.step(&world, content: content, events: &events)
         Roads.step(&world, content: content, events: &events)
         DemandRule.step(&world, content: content, events: &events)
+        if world.tick % UInt64(content.rules.rateBucketTicks) == 0 {
+            Utilities.updateWater(&world, content: content, events: &events)
+        }
         updateStatuses(&world, content: content, events: &events)
     }
 

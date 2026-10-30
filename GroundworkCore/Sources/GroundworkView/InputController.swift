@@ -9,6 +9,8 @@ public enum Tool: Equatable, Sendable {
     case belt
     /// Drag to lay road.
     case road
+    /// Drag to lay water pipe.
+    case pipe
     /// Tap where a truck loads, then where it delivers.
     case route
     case demolish
@@ -53,7 +55,7 @@ public struct InputController: Sendable {
     public init() {}
 
     /// Whether a one-finger drag should lay something instead of panning.
-    public var dragDraws: Bool { tool == .belt || tool == .road }
+    public var dragDraws: Bool { tool == .belt || tool == .road || tool == .pipe }
 
     /// Tapping a palette button: selects the tool, or puts it down if it was
     /// already selected.
@@ -119,6 +121,9 @@ public struct InputController: Sendable {
         case .road:
             return Feedback(toast: "Drag to lay a road")
 
+        case .pipe:
+            return Feedback(toast: "Drag to lay a pipe")
+
         case .route:
             guard let building = session.world.building(at: Self.snap(tile, session: session)) else {
                 return Feedback(toast: "Tap a building next to a road")
@@ -146,6 +151,9 @@ public struct InputController: Sendable {
             }
             if session.world.hasRoad(tile) {
                 return result(session.removeRoad(at: tile), success: .light)
+            }
+            if session.world.hasPipe(tile) {
+                return result(session.removePipe(at: tile), success: .light)
             }
             return .none
 
@@ -197,9 +205,9 @@ public struct InputController: Sendable {
     // MARK: Belt drags
 
     public mutating func dragBegan(_ tile: GridPoint, session: GameSession) {
-        if tool == .road {
+        if tool == .road || tool == .pipe {
             dragStart = tile
-            ghost = session.previewRoad(from: tile, to: tile) ?? []
+            ghost = preview(from: tile, to: tile, session: session)
             return
         }
         guard tool == .belt else { return }
@@ -209,8 +217,8 @@ public struct InputController: Sendable {
     }
 
     public mutating func dragMoved(_ tile: GridPoint, session: GameSession) {
-        if tool == .road, let start = dragStart {
-            ghost = session.previewRoad(from: start, to: tile) ?? []
+        if tool == .road || tool == .pipe, let start = dragStart {
+            ghost = preview(from: start, to: tile, session: session)
             return
         }
         guard tool == .belt, let start = dragStart else { return }
@@ -218,11 +226,13 @@ public struct InputController: Sendable {
     }
 
     public mutating func dragEnded(_ tile: GridPoint, session: GameSession) -> Feedback {
-        if tool == .road, let start = dragStart {
+        if tool == .road || tool == .pipe, let start = dragStart {
             dragStart = nil
             ghost = []
-            guard start != tile else { return Feedback(toast: "Drag to lay a road") }
-            return result(session.layRoad(from: start, to: tile), success: .light)
+            let road = tool == .road
+            guard start != tile else { return Feedback(toast: road ? "Drag to lay a road" : "Drag to lay a pipe") }
+            return result(road ? session.layRoad(from: start, to: tile) : session.layPipe(from: start, to: tile),
+                          success: .light)
         }
         guard tool == .belt, let start = dragStart else { return .none }
         dragStart = nil
@@ -230,6 +240,10 @@ public struct InputController: Sendable {
         let end = Self.snap(tile, session: session)
         guard start != end else { return Feedback(toast: "Drag from a building to lay a belt") }
         return layBelt(from: start, to: end, session: session)
+    }
+
+    private func preview(from: GridPoint, to: GridPoint, session: GameSession) -> [GridPoint] {
+        (tool == .road ? session.previewRoad(from: from, to: to) : session.previewPipe(from: from, to: to)) ?? []
     }
 
     private mutating func layBelt(from start: GridPoint, to end: GridPoint, session: GameSession) -> Feedback {

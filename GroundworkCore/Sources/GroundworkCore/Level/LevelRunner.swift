@@ -164,6 +164,8 @@ enum LevelRunner {
             return ["ui:road"]
         case .truckRouteSet:
             return ["ui:truck"]
+        case .pipeLaid:
+            return ["ui:pipe"]
         case let .itemDelivered(id, item, via):
             var keys = [TutorialCondition.delivered(item, qualifier: nil).key,
                         TutorialCondition.delivered(item, qualifier: via == .hand ? "hand" : via == .truck ? "truck" : "belt").key]
@@ -189,7 +191,9 @@ enum LevelRunner {
             return world.buildings.filter { $0.type == type && $0.isBuilt }.count >= n
         case let .linked(from, to):
             return isLinked(from, to, world: world, content: content)
-        case .rate, .stored:
+        case let .powered(type):
+            return world.buildings.contains { $0.type == type && world.isPowered($0.id) }
+        case .rate, .stored, .watered:
             return amount(of: condition, world: world, content: content).map { $0.current >= $0.target } ?? false
         case let .slow(type):
             return world.buildings.contains { b in
@@ -234,6 +238,8 @@ enum LevelRunner {
             let held = world.buildings.filter { content.building($0.type)?.kind == .storage }
                 .reduce(0) { $0 + $1.input.count(of: item) }
             return (held, n)
+        case let .watered(n):
+            return (world.watered.count, n)
         default:
             return nil
         }

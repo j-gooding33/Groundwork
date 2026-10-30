@@ -1,0 +1,19 @@
+size: 16x16
+variants: 2
+---
+................
+................
+....KKKKKKKK....
+...KzzzzzzzzK...
+..KzAAzyyzAAzK..
+..KzyyyyyyyyzK..
+..KyyxxxxxxyyK..
+..KyxjjjjjjxyK..
+..KyxjkkkkjxyK..
+..KyxjkkkkjxyK..
+..KyxjjjjjjxyK..
+..KyyxxxxxxyyK..
+..KzyyyyyyyyzK..
+...KKKKKKKKKK.u.
+.............uu.
+................

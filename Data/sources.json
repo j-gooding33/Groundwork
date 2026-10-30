@@ -1,4 +1,5 @@
 [
   {"id": "clay_deposit", "name": "Clay deposit", "item": "clay", "startingAmount": 200, "regrowPerMinute": 0, "description": "Soft clay in the ground. Dig it with a Clay Pit."},
-  {"id": "forest", "name": "Forest", "item": "log", "startingAmount": 120, "regrowPerMinute": 6, "description": "Trees that slowly grow back. Cut them with a Lumber Camp."}
+  {"id": "forest", "name": "Forest", "item": "log", "startingAmount": 120, "regrowPerMinute": 6, "description": "Trees that slowly grow back. Cut them with a Lumber Camp."},
+  {"id": "stone_deposit", "name": "Rock", "item": "stone", "startingAmount": 400, "regrowPerMinute": 0, "description": "Grey rock. Cut stone from it with a Quarry."}
 ]

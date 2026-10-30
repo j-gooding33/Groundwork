@@ -36,7 +36,29 @@ enum Roads {
     /// The cheapest route over free land (or existing road) between two tiles,
     /// straight runs preferred. The same drag always gives the same road.
     static func plan(from: GridPoint, to: GridPoint, world: World) -> [GridPoint]? {
-        func passable(_ p: GridPoint) -> Bool { world.isFree(p) || world.hasRoad(p) }
+        plan(from: from, to: to, world: world, passable: { world.isFree($0) || world.hasRoad($0) },
+             existing: world.hasRoad)
+    }
+
+    /// The same search for any network laid by dragging: `passable` says where
+    /// it may go, `existing` where it already is (cheaper, so new joins old).
+    static func plan(from start: GridPoint, to end: GridPoint, world: World, passable: (GridPoint) -> Bool,
+                     existing: (GridPoint) -> Bool) -> [GridPoint]? {
+        // Dragging from (or to) a building means the tile beside it nearest the other end.
+        func endpoint(_ p: GridPoint, toward q: GridPoint) -> GridPoint {
+            guard !passable(p), let b = world.building(at: p) else { return p }
+            func distance(_ n: GridPoint) -> Int { abs(n.x - q.x) + abs(n.y - q.y) }
+            var best: GridPoint?
+            for tile in world.footprintTiles(of: b) {
+                for n in Direction.allCases.map({ tile.moved($0) }) where passable(n) && world.building(at: n)?.id != b.id {
+                    if let current = best, (distance(current), current) <= (distance(n), n) { continue }
+                    best = n
+                }
+            }
+            return best ?? p
+        }
+        let from = endpoint(start, toward: end)
+        let to = endpoint(end, toward: from)
         guard passable(from), passable(to) else { return nil }
         let w = world.map.width, h = world.map.height
         let directions = Direction.allCases
@@ -61,7 +83,7 @@ enum Roads {
                 let n = p.moved(direction)
                 guard n.x >= 0, n.y >= 0, n.x < w, n.y < h, passable(n) else { continue }
                 // Existing road is cheaper, so new roads join old ones.
-                let step = (world.hasRoad(n) ? 6 : 10) + (d == heading || p == from ? 0 : 4)
+                let step = (existing(n) ? 6 : 10) + (d == heading || p == from ? 0 : 4)
                 let ns = state(n, d)
                 if c + step < cost[ns] {
                     cost[ns] = c + step
@@ -301,4 +323,16 @@ extension World {
     }
 
     public func truck(_ id: EntityID) -> Truck? { trucks.first { $0.id == id } }
+
+    /// Every tile a building covers.
+    func footprintTiles(of building: Building) -> [GridPoint] {
+        var tiles: [GridPoint] = []
+        for y in max(0, building.origin.y - 1)...min(map.height - 1, building.origin.y + 4) {
+            for x in max(0, building.origin.x - 1)...min(map.width - 1, building.origin.x + 4) {
+                let p = GridPoint(x, y)
+                if self.building(at: p)?.id == building.id { tiles.append(p) }
+            }
+        }
+        return tiles
+    }
 }

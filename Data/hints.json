@@ -15,5 +15,10 @@
   {"id": "h_undo", "show": "placed:sawmill", "done": "ui:undo", "text": "Put something in the wrong place?\nUndo is free."},
   {"id": "h_speed", "show": "count:cottage:2", "done": "ui:speed", "text": "Waiting on cottages? The speed button\nmakes time run faster."},
   {"id": "h_crate", "show": "count:cottage:3", "done": "placed:storage_crate", "text": "A Storage Crate holds spare items and\npasses them on when belted out."},
-  {"id": "h_demolish", "show": "count:cottage:4", "done": "ui:demolish", "text": "Demolish takes a building down to make\nroom. Your chain, your rules."}
+  {"id": "h_demolish", "show": "count:cottage:4", "done": "ui:demolish", "text": "Demolish takes a building down to make\nroom. Your chain, your rules."},
+  {"id": "h_quarry", "show": "count:cottage:5", "done": "placed:quarry", "text": "Grey rock holds stone. A Quarry cuts it,\nfor wells and water towers."},
+  {"id": "h_wheel", "show": "placed:quarry", "done": "placed:waterwheel", "text": "A Waterwheel beside water powers up to 4\nmachines close by. Belt 12 planks into it."},
+  {"id": "h_pump", "show": "placed:waterwheel", "done": "placed:water_pump", "text": "A Water Pump next to the wheel lifts water.\nIt needs 8 bricks to finish."},
+  {"id": "h_pipe", "show": "placed:water_pump", "done": "ui:pipe", "text": "Pick Pipe and drag from the pump. Pipes\nrun under roads and belts."},
+  {"id": "h_tower", "show": "ui:pipe", "done": "placed:water_tower", "text": "End the pipe at a Water Tower: homes\naround it get water. Wells help nearby."}
 ]

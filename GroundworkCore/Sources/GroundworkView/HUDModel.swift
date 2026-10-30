@@ -157,6 +157,8 @@ public struct HUDModel: Equatable, Sendable {
         if world.unlocked == nil {
             palette.append(PaletteEntry(tool: .road, title: "Road", sprite: "road_ew",
                                         description: Self.roadDescription, isSelected: input.tool == .road, badge: nil))
+            palette.append(PaletteEntry(tool: .pipe, title: "Pipe", sprite: "pipe_ew",
+                                        description: Self.pipeDescription, isSelected: input.tool == .pipe, badge: nil))
             palette.append(PaletteEntry(tool: .route, title: "Truck", sprite: "vehicle_truck_h",
                                         description: Self.truckDescription, isSelected: input.tool == .route, badge: nil))
         }
@@ -206,6 +208,7 @@ public struct HUDModel: Equatable, Sendable {
 
     public static let beltDescription = "Carries items. Drag from one building to another."
     public static let roadDescription = "Drag to lay road. Trucks drive on it between buildings."
+    public static let pipeDescription = "Drag to lay pipe. Carries water from pumps to towers and homes."
     public static let truckDescription = "Tap where it loads, then where it delivers. Both need a road."
 
     /// Ticks a machine must wait for an input (or a used-up source) before
@@ -242,6 +245,34 @@ public struct HUDModel: Equatable, Sendable {
             let name = other.flatMap { content.building($0.type)?.name } ?? "?"
             lines.append(truck.path.isEmpty ? "Truck to \(name): no road"
                          : outbound ? "Truck takes goods to the \(name)" : "Truck brings goods from the \(name)")
+        }
+        if let def {
+            let world = session.world
+            let working = SceneBuilder.isWorking(building, def, content: content)
+            if def.kind == .construction, !working, def.inputCapacity > 0 {
+                let needs = def.accepts.map(content.plural).joined(separator: " or ")
+                lines.append("Being built: \(building.input.total) of \(def.inputCapacity) \(needs)")
+            }
+            if let out = def.powerOutput, working {
+                let driven = world.buildings.filter { b in
+                    world.isPowered(b.id) && world.tilesBetween(b, building, content: content) <= (def.powerRadius ?? 0)
+                }.count
+                lines.append("Powers up to \(out) machines within \(def.powerRadius ?? 0) tiles (\(min(driven, out)) now)")
+            }
+            if SceneBuilder.needsPower(def, content: content), working {
+                lines.append(world.isPowered(building.id) ? "Powered" : "No power: build a Waterwheel within 6 tiles")
+            }
+            if let out = def.waterOutput, working {
+                lines.append(def.waterRadius == nil ? "Pumps \(out) water a minute into its pipes"
+                             : "Gives \(out) water a minute to homes within \(def.waterRadius ?? 0) tiles")
+            }
+            if let capacity = def.waterStorage, working {
+                lines.append("Holds \(world.storedWater(building.id)) of \(capacity) water")
+            }
+            if def.waterUse != nil, building.isBuilt {
+                lines.append(world.hasWater(building.id) ? "Has running water"
+                             : "No water: pipe it, or build a well or water tower nearby")
+            }
         }
         let io = SceneBuilder.io(of: building.type, content: content)
         if !io.takes.isEmpty { lines.append("Takes " + io.takes.map(content.plural).joined(separator: ", ")) }

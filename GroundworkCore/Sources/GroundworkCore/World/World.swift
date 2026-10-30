@@ -39,6 +39,15 @@ public struct World: Codable, Equatable, Sendable {
     public internal(set) var roads: [GridPoint] = []
     /// Trucks on fixed routes, in id order.
     public internal(set) var trucks: [Truck] = []
+    /// Water pipe tiles, sorted. Pipes run underground, so they can pass under
+    /// roads and belts, but not under buildings or water.
+    public internal(set) var pipes: [GridPoint] = []
+    /// Machines with power right now, sorted (worked out every tick).
+    public internal(set) var powered: [EntityID] = []
+    /// Homes with running water, sorted (worked out every few seconds).
+    public internal(set) var watered: [EntityID] = []
+    /// Water held in each tower.
+    public internal(set) var waterStored: [StoredWater] = []
     /// Goals after the tutorial, and in new worlds.
     public internal(set) var milestones: MilestoneState?
 
@@ -53,7 +62,7 @@ public struct World: Codable, Equatable, Sendable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case tick, rng, map, nextEntityID, buildings, belts, hand, beltsAvailable, unlocked, housingPlots, level, funTest, revealed, options, start, hints, milestones, roads, trucks
+        case tick, rng, map, nextEntityID, buildings, belts, hand, beltsAvailable, unlocked, housingPlots, level, funTest, revealed, options, start, hints, milestones, roads, trucks, pipes, powered, watered, waterStored
     }
 
     public init(from decoder: Decoder) throws {
@@ -77,6 +86,10 @@ public struct World: Codable, Equatable, Sendable {
         milestones = try c.decodeIfPresent(MilestoneState.self, forKey: .milestones)
         roads = try c.decodeIfPresent([GridPoint].self, forKey: .roads) ?? []
         trucks = try c.decodeIfPresent([Truck].self, forKey: .trucks) ?? []
+        pipes = try c.decodeIfPresent([GridPoint].self, forKey: .pipes) ?? []
+        powered = try c.decodeIfPresent([EntityID].self, forKey: .powered) ?? []
+        watered = try c.decodeIfPresent([EntityID].self, forKey: .watered) ?? []
+        waterStored = try c.decodeIfPresent([StoredWater].self, forKey: .waterStored) ?? []
         // The index needs building sizes from content, so the session rebuilds it after loading.
     }
 
@@ -101,6 +114,10 @@ public struct World: Codable, Equatable, Sendable {
         try c.encodeIfPresent(milestones, forKey: .milestones)
         if !roads.isEmpty { try c.encode(roads, forKey: .roads) }
         if !trucks.isEmpty { try c.encode(trucks, forKey: .trucks) }
+        if !pipes.isEmpty { try c.encode(pipes, forKey: .pipes) }
+        if !powered.isEmpty { try c.encode(powered, forKey: .powered) }
+        if !watered.isEmpty { try c.encode(watered, forKey: .watered) }
+        if !waterStored.isEmpty { try c.encode(waterStored, forKey: .waterStored) }
     }
 
     public static func == (lhs: World, rhs: World) -> Bool {
@@ -111,6 +128,8 @@ public struct World: Codable, Equatable, Sendable {
             && lhs.funTest == rhs.funTest && lhs.revealed == rhs.revealed
             && lhs.options == rhs.options && lhs.start == rhs.start && lhs.hints == rhs.hints
             && lhs.milestones == rhs.milestones && lhs.roads == rhs.roads && lhs.trucks == rhs.trucks
+            && lhs.pipes == rhs.pipes && lhs.powered == rhs.powered && lhs.watered == rhs.watered
+            && lhs.waterStored == rhs.waterStored
     }
 
     // MARK: Lookups
@@ -177,6 +196,12 @@ struct WorldIndex: Sendable {
     private var width = 0
     private var height = 0
     private var cells: [Occupant?] = []
+    private var pipeCells: [Bool] = []
+
+    func hasPipe(_ point: GridPoint) -> Bool {
+        guard point.x >= 0, point.y >= 0, point.x < width, point.y < height, !pipeCells.isEmpty else { return false }
+        return pipeCells[point.y * width + point.x]
+    }
 
     func occupant(at point: GridPoint) -> Occupant? {
         guard point.x >= 0, point.y >= 0, point.x < width, point.y < height else { return nil }
@@ -189,6 +214,8 @@ struct WorldIndex: Sendable {
         width = world.map.width
         height = world.map.height
         cells = Array(repeating: nil, count: width * height)
+        pipeCells = Array(repeating: false, count: width * height)
+        for pipe in world.pipes where world.map.contains(pipe) { pipeCells[pipe.y * width + pipe.x] = true }
         for road in world.roads where world.map.contains(road) {
             cells[road.y * width + road.x] = .road
         }

@@ -132,6 +132,8 @@ public struct TutorialStep: Codable, Equatable, Sendable {
 ///   one of the second right now (checked live, so undoing the belt undoes it)
 /// - `rate:<item>:<n>` buildings make at least n of the item a minute, together
 /// - `stored:<item>:<n>` storage holds at least n of the item, together
+/// - `watered:<n>` at least n homes have running water
+/// - `powered:<building>` a building of that type has power
 /// - `wait` nothing: the step finishes after its `waitTicks` (a tip)
 /// - `goal` the level goal is reached
 public enum TutorialCondition: Equatable, Sendable {
@@ -146,6 +148,8 @@ public enum TutorialCondition: Equatable, Sendable {
     case linked(BuildingTypeID, BuildingTypeID)
     case rate(ItemID, Int)
     case stored(ItemID, Int)
+    case watered(Int)
+    case powered(BuildingTypeID)
     case wait
     case goal
 
@@ -169,6 +173,10 @@ public enum TutorialCondition: Equatable, Sendable {
             guard let n = Int(parts[2]), n > 0 else { return nil }
             let item = ItemID(rawValue: parts[1])
             self = parts[0] == "rate" ? .rate(item, n) : .stored(item, n)
+        case ("watered", 2):
+            guard let n = Int(parts[1]), n > 0 else { return nil }
+            self = .watered(n)
+        case ("powered", 2): self = .powered(BuildingTypeID(rawValue: parts[1]))
         case ("wait", 1): self = .wait
         case ("goal", 1): self = .goal
         default: return nil
@@ -190,6 +198,8 @@ public enum TutorialCondition: Equatable, Sendable {
         case let .linked(from, to): return "linked:\(from):\(to)"
         case let .rate(item, n): return "rate:\(item):\(n)"
         case let .stored(item, n): return "stored:\(item):\(n)"
+        case let .watered(n): return "watered:\(n)"
+        case let .powered(type): return "powered:\(type)"
         case .wait: return "wait"
         case .goal: return "goal"
         }

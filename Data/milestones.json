@@ -21,6 +21,24 @@
       "tip": "Lay a Road past a kiln and a yard, pick\nTruck, tap the kiln, then the yard."
     },
     {
+      "id": "m_stone",
+      "text": "Store 30 stone",
+      "when": "stored:stone:30",
+      "tip": "A Quarry on grey rock cuts stone. Belt\nor truck it into a Storage Crate."
+    },
+    {
+      "id": "m_power",
+      "text": "Power a water pump",
+      "when": "powered:water_pump",
+      "tip": "Build a Waterwheel beside water (12 planks),\nthen a Water Pump near it (8 bricks)."
+    },
+    {
+      "id": "m_water",
+      "text": "Give 5 cottages running water",
+      "when": "watered:5",
+      "tip": "Pipe the pump to a Water Tower (30 stone).\nHomes around the tower get water."
+    },
+    {
       "id": "m_bricks_20",
       "text": "Make 20 bricks a minute",
       "when": "rate:brick:20",

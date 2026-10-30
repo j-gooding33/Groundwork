@@ -1,0 +1,10 @@
+size: 8x8
+---
+....KKK.
+...KDDK.
+..KDDK..
+.KDDDDK.
+..KDDK..
+.KDDK...
+.KDK....
+.KK.....

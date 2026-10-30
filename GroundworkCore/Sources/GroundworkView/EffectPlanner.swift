@@ -63,10 +63,14 @@ public struct EffectPlanner: Sendable {
                 sound(.remove)
             case .beltLaid:
                 sound(.belt)
-            case .beltRemoved, .roadRemoved, .truckRouteRemoved:
+            case .beltRemoved, .roadRemoved, .truckRouteRemoved, .pipeRemoved:
                 sound(.remove)
-            case .roadLaid:
+            case .roadLaid, .pipeLaid:
                 sound(.belt)
+            case let .waterChanged(id, true):
+                if let c = center(id) { effects.append(.floatText("Water!", at: c)) }
+            case .waterChanged:
+                break
             case .truckRouteSet:
                 sound(.place)
             case let .itemProduced(id, item, count):

@@ -69,6 +69,8 @@ After that, and in every new world, **milestones** take over the goal bar: share
 
 **Roads and trucks** (Free Build and new worlds): pick **Road** and drag to lay it; pieces join by themselves. Pick **Truck**, tap where it loads (a Depot, kiln, crate…) and then where it delivers; both need a road beside them. Tapping the same pair again removes the truck. Demolish removes road tiles.
 
+**Power and water**: a **Quarry** on grey rock cuts stone. A **Waterwheel** beside water (fill it with 12 planks) powers up to 4 machines within 6 tiles. A **Water Pump** beside water (8 bricks) needs that power and pushes water into **Pipes** (drag like roads; they run under roads and belts). End the pipe at a **Water Tower** (30 stone) and homes around it get water; a **Well** (10 stone) waters a few homes nearby with no pipes. Dry homes show a water-drop icon.
+
 The **Splitter** shares one belt: belt into it, then lay two (or more) belts out; they take turns.
 
 New worlds are generated from their seed. Everything is unlocked, there is no goal, and for the first hour a tip appears when something becomes useful (tap it away; it also goes once you do the thing).

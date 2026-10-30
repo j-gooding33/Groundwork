@@ -94,7 +94,7 @@ enum Production {
         for input in recipe.inputs where building.input.count(of: input.item) < input.count {
             return input.role == .fuel ? .missingFuel(input.item) : .missingInput(input.item)
         }
-        if recipe.power > 0 { return .noPower }
+        if recipe.power > 0, !world.isPowered(building.id) { return .noPower }
         return nil
     }
 

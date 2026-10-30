@@ -264,6 +264,16 @@ public struct ContentDatabase: Sendable {
                 problems.append("worldgen stocks an unknown building or item")
             }
         }
+        // Water is shared out once per rate bucket, so per-minute amounts must
+        // divide into whole units per bucket.
+        let buckets = Simulation.ticksPerMinute / max(rules.rateBucketTicks, 1)
+        for b in buildings {
+            for (name, value) in [("waterUse", b.waterUse), ("waterOutput", b.waterOutput)] {
+                if let value, value <= 0 || value % buckets != 0 {
+                    problems.append("Building '\(b.id)' \(name) must be a positive multiple of \(buckets)")
+                }
+            }
+        }
         for item in items where item.description.isEmpty { problems.append("Item '\(item.id)' needs a description") }
         for source in sources where source.description.isEmpty { problems.append("Source '\(source.id)' needs a description") }
         for building in buildings where building.description.isEmpty {
@@ -400,6 +410,10 @@ public struct ContentDatabase: Sendable {
             for type in [from, to] where building(type) == nil {
                 problems.append("\(name) waits for unknown building '\(type)'")
             }
+        case let .powered(type):
+            if building(type) == nil { problems.append("\(name) waits for unknown building '\(type)'") }
+        case .watered:
+            break
         case let .rate(id, _), let .stored(id, _):
             if item(id) == nil { problems.append("\(name) waits for unknown item '\(id)'") }
         case .ui, .goal:

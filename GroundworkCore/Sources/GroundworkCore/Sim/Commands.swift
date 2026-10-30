@@ -53,6 +53,14 @@ enum Commands {
                 if world.index.occupant(at: point) != nil { return .blocked("Something is already here") }
             }
         }
+        if def.placeOn == .waterside {
+            let beside = (0..<def.height).contains { dy in (0..<def.width).contains { dx in
+                Direction.allCases.contains { d in
+                    world.map.terrain(at: GridPoint(origin.x + dx, origin.y + dy).moved(d))?.isWater == true
+                }
+            } }
+            if !beside { return .blocked("The \(def.name) must stand right beside water") }
+        }
         if def.placeOn == .source {
             let sources = def.recipes.compactMap { content.recipe($0)?.source }
             guard let sourceID = sources.first, let source = content.source(sourceID) else {

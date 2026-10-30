@@ -27,6 +27,7 @@ Phase 0 of the no-Mac track (see "No Mac yet" in docs/DESIGN.md): check the tool
 15. **Tutorial belts must stay built.** A step that teaches a belt finishes on `linked:<from>:<to>`, checked live, rather than on the first item delivered. If the player later undoes or removes a belt an earlier step taught, the tutorial asks for it again before carrying on.
 16. **Tutorial, then your own worlds (owner's call, 2026-10-30).** This changes 10 (no procedural maps). The handcrafted world is the tutorial; it ends when five cottages stand, and the player can keep building there (Free Build) or make a new world. A new world takes a name, a seed (a number, or any text, which is hashed) and Few / Normal / Lots of water, forest and clay. `MapGenerator` builds it from integer value noise, deterministically, and picks a start with open grass and clay and forest close by (`Data/worldgen.json`). Everything is unlocked and belts are unlimited. For the first hour of game time, `Data/hints.json` offers one tip at a time when it becomes useful, and drops it once the player does the thing.
 17. **Splitter and milestones (owner's call, 2026-10-30).** This settles 8: a **Splitter** is a 1x1 storage building holding 2 items; every belt that starts at a building takes turns pulling from it, so a splitter (or a crate) shares its supply evenly. Merging stays side-loading. After the tutorial's five cottages, and from the start of a new world, **milestones** give direction: one goal at a time in the top bar with a tip on how to get there, a banner and celebration when reached, and the town's title growing (Hamlet, Village, Town, Market Town). Goals use the tutorial's conditions plus `rate:<item>:<n>` and `stored:<item>:<n>`.
+18. **Power and water (phase 2).** Waterwheels, pumps, wells and water towers are construction sites: they work once they hold their materials (planks, bricks, stone). A finished waterwheel drives up to 4 machines within 6 tiles, first come in id order. Pumps need power and push water into pipes; pipes run underground (under roads and belts, never under buildings or water) and connect buildings they touch. Water is shared out once per rate bucket in whole units: homes piped directly come first, then homes within a tower's reach on a network with water, then homes near a well. Spare water fills towers. Homes without water show a dry icon; nothing else depends on it until citizens arrive. Rock is now a stone deposit for quarries. Roads and pipes dragged from a building start beside it.
 
 ## Folder layout
 ```
@@ -158,8 +159,8 @@ The owner asked for everything in DESIGN.md plus a government, offices, apartmen
 | Phase | Design levels | What it adds | Status |
 | --- | --- | --- | --- |
 | 1 | 4 (logistics) | Roads (drag to lay, auto-joining pieces), Depot, trucks on fixed routes (tap where to load, then where to deliver), trucks count as supply links for Trace | **Done** |
-| 2 | 2, 4 | Stone and quarry, waterwheel and mechanical power within 6 tiles, water pump, pipes, well, water tower; homes need water | Next |
-| 3 | 5 | Food: wheat field, flour mill, bakery, market stall; soil and compost | |
+| 2 | 2, 4 | Stone and quarry, waterwheel and mechanical power within 6 tiles, water pump, pipes, well, water tower; homes need water | **Done** |
+| 3 | 5 | Food: wheat field, flour mill, bakery, market stall; soil and compost | Next |
 | 4 | 6 | Citizens move in, needs and mood, jobs, walking and cars on roads, money, Town Hall with taxes and laws (policy switches with trade-offs), clinic, pub, park, Policies and Stats tabs | |
 | 5 | 7 | Coal and iron mines, smelter, steam engine, smoke and waste, landfill | |
 | 6 | 8 | Rail and stations, workshop and components (nails, gears), glassworks, terrace rows, freight roads | |

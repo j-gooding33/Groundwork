@@ -131,6 +131,12 @@ public struct SceneBuilder: Sendable {
                 for overlay in edgeOverlays(point, terrain: { Self.drawnTerrain(at: $0, world: world) }) {
                     sprites.append(Sprite(id: "e:\(x),\(y):\(overlay)", name: overlay, x: c.x, y: c.y, z: Layer.edges))
                 }
+                if world.hasPipe(point) {
+                    var pipe = Sprite(id: "p:\(x),\(y)", name: Self.pipePiece(at: point, world: world),
+                                      x: c.x, y: c.y, z: Layer.edges + 0.6)
+                    pipe.alpha = 0.85
+                    sprites.append(pipe)
+                }
                 if world.hasRoad(point) {
                     sprites.append(Sprite(id: "r:\(x),\(y)", name: Self.roadPiece(at: point, world: world),
                                           x: c.x, y: c.y, z: Layer.edges + 0.5))
@@ -251,6 +257,15 @@ public struct SceneBuilder: Sendable {
         return "road_" + (letters.isEmpty ? "o" : String(letters))
     }
 
+    /// The pipe piece for a tile: which sides join more pipe or a building it feeds.
+    public static func pipePiece(at point: GridPoint, world: World) -> String {
+        let letters = zip("nesw", [Direction.north, .east, .south, .west]).compactMap { letter, d -> Character? in
+            let n = point.moved(d)
+            return world.hasPipe(n) || world.building(at: n) != nil ? letter : nil
+        }
+        return "pipe_" + (letters.isEmpty ? "o" : String(letters))
+    }
+
     /// Trucks glide from tile to tile; at either end they wait facing the building.
     func truckSprites(_ world: World, time: RenderTime) -> [Sprite] {
         let ticksPerTile = Double(max(content.rules.truckTicksPerTile, 1))
@@ -366,7 +381,13 @@ public struct SceneBuilder: Sendable {
     /// What a machine's bubble shows, if anything: the item it is missing, or
     /// a glyph for a full output, a used-up source, or running slow.
     public func statusIcon(for building: Building, world: World) -> String? {
-        guard let kind = content.building(building.type)?.kind, kind == .gatherer || kind == .processor else { return nil }
+        guard let def = content.building(building.type) else { return nil }
+        // Homes without water, and finished machines waiting on power.
+        if def.waterUse != nil, building.isBuilt, !world.hasWater(building.id) { return "status_no_water" }
+        if Self.needsPower(def, content: content), Self.isWorking(building, def, content: content),
+           !world.isPowered(building.id) { return "status_no_power" }
+        let kind = def.kind
+        guard kind == .gatherer || kind == .processor else { return nil }
         switch building.status {
         case let .blocked(reason):
             switch reason {
@@ -380,6 +401,15 @@ public struct SceneBuilder: Sendable {
         default:
             return nil
         }
+    }
+
+    static func needsPower(_ def: BuildingDef, content: ContentDatabase) -> Bool {
+        (def.powerUse ?? 0) > 0 || def.recipes.contains { (content.recipe($0)?.power ?? 0) > 0 }
+    }
+
+    /// A construction site works once it is full; anything else once built.
+    static func isWorking(_ b: Building, _ def: BuildingDef, content: ContentDatabase) -> Bool {
+        def.kind == .construction ? b.input.total >= def.inputCapacity : b.isBuilt
     }
 
     private func statusSprites(_ building: Building, def: BuildingDef, center c: ScenePoint, world: World,
@@ -614,7 +644,8 @@ public struct SceneBuilder: Sendable {
             let c = Camera.center(of: point, w: 1, h: 1, mapHeight: mapHeight)
             let next = k + 1 < input.ghost.count ? input.ghost[k + 1] : nil
             let horizontal = next.map { $0.y == point.y } ?? (k > 0 && input.ghost[k - 1].y == point.y)
-            let name = input.tool == .road ? (horizontal ? "road_ew" : "road_ns") : (horizontal ? "belt_h" : "belt_v")
+            let name = input.tool == .road ? (horizontal ? "road_ew" : "road_ns")
+                : input.tool == .pipe ? (horizontal ? "pipe_ew" : "pipe_ns") : (horizontal ? "belt_h" : "belt_v")
             var sprite = Sprite(id: "ghost:\(k)", name: name, x: c.x, y: c.y, z: Layer.overlay)
             sprite.alpha = 0.55
             sprites.append(sprite)
