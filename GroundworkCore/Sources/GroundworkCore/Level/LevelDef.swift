@@ -130,6 +130,8 @@ public struct TutorialStep: Codable, Equatable, Sendable {
 /// - `count:<building>:<n>` there are at least n finished buildings of that type
 /// - `linked:<from>:<to>` a belt runs from a building of the first type into
 ///   one of the second right now (checked live, so undoing the belt undoes it)
+/// - `rate:<item>:<n>` buildings make at least n of the item a minute, together
+/// - `stored:<item>:<n>` storage holds at least n of the item, together
 /// - `wait` nothing: the step finishes after its `waitTicks` (a tip)
 /// - `goal` the level goal is reached
 public enum TutorialCondition: Equatable, Sendable {
@@ -142,6 +144,8 @@ public enum TutorialCondition: Equatable, Sendable {
     case ui(String)
     case count(BuildingTypeID, Int)
     case linked(BuildingTypeID, BuildingTypeID)
+    case rate(ItemID, Int)
+    case stored(ItemID, Int)
     case wait
     case goal
 
@@ -161,6 +165,10 @@ public enum TutorialCondition: Equatable, Sendable {
             self = .count(BuildingTypeID(rawValue: parts[1]), n)
         case ("linked", 3):
             self = .linked(BuildingTypeID(rawValue: parts[1]), BuildingTypeID(rawValue: parts[2]))
+        case ("rate", 3), ("stored", 3):
+            guard let n = Int(parts[2]), n > 0 else { return nil }
+            let item = ItemID(rawValue: parts[1])
+            self = parts[0] == "rate" ? .rate(item, n) : .stored(item, n)
         case ("wait", 1): self = .wait
         case ("goal", 1): self = .goal
         default: return nil
@@ -180,6 +188,8 @@ public enum TutorialCondition: Equatable, Sendable {
         case let .ui(name): return "ui:\(name)"
         case let .count(type, n): return "count:\(type):\(n)"
         case let .linked(from, to): return "linked:\(from):\(to)"
+        case let .rate(item, n): return "rate:\(item):\(n)"
+        case let .stored(item, n): return "stored:\(item):\(n)"
         case .wait: return "wait"
         case .goal: return "goal"
         }

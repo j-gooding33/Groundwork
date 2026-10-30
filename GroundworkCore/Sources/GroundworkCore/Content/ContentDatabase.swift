@@ -33,6 +33,8 @@ public struct ContentDatabase: Sendable {
     public let worldGen: WorldGenDef?
     /// Tips for a generated world's first hour, in priority order.
     public let hints: [HintDef]
+    /// Goals after the tutorial and in new worlds, in order.
+    public let milestones: MilestoneList?
 
     private let itemIndex: [ItemID: Int]
     private let sourceIndex: [SourceID: Int]
@@ -43,7 +45,8 @@ public struct ContentDatabase: Sendable {
     public init(items: [ItemDef], sources: [SourceDef], buildings: [BuildingDef],
                 recipes: [RecipeDef], rules: GameRules, legend: [String: LegendEntry],
                 levels: [LevelDef] = [], tutorials: [String: [TutorialStep]] = [:],
-                maps: [String: String] = [:], worldGen: WorldGenDef? = nil, hints: [HintDef] = []) throws {
+                maps: [String: String] = [:], worldGen: WorldGenDef? = nil, hints: [HintDef] = [],
+                milestones: MilestoneList? = nil) throws {
         self.items = items.sorted { $0.id < $1.id }
         self.sources = sources.sorted { $0.id < $1.id }
         self.buildings = buildings.sorted { $0.id < $1.id }
@@ -55,6 +58,7 @@ public struct ContentDatabase: Sendable {
         self.maps = maps
         self.worldGen = worldGen
         self.hints = hints
+        self.milestones = milestones
         itemIndex = Self.index(self.items.map(\.id))
         sourceIndex = Self.index(self.sources.map(\.id))
         buildingIndex = Self.index(self.buildings.map(\.id))
@@ -87,7 +91,8 @@ public struct ContentDatabase: Sendable {
             tutorials: decode("tutorial.json", in: dataDirectory),
             maps: maps,
             worldGen: decode("worldgen.json", in: dataDirectory),
-            hints: decode("hints.json", in: dataDirectory)
+            hints: decode("hints.json", in: dataDirectory),
+            milestones: decode("milestones.json", in: dataDirectory)
         )
     }
 
@@ -237,6 +242,17 @@ public struct ContentDatabase: Sendable {
                 problems.append("Hint '\(hint.id)' text must be at most 2 lines of \(Self.maxTutorialLineLength) characters")
             }
         }
+        for milestone in milestones?.milestones ?? [] {
+            guard let condition = TutorialCondition(milestone.when) else {
+                problems.append("Milestone '\(milestone.id)' has an unreadable condition '\(milestone.when)'")
+                continue
+            }
+            if case .wait = condition { problems.append("Milestone '\(milestone.id)' must wait for something") }
+            let lines = milestone.tip.split(separator: "\n", omittingEmptySubsequences: false)
+            if lines.count > 2 || lines.contains(where: { $0.count > Self.maxTutorialLineLength }) {
+                problems.append("Milestone '\(milestone.id)' tip must be at most 2 lines of \(Self.maxTutorialLineLength) characters")
+            }
+        }
         if let gen = worldGen {
             for coverage in [gen.water, gen.forest, gen.clay] {
                 for v in [coverage.few, coverage.normal, coverage.lots] where v < 0 || v > 600 {
@@ -384,6 +400,8 @@ public struct ContentDatabase: Sendable {
             for type in [from, to] where building(type) == nil {
                 problems.append("\(name) waits for unknown building '\(type)'")
             }
+        case let .rate(id, _), let .stored(id, _):
+            if item(id) == nil { problems.append("\(name) waits for unknown item '\(id)'") }
         case .ui, .goal:
             break
         case .wait:

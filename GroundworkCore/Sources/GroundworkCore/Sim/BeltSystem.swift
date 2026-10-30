@@ -6,6 +6,12 @@ enum BeltSystem {
         guard world.tick % UInt64(rules.beltTicksPerSlot) == 0 else { return }
         let last = rules.beltSlotsPerTile - 1
 
+        // Belts that start at each building, so they can take turns.
+        var outlets: [EntityID: [Int]] = [:]
+        for i in world.belts.indices {
+            if let source = world.belts[i].pullsFrom { outlets[source, default: []].append(i) }
+        }
+
         // Downstream tiles come first, so a slot freed at the front of a line
         // is filled from behind in the same tick and the line moves as one.
         for i in world.belts.indices {
@@ -23,11 +29,20 @@ enum BeltSystem {
 
             if world.belts[i].slots[0] == nil, let sourceID = tile.pullsFrom,
                let b = world.buildingIndex(sourceID), let def = content.building(world.buildings[b].type),
+               isTurn(of: i, at: b, outlets: outlets[sourceID] ?? [], world: world),
                let item = Production.takeable(world.buildings[b], def: def)?.stacks.first?.item,
                Production.take(item, 1, from: b, world: &world, def: def) == 1 {
                 world.belts[i].slots[0] = item
+                world.buildings[b].lastPullBelt = tile.point
             }
         }
+    }
+
+    /// A belt waits a turn if it took the last item and another belt from the
+    /// same building has room now, so outputs alternate.
+    private static func isTurn(of belt: Int, at building: Int, outlets: [Int], world: World) -> Bool {
+        guard outlets.count > 1, world.buildings[building].lastPullBelt == world.belts[belt].point else { return true }
+        return !outlets.contains { $0 != belt && world.belts[$0].slots[0] == nil }
     }
 
     /// Passes the item at a tile's exit to whatever it points into. Returns true if it moved.

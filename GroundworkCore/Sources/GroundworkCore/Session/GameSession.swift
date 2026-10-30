@@ -78,6 +78,7 @@ public final class GameSession {
         session.world.options = options
         session.world.start = result.start
         session.world.hints = HintState()
+        session.world.milestones = MilestoneState()
         session.afterEvents(since: 0, byPlayer: false, succeeded: true)
         return session
     }
@@ -112,6 +113,9 @@ public final class GameSession {
         if world.hints != nil {
             stockFirstPlacements(events[mark...])
             HintRunner.update(&world, content: content, newEvents: events[mark...])
+        }
+        if world.milestones != nil {
+            MilestoneRunner.update(&world, content: content, events: &events)
         }
         world.funTest.record(events[mark...], tick: world.tick, byPlayer: byPlayer, succeeded: succeeded)
     }
@@ -297,7 +301,22 @@ public final class GameSession {
     /// The guided step showing now, or nil when there is none or the tutorial is done.
     public var tutorialStep: TutorialStep? { LevelRunner.currentStep(world: world, content: content) }
 
-    public var goal: GoalProgress? { LevelRunner.goalProgress(world: world, content: content) }
+    /// The chapter's goal, or after the tutorial (and in new worlds) the next milestone.
+    public var goal: GoalProgress? {
+        LevelRunner.goalProgress(world: world, content: content) ?? MilestoneRunner.progress(world: world, content: content)
+    }
+
+    /// The next milestone, if milestones are running.
+    public var milestone: MilestoneDef? { MilestoneRunner.current(world: world, content: content) }
+
+    /// What the town has grown into: "Hamlet", "Village", "Town".
+    public var townTitle: String? { MilestoneRunner.title(world: world, content: content) }
+
+    /// The tip for the current milestone, until the player puts it away.
+    public var milestoneTip: MilestoneDef? {
+        guard let m = milestone, !(world.milestones?.tipsDismissed.contains(m.id) ?? true) else { return nil }
+        return m
+    }
 
     public var isGoalReached: Bool { world.level?.goalReached ?? false }
     /// A belt the tutorial already taught that has since been removed, so the
@@ -335,7 +354,13 @@ public final class GameSession {
     }
 
     /// The player tapped the hint away.
-    public func dismissHint() { HintRunner.dismiss(world: &world) }
+    public func dismissHint() {
+        if world.hints?.current != nil {
+            HintRunner.dismiss(world: &world)
+        } else if let m = milestone {
+            world.milestones?.tipsDismissed.append(m.id)
+        }
+    }
 
     /// Where the camera should open: the tutorial's spot or a generated world's start.
     public var startPoint: GridPoint? { level?.focus ?? world.start }

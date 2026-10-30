@@ -23,4 +23,6 @@ public enum GameEvent: Equatable, Sendable {
     case chapterStarted(Int)
     /// The chapter's goal is met; the next one begins when the player continues.
     case chapterComplete(Int)
+    /// A milestone after the tutorial was reached.
+    case milestoneReached(String)
 }

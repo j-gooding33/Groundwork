@@ -59,6 +59,9 @@ public struct Building: Codable, Equatable, Sendable {
     /// Ticks left before a yard-built home is finished.
     public internal(set) var buildRemaining = 0
     public internal(set) var rates: RateTracker
+    /// The belt that last took an item from here. When several belts start at
+    /// one building (a splitter), they take turns, so each gets a fair share.
+    public internal(set) var lastPullBelt: GridPoint?
 
     init(id: EntityID, type: BuildingTypeID, origin: GridPoint, facing: Direction, tick: UInt64, rules: GameRules) {
         self.id = id

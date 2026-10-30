@@ -21,6 +21,8 @@ public enum Effect: Equatable, Sendable {
     /// A warm light sweep and colour spreading across the map.
     case celebrate
     case musicLayers(Int)
+    /// A line across the top for a moment: "Milestone: Grow to 10 cottages".
+    case banner(String)
 }
 
 /// Decides which effects to play for a batch of game events. Restraint is
@@ -94,6 +96,14 @@ public struct EffectPlanner: Sendable {
                 sound(.tutorial)
             case .tutorialFinished, .chapterStarted, .chapterComplete:
                 break
+            case let .milestoneReached(id):
+                let def = session.content.milestones?.milestones.first { $0.id == id }
+                var text = def.map { "Milestone: \($0.text)" } ?? "Milestone reached"
+                if let title = def?.title { text += ". Now a \(title)!" }
+                effects.append(.banner(text))
+                effects.append(.haptic(.double))
+                effects.append(.celebrate)
+                sound(.goal)
             case .goalReached:
                 effects.append(.haptic(.double))
                 effects.append(.celebrate)

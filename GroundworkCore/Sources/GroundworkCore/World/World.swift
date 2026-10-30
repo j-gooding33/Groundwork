@@ -35,6 +35,8 @@ public struct World: Codable, Equatable, Sendable {
     public internal(set) var start: GridPoint?
     /// Hints offered in a generated world's first hour.
     public internal(set) var hints: HintState?
+    /// Goals after the tutorial, and in new worlds.
+    public internal(set) var milestones: MilestoneState?
 
     /// Tile lookups, rebuilt from the fields above. Never saved.
     var index = WorldIndex()
@@ -47,7 +49,7 @@ public struct World: Codable, Equatable, Sendable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case tick, rng, map, nextEntityID, buildings, belts, hand, beltsAvailable, unlocked, housingPlots, level, funTest, revealed, options, start, hints
+        case tick, rng, map, nextEntityID, buildings, belts, hand, beltsAvailable, unlocked, housingPlots, level, funTest, revealed, options, start, hints, milestones
     }
 
     public init(from decoder: Decoder) throws {
@@ -68,6 +70,7 @@ public struct World: Codable, Equatable, Sendable {
         options = try c.decodeIfPresent(WorldOptions.self, forKey: .options)
         start = try c.decodeIfPresent(GridPoint.self, forKey: .start)
         hints = try c.decodeIfPresent(HintState.self, forKey: .hints)
+        milestones = try c.decodeIfPresent(MilestoneState.self, forKey: .milestones)
         // The index needs building sizes from content, so the session rebuilds it after loading.
     }
 
@@ -89,6 +92,7 @@ public struct World: Codable, Equatable, Sendable {
         try c.encodeIfPresent(options, forKey: .options)
         try c.encodeIfPresent(start, forKey: .start)
         try c.encodeIfPresent(hints, forKey: .hints)
+        try c.encodeIfPresent(milestones, forKey: .milestones)
     }
 
     public static func == (lhs: World, rhs: World) -> Bool {
@@ -98,6 +102,7 @@ public struct World: Codable, Equatable, Sendable {
             && lhs.unlocked == rhs.unlocked && lhs.housingPlots == rhs.housingPlots && lhs.level == rhs.level
             && lhs.funTest == rhs.funTest && lhs.revealed == rhs.revealed
             && lhs.options == rhs.options && lhs.start == rhs.start && lhs.hints == rhs.hints
+            && lhs.milestones == rhs.milestones
     }
 
     // MARK: Lookups

@@ -127,7 +127,14 @@ public struct HUDModel: Equatable, Sendable {
                                           next: nil, tutorialComplete: true)
             }
         }
-        if let hint = session.hint { tip = Tip(id: hint.id, text: hint.text) }
+        if let hint = session.hint {
+            tip = Tip(id: hint.id, text: hint.text)
+        } else if let milestone = session.milestoneTip, session.tutorialStep == nil {
+            tip = Tip(id: milestone.id, text: milestone.tip)
+        }
+        if let town = session.townTitle {
+            chapterTitle = [session.world.options?.name, town].compactMap { $0 }.joined(separator: " · ")
+        }
         canUndo = session.canUndo
         paused = session.isPausedByTutorial
 

@@ -26,10 +26,10 @@ final class NewWorldViewTests: XCTestCase {
                                                options: WorldOptions(name: "A", seed: 3))
         let hud = HUDModel(session: session, input: InputController())
         XCTAssertEqual(hud.tip?.id, "h_clay")
-        XCTAssertNil(hud.goal)
-        XCTAssertNil(hud.chapterTitle)
+        XCTAssertEqual(hud.goal?.text, "Share one belt with a Splitter", "The first milestone")
+        XCTAssertEqual(hud.chapterTitle, "A · Hamlet")
         XCTAssertEqual(hud.tabs, ModeTab.allCases)
-        XCTAssertEqual(Set(hud.palette.map(\.title)).count, 8, "Every building the player places, plus belts")
+        XCTAssertEqual(Set(hud.palette.map(\.title)).count, 9, "Every building the player places, plus belts")
     }
 
     func testTheTutorialEndsAfterChapterThree() throws {
@@ -41,6 +41,8 @@ final class NewWorldViewTests: XCTestCase {
         XCTAssertEqual(card.heading, "Tutorial complete!")
         XCTAssertNil(card.next)
         XCTAssertTrue(town.beginNextChapter(), "Keep building: the whole map opens")
-        XCTAssertNil(HUDModel(session: town, input: InputController()).goal, "No goal bar left behind")
+        let hud = HUDModel(session: town, input: InputController())
+        XCTAssertEqual(hud.goal?.text, "Share one belt with a Splitter", "The five-cottage bar gives way to milestones")
+        XCTAssertNil(hud.chapterCard)
     }
 }

@@ -7,7 +7,7 @@ final class ContentLoadingTests: XCTestCase {
         XCTAssertEqual(content.items.map(\.id), ["brick", "clay", "log", "plank"])
         XCTAssertEqual(content.recipes.count, 4)
         XCTAssertEqual(content.sources.count, 2)
-        XCTAssertEqual(content.buildings.count, 8)
+        XCTAssertEqual(content.buildings.count, 9)
     }
 
     func testEverythingHasAShortDescription() throws {

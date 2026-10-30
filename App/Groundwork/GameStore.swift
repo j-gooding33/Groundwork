@@ -263,6 +263,7 @@ final class GameStore {
             case let .haptic(h): feel.haptic(h)
             case let .sound(cue): feel.play(cue)
             case let .musicLayers(n): feel.musicLayers = n
+            case let .banner(text): show(text)
             default: pendingEffects.append(effect)
             }
         }

@@ -68,6 +68,7 @@ enum LevelRunner {
         world.level?.step = 0
         world.level?.seen = []
         world.level?.goalReached = false
+        if chapter.goal == nil, world.milestones == nil { world.milestones = MilestoneState() }
         events.append(.chapterStarted(index))
         if let step = steps(chapter, content).first {
             enter(step, world: &world, events: &events)
@@ -184,6 +185,8 @@ enum LevelRunner {
             return world.buildings.filter { $0.type == type && $0.isBuilt }.count >= n
         case let .linked(from, to):
             return isLinked(from, to, world: world, content: content)
+        case .rate, .stored:
+            return amount(of: condition, world: world, content: content).map { $0.current >= $0.target } ?? false
         case let .slow(type):
             return world.buildings.contains { b in
                 b.type == type && Trace.run(.building(b.id), world: world, content: content).root.state == .slow
@@ -212,6 +215,24 @@ enum LevelRunner {
         guard let state = world.level, let condition = TutorialCondition(step.when) else { return false }
         if let wait = step.waitTicks, world.tick < (state.stepStartedTick ?? 0) + UInt64(wait) { return false }
         return holds(condition, seen: state.hasSeen, world: world, content: content)
+    }
+
+    /// How far along a counting condition is: buildings, a rate, or a store.
+    static func amount(of condition: TutorialCondition, world: World,
+                       content: ContentDatabase) -> (current: Int, target: Int)? {
+        switch condition {
+        case let .count(type, n):
+            return (world.buildings.filter { $0.type == type && $0.isBuilt }.count, n)
+        case let .rate(item, n):
+            let made = world.buildings.reduce(0) { $0 + $1.rates.perMinute(.made, item, tick: world.tick, rules: content.rules) }
+            return (made, n)
+        case let .stored(item, n):
+            let held = world.buildings.filter { content.building($0.type)?.kind == .storage }
+                .reduce(0) { $0 + $1.input.count(of: item) }
+            return (held, n)
+        default:
+            return nil
+        }
     }
 
     /// True if a belt runs from a building of type `from` into one of type `to`.

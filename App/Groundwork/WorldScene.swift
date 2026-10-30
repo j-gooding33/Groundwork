@@ -260,7 +260,7 @@ final class WorldScene: SKScene {
             flash.zPosition = CGFloat(Layer.effects + 2)
             cameraNode.addChild(flash)
             flash.run(.sequence([.fadeAlpha(to: 0.45, duration: 0.25), .fadeOut(withDuration: 1.2), .removeFromParent()]))
-        case .haptic, .sound, .musicLayers:
+        case .haptic, .sound, .musicLayers, .banner:
             break   // handled by the store's Feel
         }
     }

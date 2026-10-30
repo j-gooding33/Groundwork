@@ -43,7 +43,7 @@ final class NewWorldTests: XCTestCase {
         let session = try world(5)
         XCTAssertNil(session.world.unlocked, "Every building")
         XCTAssertNil(session.world.beltsAvailable, "No belt limit")
-        XCTAssertNil(session.goal)
+        XCTAssertEqual(session.goal?.text, "Share one belt with a Splitter", "Milestones give it a direction")
         XCTAssertNil(session.tutorialStep)
         let loaded = try GameSession.load(try session.save(), content: session.content)
         XCTAssertEqual(loaded.world.options?.name, "Test")
