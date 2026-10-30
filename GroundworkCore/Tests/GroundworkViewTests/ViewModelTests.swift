@@ -170,7 +170,8 @@ final class ViewModelTests: XCTestCase {
         session.stock(foundation.id, with: "brick", count: 8)
         session.advance(ticks: 1)
         let card = try XCTUnwrap(HUDModel(session: session, input: InputController()).chapterCard)
-        XCTAssertEqual(card, ChapterCard(heading: "Chapter 1 complete", name: "Bare Ground", next: "Next: First Belts"))
+        XCTAssertEqual(card, ChapterCard(heading: "Chapter 1 complete", name: "Bare Ground", next: "Next: First Belts",
+                                    tutorialComplete: false))
 
         XCTAssertTrue(session.beginNextChapter())
         let hud = HUDModel(session: session, input: InputController())

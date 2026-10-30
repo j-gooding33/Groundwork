@@ -54,6 +54,17 @@ private struct HUD: View {
                             .transition(.opacity)
                             .id(bubble.text)
                     }
+                } else if let tip = hud.tip {
+                    HStack(spacing: 8) {
+                        Text("TIP").font(.pixel(10)).foregroundStyle(Palette.ember)
+                        Text(tip.text).font(.pixel(12)).multilineTextAlignment(.leading)
+                        Image(systemName: "xmark").font(.system(size: 10))
+                    }
+                    .foregroundStyle(Palette.ink)
+                    .paperCard()
+                    .onTapGesture { store.dismissTip() }
+                    .transition(.opacity)
+                    .id(tip.id)
                 } else if let hint = hud.hint {
                     Text(hint)
                         .font(.pixel(12))
@@ -360,10 +371,13 @@ private struct ChapterCompleteCard: View {
                 Text(next).font(.pixel(12))
             }
             HStack(spacing: 12) {
-                if card.next != nil {
+                if card.tutorialComplete {
+                    TitleButton(title: "Make a new world") { store.finishTutorialForNewWorld() }
+                    TitleButton(title: "Keep building here") { store.continueChapter() }
+                } else {
                     TitleButton(title: "Continue") { store.continueChapter() }
+                    TitleButton(title: "Stay a while") { store.closeCompleteCard() }
                 }
-                TitleButton(title: "Stay a while") { store.closeCompleteCard() }
             }
         }
         .foregroundStyle(Palette.ink)

@@ -29,6 +29,10 @@ public struct ContentDatabase: Sendable {
     public let maps: [String: String]
     /// Map characters, keyed by a one-character string.
     public let legend: [String: LegendEntry]
+    /// Settings for generated worlds; nil in small test databases.
+    public let worldGen: WorldGenDef?
+    /// Tips for a generated world's first hour, in priority order.
+    public let hints: [HintDef]
 
     private let itemIndex: [ItemID: Int]
     private let sourceIndex: [SourceID: Int]
@@ -39,7 +43,7 @@ public struct ContentDatabase: Sendable {
     public init(items: [ItemDef], sources: [SourceDef], buildings: [BuildingDef],
                 recipes: [RecipeDef], rules: GameRules, legend: [String: LegendEntry],
                 levels: [LevelDef] = [], tutorials: [String: [TutorialStep]] = [:],
-                maps: [String: String] = [:]) throws {
+                maps: [String: String] = [:], worldGen: WorldGenDef? = nil, hints: [HintDef] = []) throws {
         self.items = items.sorted { $0.id < $1.id }
         self.sources = sources.sorted { $0.id < $1.id }
         self.buildings = buildings.sorted { $0.id < $1.id }
@@ -49,6 +53,8 @@ public struct ContentDatabase: Sendable {
         self.levels = levels
         self.tutorials = tutorials
         self.maps = maps
+        self.worldGen = worldGen
+        self.hints = hints
         itemIndex = Self.index(self.items.map(\.id))
         sourceIndex = Self.index(self.sources.map(\.id))
         buildingIndex = Self.index(self.buildings.map(\.id))
@@ -79,7 +85,9 @@ public struct ContentDatabase: Sendable {
             legend: decode("maps/legend.json", in: dataDirectory),
             levels: levels,
             tutorials: decode("tutorial.json", in: dataDirectory),
-            maps: maps
+            maps: maps,
+            worldGen: decode("worldgen.json", in: dataDirectory),
+            hints: decode("hints.json", in: dataDirectory)
         )
     }
 
@@ -217,6 +225,29 @@ public struct ContentDatabase: Sendable {
         problems += rules.problems()
         problems += traceRuleProblems()
         problems += Self.duplicates(levels.map(\.id), kind: "level")
+        for (i, hint) in hints.enumerated() where hints[..<i].contains(where: { $0.id == hint.id }) {
+            problems.append("Duplicate hint id '\(hint.id)'")
+        }
+        for hint in hints {
+            for condition in [hint.show, hint.done] where TutorialCondition(condition) == nil {
+                problems.append("Hint '\(hint.id)' has an unreadable condition '\(condition)'")
+            }
+            let lines = hint.text.split(separator: "\n", omittingEmptySubsequences: false)
+            if lines.count > 2 || lines.contains(where: { $0.count > Self.maxTutorialLineLength }) {
+                problems.append("Hint '\(hint.id)' text must be at most 2 lines of \(Self.maxTutorialLineLength) characters")
+            }
+        }
+        if let gen = worldGen {
+            for coverage in [gen.water, gen.forest, gen.clay] {
+                for v in [coverage.few, coverage.normal, coverage.lots] where v < 0 || v > 600 {
+                    problems.append("worldgen coverage must be between 0 and 600 per thousand, not \(v)")
+                }
+            }
+            if gen.width < 32 || gen.height < 32 { problems.append("worldgen maps must be at least 32 by 32") }
+            for stock in gen.firstPlacementStock where building(stock.building) == nil || item(stock.item) == nil {
+                problems.append("worldgen stocks an unknown building or item")
+            }
+        }
         for item in items where item.description.isEmpty { problems.append("Item '\(item.id)' needs a description") }
         for source in sources where source.description.isEmpty { problems.append("Source '\(source.id)' needs a description") }
         for building in buildings where building.description.isEmpty {

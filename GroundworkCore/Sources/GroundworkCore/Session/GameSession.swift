@@ -69,6 +69,19 @@ public final class GameSession {
         afterEvents(since: 0, byPlayer: false, succeeded: true)
     }
 
+    /// Makes a new world from the player's choices: a generated map, every
+    /// building unlocked, no belt limit, no goal, and hints for the first hour.
+    public static func newWorld(content: ContentDatabase, options: WorldOptions) throws -> GameSession {
+        guard let def = content.worldGen else { throw ContentError.invalid(["No worldgen.json"]) }
+        let result = MapGenerator.generate(options, def: def, content: content)
+        let session = GameSession(content: content, map: result.map, seed: options.seed)
+        session.world.options = options
+        session.world.start = result.start
+        session.world.hints = HintState()
+        session.afterEvents(since: 0, byPlayer: false, succeeded: true)
+        return session
+    }
+
     private init(content: ContentDatabase, world: World) {
         self.content = content
         self.world = world
@@ -96,7 +109,24 @@ public final class GameSession {
         if world.level != nil {
             LevelRunner.update(&world, content: content, newEvents: events[mark...], events: &events)
         }
+        if world.hints != nil {
+            stockFirstPlacements(events[mark...])
+            HintRunner.update(&world, content: content, newEvents: events[mark...])
+        }
         world.funTest.record(events[mark...], tick: world.tick, byPlayer: byPlayer, succeeded: succeeded)
+    }
+
+    /// In a generated world, the first building of a type gets its starting
+    /// stock (the kiln's first logs), as it does in the tutorial.
+    private func stockFirstPlacements(_ newEvents: ArraySlice<GameEvent>) {
+        guard let def = content.worldGen else { return }
+        for case let .buildingPlaced(id, type) in newEvents
+        where world.buildings.filter({ $0.type == type }).count == 1 {
+            guard let i = world.buildingIndex(id) else { continue }
+            for stock in def.firstPlacementStock where stock.building == type {
+                world.buildings[i].input.add(stock.item, stock.count)
+            }
+        }
     }
 
     /// Runs a command, then lets the level react to what it did.
@@ -288,6 +318,7 @@ public final class GameSession {
         let result = Trace.run(target, world: world, content: content)
         if case let .building(id) = target, let type = world.building(id)?.type {
             LevelRunner.note(TutorialCondition.traced(type).key, world: &world, content: content, events: &events)
+            HintRunner.note(TutorialCondition.traced(type).key, world: &world)
         }
         return result
     }
@@ -295,7 +326,19 @@ public final class GameSession {
     /// The app reports UI actions the tutorial may wait for ("panned", "zoomed").
     public func noteUI(_ name: String) {
         LevelRunner.note(TutorialCondition.ui(name).key, world: &world, content: content, events: &events)
+        HintRunner.note(TutorialCondition.ui(name).key, world: &world)
     }
+
+    /// The hint showing now in a generated world, if any.
+    public var hint: HintDef? {
+        world.hints?.current.flatMap { id in content.hints.first { $0.id == id } }
+    }
+
+    /// The player tapped the hint away.
+    public func dismissHint() { HintRunner.dismiss(world: &world) }
+
+    /// Where the camera should open: the tutorial's spot or a generated world's start.
+    public var startPoint: GridPoint? { level?.focus ?? world.start }
 
     /// Ends the tutorial now, handing over everything its remaining steps would unlock.
     public func skipTutorial() {

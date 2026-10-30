@@ -130,28 +130,13 @@ enum LevelRunner {
         guard var state = world.level, let level = content.level(state.level) else { return }
 
         for event in newEvents {
-            switch event {
-            case let .buildingPlaced(id, type):
-                state.record(TutorialCondition.placed(type).key)
-                if !state.stocked.contains(type), let i = world.buildingIndex(id) {
-                    let stock = level.firstPlacementStock.filter { $0.building == type }
-                    if !stock.isEmpty {
-                        for item in stock { world.buildings[i].input.add(item.item, item.count) }
-                        state.stocked.append(type)
-                    }
+            for key in keys(for: event, world: world) { state.record(key) }
+            if case let .buildingPlaced(id, type) = event, !state.stocked.contains(type), let i = world.buildingIndex(id) {
+                let stock = level.firstPlacementStock.filter { $0.building == type }
+                if !stock.isEmpty {
+                    for item in stock { world.buildings[i].input.add(item.item, item.count) }
+                    state.stocked.append(type)
                 }
-            case let .itemProduced(_, item, _):
-                state.record(TutorialCondition.produced(item).key)
-            case let .itemDelivered(id, item, via):
-                state.record(TutorialCondition.delivered(item, qualifier: nil).key)
-                state.record(TutorialCondition.delivered(item, qualifier: via == .hand ? "hand" : "belt").key)
-                if let type = world.building(id)?.type {
-                    state.record(TutorialCondition.delivered(item, qualifier: type.rawValue).key)
-                }
-            case let .statusChanged(_, .blocked(reason)):
-                if let item = reason.waitingItem { state.record(TutorialCondition.waiting(item).key) }
-            default:
-                break
             }
         }
 
@@ -164,6 +149,48 @@ enum LevelRunner {
 
         world.level = state
         advanceSteps(world: &world, content: content, events: &events)
+    }
+
+    /// The condition keys an event satisfies, such as "placed:clay_pit" and
+    /// "delivered:clay:belt". Shared by the tutorial and the hints.
+    static func keys(for event: GameEvent, world: World) -> [String] {
+        switch event {
+        case let .buildingPlaced(_, type):
+            return [TutorialCondition.placed(type).key]
+        case let .itemProduced(_, item, _):
+            return [TutorialCondition.produced(item).key]
+        case let .itemDelivered(id, item, via):
+            var keys = [TutorialCondition.delivered(item, qualifier: nil).key,
+                        TutorialCondition.delivered(item, qualifier: via == .hand ? "hand" : "belt").key]
+            if let type = world.building(id)?.type {
+                keys.append(TutorialCondition.delivered(item, qualifier: type.rawValue).key)
+            }
+            return keys
+        case let .statusChanged(_, .blocked(reason)):
+            return reason.waitingItem.map { [TutorialCondition.waiting($0).key] } ?? []
+        default:
+            return []
+        }
+    }
+
+    /// Whether a condition holds now: live checks look at the world, the rest
+    /// at what has been recorded.
+    static func holds(_ condition: TutorialCondition, seen: (String) -> Bool, world: World,
+                      content: ContentDatabase) -> Bool {
+        switch condition {
+        case .wait:
+            return true
+        case let .count(type, n):
+            return world.buildings.filter { $0.type == type && $0.isBuilt }.count >= n
+        case let .linked(from, to):
+            return isLinked(from, to, world: world, content: content)
+        case let .slow(type):
+            return world.buildings.contains { b in
+                b.type == type && Trace.run(.building(b.id), world: world, content: content).root.state == .slow
+            }
+        default:
+            return seen(condition.key)
+        }
     }
 
     /// Moves past every step whose condition holds and whose minimum time is up.
@@ -184,20 +211,7 @@ enum LevelRunner {
     static func isDone(_ step: TutorialStep, world: World, content: ContentDatabase) -> Bool {
         guard let state = world.level, let condition = TutorialCondition(step.when) else { return false }
         if let wait = step.waitTicks, world.tick < (state.stepStartedTick ?? 0) + UInt64(wait) { return false }
-        switch condition {
-        case .wait:
-            return true
-        case let .count(type, n):
-            return world.buildings.filter { $0.type == type && $0.isBuilt }.count >= n
-        case let .linked(from, to):
-            return isLinked(from, to, world: world, content: content)
-        case let .slow(type):
-            return world.buildings.contains { b in
-                b.type == type && Trace.run(.building(b.id), world: world, content: content).root.state == .slow
-            }
-        default:
-            return state.hasSeen(condition.key)
-        }
+        return holds(condition, seen: state.hasSeen, world: world, content: content)
     }
 
     /// True if a belt runs from a building of type `from` into one of type `to`.

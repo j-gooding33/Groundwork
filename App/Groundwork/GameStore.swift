@@ -10,6 +10,17 @@ import GroundworkView
 final class GameStore {
     enum Screen: Equatable { case title, playing }
 
+    /// One saved world, as listed on the title screen.
+    struct WorldSlot: Codable, Equatable, Identifiable {
+        var id: String
+        var name: String
+        var seed: UInt64
+        var played: Date
+    }
+
+    /// Which file the running game saves to.
+    private enum Slot: Equatable { case tutorial, world(String) }
+
     struct Toast: Equatable {
         var id: Int
         var text: String
@@ -27,7 +38,12 @@ final class GameStore {
     /// The player closed the chapter card to keep building first.
     private(set) var completeDismissed = false
     private(set) var speed = 1
-    private(set) var hasSave = false
+    /// A tutorial save exists to continue.
+    private(set) var hasTutorialSave = false
+    /// The player's own worlds, most recently played first.
+    private(set) var worlds: [WorldSlot] = []
+    /// Ask the title screen to open the "New world" sheet (after the tutorial).
+    var wantsNewWorld = false
     var soundOn = UserDefaults.standard.object(forKey: "soundOn") as? Bool ?? true {
         didSet {
             UserDefaults.standard.set(soundOn, forKey: "soundOn")
@@ -47,6 +63,7 @@ final class GameStore {
     @ObservationIgnored let atlas: AtlasManifest
     @ObservationIgnored let builder: SceneBuilder
     @ObservationIgnored private(set) var session: GameSession?
+    @ObservationIgnored private var slot = Slot.tutorial
     @ObservationIgnored private(set) var input = InputController()
     @ObservationIgnored private(set) var camera = Camera(mapWidth: 64, mapHeight: 64)
     @ObservationIgnored private var clock = TickClock()
@@ -76,43 +93,85 @@ final class GameStore {
             fatalError("Game data failed to load: \(error)")
         }
         builder = SceneBuilder(content: content, atlas: atlas)
-        hasSave = FileManager.default.fileExists(atPath: Self.saveURL.path)
+        // The first builds kept one save; it was the tutorial.
+        let old = Self.folder.appendingPathComponent("save.json")
+        if FileManager.default.fileExists(atPath: old.path), !FileManager.default.fileExists(atPath: Self.tutorialURL.path) {
+            try? FileManager.default.moveItem(at: old, to: Self.tutorialURL)
+        }
+        hasTutorialSave = FileManager.default.fileExists(atPath: Self.tutorialURL.path)
+        worlds = Self.readIndex()
         feel.soundOn = soundOn
         feel.hapticsOn = hapticsOn
     }
 
     // MARK: Starting and stopping
 
-    /// Continues the saved world, or starts it at Chapter 1.
-    func play() {
-        guard hasSave else { return startFresh() }
+    /// Continues the tutorial, or starts it at Chapter 1.
+    func playTutorial() {
+        slot = .tutorial
+        guard hasTutorialSave else { return startTutorial() }
         do {
-            let data = try Data(contentsOf: Self.saveURL)
-            let session = try GameSession.load(data, content: content)
+            let session = try GameSession.load(try Data(contentsOf: Self.tutorialURL), content: content)
             guard session.chapter != nil else {
-                show("That save is from an older version, so a new world began")
-                return startFresh()
+                show("That save is from an older version, so the tutorial began again")
+                return startTutorial()
             }
             start(session)
         } catch {
-            show("The save could not be read, so a new world began")
-            startFresh()
+            show("The save could not be read, so the tutorial began again")
+            startTutorial()
         }
     }
 
-    /// Throws the saved world away and begins again at Chapter 1.
-    func startOver() {
-        try? FileManager.default.removeItem(at: Self.saveURL)
-        hasSave = false
-        startFresh()
+    /// Throws the tutorial save away and begins again at Chapter 1.
+    func restartTutorial() {
+        try? FileManager.default.removeItem(at: Self.tutorialURL)
+        hasTutorialSave = false
+        slot = .tutorial
+        startTutorial()
     }
 
-    private func startFresh() {
+    private func startTutorial() {
         do {
             start(try GameSession(content: content))
         } catch {
-            show("Could not start the world: \(error)")
+            show("Could not start the tutorial: \(error)")
         }
+    }
+
+    /// Makes a new world from the player's choices and starts playing it.
+    func createWorld(_ options: WorldOptions) {
+        do {
+            let session = try GameSession.newWorld(content: content, options: options)
+            let id = UUID().uuidString
+            worlds.insert(WorldSlot(id: id, name: options.name, seed: options.seed, played: Date()), at: 0)
+            slot = .world(id)
+            start(session)
+            saveNow()
+        } catch {
+            show("Could not make the world: \(error)")
+        }
+    }
+
+    func openWorld(_ id: String) {
+        do {
+            let data = try Data(contentsOf: Self.worldURL(id))
+            slot = .world(id)
+            start(try GameSession.load(data, content: content))
+        } catch {
+            show("That world could not be read")
+        }
+    }
+
+    func deleteWorld(_ id: String) {
+        try? FileManager.default.removeItem(at: Self.worldURL(id))
+        worlds.removeAll { $0.id == id }
+        Self.writeIndex(worlds)
+    }
+
+    /// The preview on the "New world" sheet.
+    func preview(_ options: WorldOptions) -> NewWorld.Preview? {
+        NewWorld.preview(options, content: content)
     }
 
     private func start(_ session: GameSession) {
@@ -123,7 +182,7 @@ final class GameStore {
         speed = 1
         autosave = AutosavePolicy()
         camera = Camera(mapWidth: session.world.map.width, mapHeight: session.world.map.height,
-                        focus: session.level?.focus, zoom: 1.5)
+                        focus: session.startPoint, zoom: 1.5)
         _ = session.drainEvents()
         staticDirty = true
         menuOpen = false
@@ -142,20 +201,47 @@ final class GameStore {
     func saveNow() {
         guard let session else { return }
         do {
-            try FileManager.default.createDirectory(at: Self.saveURL.deletingLastPathComponent(),
+            try FileManager.default.createDirectory(at: Self.folder.appendingPathComponent("worlds"),
                                                     withIntermediateDirectories: true)
-            try session.save().write(to: Self.saveURL, options: .atomic)
-            hasSave = true
+            switch slot {
+            case .tutorial:
+                try session.save().write(to: Self.tutorialURL, options: .atomic)
+                hasTutorialSave = true
+            case let .world(id):
+                try session.save().write(to: Self.worldURL(id), options: .atomic)
+                if let i = worlds.firstIndex(where: { $0.id == id }) {
+                    var entry = worlds.remove(at: i)
+                    entry.played = Date()
+                    worlds.insert(entry, at: 0)
+                }
+                Self.writeIndex(worlds)
+            }
             autosave.didSave(now: now)
         } catch {
             show("Saving failed: \(error.localizedDescription)")
         }
     }
 
-    static var saveURL: URL {
+    static var folder: URL {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? URL(fileURLWithPath: NSTemporaryDirectory())
-        return base.appendingPathComponent("Groundwork/save.json")
+        return base.appendingPathComponent("Groundwork")
+    }
+
+    static var tutorialURL: URL { folder.appendingPathComponent("tutorial.json") }
+    static func worldURL(_ id: String) -> URL { folder.appendingPathComponent("worlds/\(id).json") }
+    private static var indexURL: URL { folder.appendingPathComponent("worlds/index.json") }
+
+    private static func readIndex() -> [WorldSlot] {
+        guard let data = try? Data(contentsOf: indexURL),
+              let slots = try? JSONDecoder().decode([WorldSlot].self, from: data) else { return [] }
+        return slots
+    }
+
+    private static func writeIndex(_ slots: [WorldSlot]) {
+        try? FileManager.default.createDirectory(at: folder.appendingPathComponent("worlds"),
+                                                 withIntermediateDirectories: true)
+        try? JSONEncoder().encode(slots).write(to: indexURL, options: .atomic)
     }
 
     // MARK: The frame loop
@@ -247,18 +333,22 @@ final class GameStore {
 
     func choose(_ tool: Tool) {
         input.choose(tool)
+        if tool == .demolish { session?.noteUI("demolish") }
         refreshHUD()
     }
 
     func undo() {
         guard let session else { return }
         if case let .rejected(error) = session.undo() { show(error.message) }
+        session.noteUI("undo")
         refreshHUD()
     }
 
     func cycleSpeed() {
         speed = speed == 1 ? 2 : speed == 2 ? 4 : 1
         clock.speed = speed
+        session?.noteUI("speed")
+        refreshHUD()
     }
 
     func closePanel() {
@@ -274,6 +364,18 @@ final class GameStore {
 
     func closeCompleteCard() { completeDismissed = true }
 
+    /// From the tutorial-complete card: back to the title, straight into "New world".
+    func finishTutorialForNewWorld() {
+        quitToTitle()
+        wantsNewWorld = true
+    }
+
+    /// The player tapped the hint away.
+    func dismissTip() {
+        session?.dismissHint()
+        refreshHUD()
+    }
+
     /// Opens the next chapter from the chapter-complete card: more land, new
     /// buildings and the next goal.
     func continueChapter() {
@@ -286,6 +388,7 @@ final class GameStore {
 
     func toggleRates() {
         input.toggleRates()
+        session?.noteUI("rates")
         refreshHUD()
     }
 

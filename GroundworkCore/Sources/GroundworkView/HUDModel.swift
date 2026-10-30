@@ -63,6 +63,11 @@ public struct TraceRow: Equatable, Sendable {
     public var isBroken: Bool
 }
 
+public struct Tip: Equatable, Sendable {
+    public var id: String
+    public var text: String
+}
+
 /// The card shown when a chapter's goal is met.
 public struct ChapterCard: Equatable, Sendable {
     /// "Chapter 1 complete"
@@ -71,6 +76,8 @@ public struct ChapterCard: Equatable, Sendable {
     public var name: String
     /// "Next: First Belts", or nil after the last chapter with a goal.
     public var next: String?
+    /// The last chapter with a goal is done: the card offers a new world.
+    public var tutorialComplete: Bool
 }
 
 /// Everything the SwiftUI overlay shows, worked out from the session in one place.
@@ -95,6 +102,9 @@ public struct HUDModel: Equatable, Sendable {
     public var tracePanel: [TraceRow]
     /// Above the top of the building Trace says to fix (or nearest to it).
     public var traceMarker: ScenePoint?
+    /// A hint in a new world's first hour. Shown like the tutorial bubble,
+    /// but never pauses anything; tap to put it away.
+    public var tip: Tip?
     /// Set once the chapter's goal is met, until the player continues.
     public var chapterCard: ChapterCard?
     public var canUndo: Bool
@@ -109,9 +119,15 @@ public struct HUDModel: Equatable, Sendable {
         let number = session.chapterIndex + 1
         chapterTitle = session.chapter.map { "Chapter \(number) · \($0.name)" }
         if session.isGoalReached, let chapter = session.chapter {
-            chapterCard = ChapterCard(heading: "Chapter \(number) complete", name: chapter.name,
-                                      next: session.nextChapter.map { "Next: \($0.name)" })
+            if let next = session.nextChapter, next.goal != nil {
+                chapterCard = ChapterCard(heading: "Chapter \(number) complete", name: chapter.name,
+                                          next: "Next: \(next.name)", tutorialComplete: false)
+            } else {
+                chapterCard = ChapterCard(heading: "Tutorial complete!", name: "You can build a whole town now.",
+                                          next: nil, tutorialComplete: true)
+            }
         }
+        if let hint = session.hint { tip = Tip(id: hint.id, text: hint.text) }
         canUndo = session.canUndo
         paused = session.isPausedByTutorial
 
@@ -164,7 +180,7 @@ public struct HUDModel: Equatable, Sendable {
         }
         traceLines = input.trace.map { Self.lines(for: $0, world: world, content: content) } ?? []
         tracePanel = input.trace.map(Self.rows) ?? []
-        if tutorial == nil, input.trace == nil, Self.hasStuckMachine(world, content: content) {
+        if tutorial == nil, tip == nil, input.trace == nil, Self.hasStuckMachine(world, content: content) {
             hint = "Something has stopped.\nTap Trace, then the dim building."
         }
         if let trace = input.trace, trace.firstBroken != nil, let id = trace.jumpTarget,

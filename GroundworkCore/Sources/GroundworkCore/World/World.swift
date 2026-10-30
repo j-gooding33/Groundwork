@@ -29,6 +29,12 @@ public struct World: Codable, Equatable, Sendable {
     /// The land drawn so far; nil means the whole map. Nothing can be built
     /// on paper that has not been drawn yet.
     public internal(set) var revealed: Reveal?
+    /// For a generated world: its name, seed and the choices it was made with.
+    public internal(set) var options: WorldOptions?
+    /// Where a generated world begins (the camera's first view).
+    public internal(set) var start: GridPoint?
+    /// Hints offered in a generated world's first hour.
+    public internal(set) var hints: HintState?
 
     /// Tile lookups, rebuilt from the fields above. Never saved.
     var index = WorldIndex()
@@ -41,7 +47,7 @@ public struct World: Codable, Equatable, Sendable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case tick, rng, map, nextEntityID, buildings, belts, hand, beltsAvailable, unlocked, housingPlots, level, funTest, revealed
+        case tick, rng, map, nextEntityID, buildings, belts, hand, beltsAvailable, unlocked, housingPlots, level, funTest, revealed, options, start, hints
     }
 
     public init(from decoder: Decoder) throws {
@@ -59,6 +65,9 @@ public struct World: Codable, Equatable, Sendable {
         level = try c.decodeIfPresent(LevelState.self, forKey: .level)
         funTest = try c.decodeIfPresent(FunTestLog.self, forKey: .funTest) ?? FunTestLog()
         revealed = try c.decodeIfPresent(Reveal.self, forKey: .revealed)
+        options = try c.decodeIfPresent(WorldOptions.self, forKey: .options)
+        start = try c.decodeIfPresent(GridPoint.self, forKey: .start)
+        hints = try c.decodeIfPresent(HintState.self, forKey: .hints)
         // The index needs building sizes from content, so the session rebuilds it after loading.
     }
 
@@ -77,6 +86,9 @@ public struct World: Codable, Equatable, Sendable {
         try c.encode(level, forKey: .level)
         try c.encode(funTest, forKey: .funTest)
         try c.encode(revealed, forKey: .revealed)
+        try c.encodeIfPresent(options, forKey: .options)
+        try c.encodeIfPresent(start, forKey: .start)
+        try c.encodeIfPresent(hints, forKey: .hints)
     }
 
     public static func == (lhs: World, rhs: World) -> Bool {
@@ -85,6 +97,7 @@ public struct World: Codable, Equatable, Sendable {
             && lhs.belts == rhs.belts && lhs.hand == rhs.hand && lhs.beltsAvailable == rhs.beltsAvailable
             && lhs.unlocked == rhs.unlocked && lhs.housingPlots == rhs.housingPlots && lhs.level == rhs.level
             && lhs.funTest == rhs.funTest && lhs.revealed == rhs.revealed
+            && lhs.options == rhs.options && lhs.start == rhs.start && lhs.hints == rhs.hints
     }
 
     // MARK: Lookups

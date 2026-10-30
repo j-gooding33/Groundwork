@@ -1,0 +1,14 @@
+{
+  "width": 64,
+  "height": 64,
+  "water":  { "few": 60, "normal": 140, "lots": 260 },
+  "forest": { "few": 80, "normal": 170, "lots": 280 },
+  "clay":   { "few": 25, "normal": 50, "lots": 90 },
+  "rock": 20,
+  "startRadius": 9,
+  "startClay": 6,
+  "startForest": 10,
+  "firstPlacementStock": [ { "building": "brick_kiln", "item": "log", "count": 5 } ],
+  "hintTicks": 36000,
+  "hintShowTicks": 450
+}

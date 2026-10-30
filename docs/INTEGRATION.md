@@ -44,7 +44,7 @@ The rule that keeps this working: **the app only reads `GameSession` and sends i
 
 - `GroundworkApp.swift`: entry point; saves whenever the app leaves the foreground.
 - `GameStore.swift`: owns the `GameSession`, the camera and input state. Runs the frame loop: ticks, effects, HUD refresh, autosave every 30 seconds. Turns touches into gestures and commands, and saves to Application Support.
-- `TitleView.swift`: ten builders lay bricks spelling GROUNDWORK (1.8 s, tap to skip; timing in `GroundworkView/IntroAnimation.swift`), then Play (continues your world, or starts it), Start over (asks first) and Settings (sound, haptics). There is no level menu: everyone starts in the same place.
+- `TitleView.swift`: ten builders lay bricks spelling GROUNDWORK (1.8 s, tap to skip; timing in `GroundworkView/IntroAnimation.swift`), then Tutorial (or Continue tutorial), New world, Restart tutorial, Settings, and your saved worlds (tap to play, hold to delete). New world asks for a name, a seed (with a dice button) and how much water, forest and clay, and shows the map before it is made. Saves live in Application Support/Groundwork: `tutorial.json` and `worlds/<id>.json`.
 - `GameView.swift`: the world fills the screen, with controls at the edges:
   - build palette on the left;
   - chapter name, goal bar and clock on top;
@@ -58,12 +58,14 @@ The rule that keeps this working: **the app only reads `GameSession` and sends i
 
 ### How a game goes
 
-One world, played in chapters. Buildings carry over from one chapter to the next, and each chapter draws more of the map (you can't build on blank paper yet).
+Everyone starts with the tutorial: one handcrafted world, played in chapters. Buildings carry over from one chapter to the next, and each chapter draws more of the map (you can't build on blank paper yet).
 
 1. **Bare Ground:** dig clay, bake bricks, fill the foundation. Teaches carrying, belts and Trace.
 2. **First Belts:** a crate appears; fill it with 20 bricks by belt. Teaches a second pit and merging belts.
 3. **Stone to Roof:** sawmill and builder's yard; five cottages build themselves once supply is steady.
-4. **Free Build:** the whole map, everything unlocked, no goal.
+4. Five cottages finish the tutorial. The card offers **Make a new world** or **Keep building here** (Free Build: the whole map, everything unlocked, no goal).
+
+New worlds are generated from their seed. Everything is unlocked, there is no goal, and for the first hour a tip appears when something becomes useful (tap it away; it also goes once you do the thing).
 
 Landmarks are named on the map ("Clay", "Forest", "Lake") until you use them, and the first building of each type shows its name and what it does for ten seconds.
 

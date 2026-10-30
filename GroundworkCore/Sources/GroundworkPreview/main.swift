@@ -326,3 +326,12 @@ town.advance(ticks: 3000)
 try shot("11_town_stalls", session: town, camera: townCamera, input: townInput)
 let homes = town.world.buildings.filter { $0.type == "cottage" }
 print("Town: \(homes.filter(\.isBuilt).count) cottages built, \(homes.count - homes.filter(\.isBuilt).count) underway")
+
+// MARK: New worlds made from seeds
+
+for (seed, water, forest) in [(UInt64(2026), Amount.normal, Amount.normal), (UInt64(77), Amount.lots, Amount.lots)] {
+    let made = try GameSession.newWorld(content: content, options: WorldOptions(name: "Preview", seed: seed,
+                                                                                water: water, forest: forest))
+    let view = Camera(mapWidth: made.world.map.width, mapHeight: made.world.map.height, focus: made.startPoint, zoom: 1)
+    try shot("12_new_world_seed_\(seed)", session: made, camera: view)
+}
