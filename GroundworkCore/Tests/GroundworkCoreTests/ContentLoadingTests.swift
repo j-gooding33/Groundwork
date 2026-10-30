@@ -4,10 +4,12 @@ import XCTest
 final class ContentLoadingTests: XCTestCase {
     func testRealContentLoadsWithoutProblems() throws {
         let content = try TestSupport.content()
-        XCTAssertEqual(content.items.map(\.id), ["brick", "clay", "log", "plank", "stone"])
-        XCTAssertEqual(content.recipes.count, 5)
-        XCTAssertEqual(content.sources.count, 3)
-        XCTAssertEqual(content.buildings.count, 15)
+        // The first chain is always there; later phases only add to it.
+        XCTAssertTrue(Set(content.items.map(\.id)).isSuperset(of: ["brick", "clay", "log", "plank"]))
+        XCTAssertNotNil(content.recipe("brick"))
+        XCTAssertNotNil(content.source("clay_deposit"))
+        XCTAssertNotNil(content.building("builders_yard"))
+        XCTAssertEqual(content.items.map(\.id), content.items.map(\.id).sorted(), "Sorted by id")
     }
 
     func testEverythingHasAShortDescription() throws {

@@ -39,6 +39,18 @@
       "tip": "Pipe the pump to a Water Tower (30 stone).\nHomes around the tower get water."
     },
     {
+      "id": "m_bread",
+      "text": "Stock a market stall with 20 bread",
+      "when": "stored:bread:20",
+      "tip": "Field, then a powered Flour Mill, then a\nBakery. Belt the bread to a Market Stall."
+    },
+    {
+      "id": "m_compost",
+      "text": "Feed a field with compost",
+      "when": "delivered:compost:wheat_field",
+      "tip": "Fields tire. A Compost Heap turns wheat\ninto compost: belt it back to the field."
+    },
+    {
       "id": "m_bricks_20",
       "text": "Make 20 bricks a minute",
       "when": "rate:brick:20",

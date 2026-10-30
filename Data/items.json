@@ -3,5 +3,9 @@
   {"id": "log", "name": "Log", "tier": "raw", "plural": "logs", "description": "Cut from the forest. Burned as fuel, or sawn into planks."},
   {"id": "brick", "name": "Brick", "tier": "processed", "plural": "bricks", "description": "Baked clay. The base of every building."},
   {"id": "plank", "name": "Plank", "tier": "processed", "plural": "planks", "description": "Sawn wood. Cottages need it for floors and roofs."},
-  {"id": "stone", "name": "Stone", "tier": "raw", "plural": "stone", "description": "Cut from rock by a Quarry. Wells and towers need it."}
+  {"id": "stone", "name": "Stone", "tier": "raw", "plural": "stone", "description": "Cut from rock by a Quarry. Wells and towers need it."},
+  {"id": "wheat", "name": "Wheat", "tier": "raw", "plural": "wheat", "description": "Grown in fields. Milled into flour, or composted."},
+  {"id": "flour", "name": "Flour", "tier": "processed", "plural": "flour", "description": "Milled wheat. Bakeries make bread from it."},
+  {"id": "bread", "name": "Bread", "tier": "processed", "plural": "bread", "description": "Baked at a bakery. Stock it at a market stall."},
+  {"id": "compost", "name": "Compost", "tier": "processed", "plural": "compost", "description": "Rotted wheat straw. Brings tired soil back to life."}
 ]

@@ -388,13 +388,17 @@ public struct SceneBuilder: Sendable {
            !world.isPowered(building.id) { return "status_no_power" }
         let kind = def.kind
         guard kind == .gatherer || kind == .processor else { return nil }
+        if building.hasTiredSoil(def, rules: content.rules), building.status != .blocked(.noWater) {
+            return "status_soil"
+        }
         switch building.status {
         case let .blocked(reason):
             switch reason {
             case let .missingInput(item), let .missingFuel(item): return "item_\(item)"
             case .outputFull: return "status_full"
             case .sourceDepleted, .noSource: return "status_empty"
-            case .noPower: return nil
+            case .noPower: return "status_no_power"
+            case .noWater: return "status_no_water"
             }
         case .running where kind == .processor:
             return Trace.run(.building(building.id), world: world, content: content).root.state == .slow ? "status_slow" : nil
@@ -712,7 +716,8 @@ public struct SceneBuilder: Sendable {
         guard let def = content.building(type) else { return ([], []) }
         let recipes = def.recipes.compactMap(content.recipe)
         var takes: [ItemID] = [], gives: [ItemID] = []
-        for item in recipes.flatMap({ $0.inputs.map(\.item) }) + def.accepts where !takes.contains(item) {
+        for item in recipes.flatMap({ $0.inputs.map(\.item) }) + def.accepts + [def.soilFeed].compactMap({ $0 })
+        where !takes.contains(item) {
             takes.append(item)
         }
         for item in recipes.flatMap({ $0.outputs.map(\.item) }) where !gives.contains(item) { gives.append(item) }

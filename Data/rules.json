@@ -6,5 +6,7 @@
   "rateBuckets": 10,
   "blockGraceTicks": 20,
   "truckCapacity": 10,
-  "truckTicksPerTile": 3
+  "truckTicksPerTile": 3,
+  "soilMax": 100,
+  "soilTired": 40
 }

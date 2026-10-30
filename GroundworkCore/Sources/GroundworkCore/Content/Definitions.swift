@@ -23,6 +23,8 @@ public struct SourceDef: Codable, Equatable, Sendable {
     /// Amount held by each tile when the map loads. Nil means it never runs out.
     public var startingAmount: Int?
     public var regrowPerMinute: Int
+    /// A source found on any land, like soil for fields: no deposit needed.
+    public var everywhere: Bool?
     /// One plain line for players: what it is and how to use it.
     public var description: String
 }
@@ -103,8 +105,14 @@ public struct BuildingDef: Codable, Equatable, Sendable {
     public var waterRadius: Int?
     /// Water a tower holds for when supply dips.
     public var waterStorage: Int?
-    /// Water a home uses per minute.
+    /// Water it uses per minute (homes, fields, bakeries). Without it a
+    /// machine stops.
     public var waterUse: Int?
+    /// Soil a field uses up per harvest; below `soilTired` it grows at half speed.
+    public var soilUse: Int?
+    /// What restores the soil (compost), and how much each one gives back.
+    public var soilFeed: ItemID?
+    public var soilPerFeed: Int?
 
     public var width: Int { size.first ?? 1 }
     public var height: Int { size.count > 1 ? size[1] : 1 }

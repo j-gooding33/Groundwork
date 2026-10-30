@@ -20,5 +20,10 @@
   {"id": "h_wheel", "show": "placed:quarry", "done": "placed:waterwheel", "text": "A Waterwheel beside water powers up to 4\nmachines close by. Belt 12 planks into it."},
   {"id": "h_pump", "show": "placed:waterwheel", "done": "placed:water_pump", "text": "A Water Pump next to the wheel lifts water.\nIt needs 8 bricks to finish."},
   {"id": "h_pipe", "show": "placed:water_pump", "done": "ui:pipe", "text": "Pick Pipe and drag from the pump. Pipes\nrun under roads and belts."},
-  {"id": "h_tower", "show": "ui:pipe", "done": "placed:water_tower", "text": "End the pipe at a Water Tower: homes\naround it get water. Wells help nearby."}
+  {"id": "h_tower", "show": "ui:pipe", "done": "placed:water_tower", "text": "End the pipe at a Water Tower: homes\naround it get water. Wells help nearby."},
+  {"id": "h_field", "show": "placed:water_tower", "done": "placed:wheat_field", "text": "Food starts in a Wheat Field. It grows on\nany land, but needs water like a home."},
+  {"id": "h_mill", "show": "placed:wheat_field", "done": "placed:flour_mill", "text": "A Flour Mill grinds wheat. It needs a\nWaterwheel within 6 tiles to turn."},
+  {"id": "h_bakery", "show": "placed:flour_mill", "done": "placed:bakery", "text": "A Bakery bakes flour into bread. It burns\nlogs and needs water."},
+  {"id": "h_stall", "show": "produced:bread", "done": "placed:market_stall", "text": "A Market Stall holds bread for the town.\nBelt or truck bread into it."},
+  {"id": "h_soil", "show": "count:wheat_field:2", "done": "placed:compost_heap", "text": "Fields tire and slow down. A Compost Heap\nmakes compost to bring them back."}
 ]

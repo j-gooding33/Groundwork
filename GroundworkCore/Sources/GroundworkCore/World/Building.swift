@@ -8,6 +8,7 @@ public enum BlockReason: Codable, Equatable, Hashable, Sendable {
     case sourceDepleted(SourceID)
     case noSource
     case noPower
+    case noWater
 
     public func text(_ content: ContentDatabase) -> String {
         switch self {
@@ -21,6 +22,8 @@ public enum BlockReason: Codable, Equatable, Hashable, Sendable {
             return "Nothing to gather here"
         case .noPower:
             return "No power"
+        case .noWater:
+            return "No water"
         }
     }
 }
@@ -62,6 +65,8 @@ public struct Building: Codable, Equatable, Sendable {
     /// The belt that last took an item from here. When several belts start at
     /// one building (a splitter), they take turns, so each gets a fair share.
     public internal(set) var lastPullBelt: GridPoint?
+    /// A field's soil, used up by harvests and restored by compost. Nil means full.
+    public internal(set) var soil: Int?
 
     init(id: EntityID, type: BuildingTypeID, origin: GridPoint, facing: Direction, tick: UInt64, rules: GameRules) {
         self.id = id

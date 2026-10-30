@@ -26,7 +26,7 @@ enum TestSupport {
     static let brickItem = ItemDef(id: "brick", name: "Brick", plural: "bricks", tier: .processed, description: "An item.")
     static let rules = GameRules(handCapacity: 10, beltSlotsPerTile: 4, beltTicksPerSlot: 2,
                                  rateBucketTicks: 60, rateBuckets: 10, blockGraceTicks: 20,
-                                 truckCapacity: 10, truckTicksPerTile: 3)
+                                 truckCapacity: 10, truckTicksPerTile: 3, soilMax: 100, soilTired: 40)
     static let claySource = SourceDef(id: "clay_deposit", name: "Clay deposit", item: "clay",
                                       startingAmount: 40, regrowPerMinute: 0, description: "A source.")
     static let gatherClay = RecipeDef(id: "gather_clay", building: "clay_pit", source: "clay_deposit",

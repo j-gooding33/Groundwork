@@ -221,7 +221,7 @@ public struct HUDModel: Equatable, Sendable {
             guard let kind = content.building(b.type)?.kind, kind == .gatherer || kind == .processor,
                   let reason = b.waitReason, b.waitingTicks >= stuckTicks else { return false }
             switch reason {
-            case .missingInput, .missingFuel, .sourceDepleted, .noSource: return true
+            case .missingInput, .missingFuel, .sourceDepleted, .noSource, .noWater: return true
             case .outputFull, .noPower: return false
             }
         }
@@ -272,6 +272,13 @@ public struct HUDModel: Equatable, Sendable {
             if def.waterUse != nil, building.isBuilt {
                 lines.append(world.hasWater(building.id) ? "Has running water"
                              : "No water: pipe it, or build a well or water tower nearby")
+            }
+            if def.soilUse != nil {
+                let soil = building.soil ?? content.rules.soilMax
+                let percent = soil * 100 / max(content.rules.soilMax, 1)
+                lines.append(building.hasTiredSoil(def, rules: content.rules)
+                             ? "Soil \(percent)%: tired, growing at half speed. Bring compost."
+                             : "Soil \(percent)%")
             }
         }
         let io = SceneBuilder.io(of: building.type, content: content)

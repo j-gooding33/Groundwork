@@ -8,6 +8,7 @@ enum Production {
             switch def.kind {
             case .gatherer, .processor:
                 guard let recipe = def.recipes.first.flatMap(content.recipe) else { continue }
+                feedSoil(&world, i, def: def, rules: content.rules)
                 craft(&world, i, recipe: recipe, def: def, content: content, events: &events)
             case .home:
                 if world.buildings[i].buildRemaining > 0 {
@@ -33,12 +34,12 @@ enum Production {
         var justFinished = false
         if world.buildings[i].crafting {
             world.buildings[i].progress += 1
-            guard world.buildings[i].progress >= recipe.durationTicks else { return }
+            guard world.buildings[i].progress >= duration(recipe, world.buildings[i], def, content.rules) else { return }
             finish(&world, i, recipe: recipe, content: content, events: &events)
             justFinished = true
         }
 
-        if let reason = blockReason(world.buildings[i], recipe: recipe, def: def, world: world) {
+        if let reason = blockReason(world.buildings[i], recipe: recipe, def: def, world: world, content: content) {
             if world.buildings[i].waitReason != reason {
                 world.buildings[i].waitReason = reason
                 world.buildings[i].waitingTicks = 0
@@ -50,8 +51,11 @@ enum Production {
             return
         }
 
-        if recipe.source != nil {
+        if let source = recipe.source, content.source(source)?.everywhere != true {
             _ = world.map.take(gatherAmount(recipe), at: world.buildings[i].origin)
+        }
+        if let use = def.soilUse {
+            world.buildings[i].soil = max(0, (world.buildings[i].soil ?? rules.soilMax) - use)
         }
         for input in recipe.inputs {
             world.buildings[i].input.remove(input.item, input.count)
@@ -61,10 +65,29 @@ enum Production {
         world.buildings[i].waitingTicks = 0
         world.buildings[i].crafting = true
         world.buildings[i].progress = justFinished ? 0 : 1
-        if world.buildings[i].progress >= recipe.durationTicks {
+        if world.buildings[i].progress >= duration(recipe, world.buildings[i], def, rules) {
             // A one-tick recipe started fresh finishes on the tick it starts.
             finish(&world, i, recipe: recipe, content: content, events: &events)
         }
+    }
+
+    /// A recipe's time, doubled on tired soil.
+    static func duration(_ recipe: RecipeDef, _ building: Building, _ def: BuildingDef, _ rules: GameRules) -> Int {
+        isSoilTired(building, def, rules) ? recipe.durationTicks * 2 : recipe.durationTicks
+    }
+
+    static func isSoilTired(_ building: Building, _ def: BuildingDef, _ rules: GameRules) -> Bool {
+        def.soilUse != nil && (building.soil ?? rules.soilMax) < rules.soilTired
+    }
+
+    /// Works compost into the soil, one at a time, while there is room for it.
+    private static func feedSoil(_ world: inout World, _ i: Int, def: BuildingDef, rules: GameRules) {
+        guard let feed = def.soilFeed, let per = def.soilPerFeed,
+              world.buildings[i].input.count(of: feed) > 0 else { return }
+        let soil = world.buildings[i].soil ?? rules.soilMax
+        guard soil + per <= rules.soilMax else { return }
+        world.buildings[i].input.remove(feed, 1)
+        world.buildings[i].soil = soil + per
     }
 
     private static func finish(_ world: inout World, _ i: Int, recipe: RecipeDef, content: ContentDatabase,
@@ -84,10 +107,11 @@ enum Production {
     }
 
     /// Why the building cannot start its recipe now, or nil if it can.
-    static func blockReason(_ building: Building, recipe: RecipeDef, def: BuildingDef, world: World) -> BlockReason? {
+    static func blockReason(_ building: Building, recipe: RecipeDef, def: BuildingDef, world: World,
+                            content: ContentDatabase) -> BlockReason? {
         let produced = recipe.outputs.reduce(0) { $0 + $1.count }
         if building.output.total + produced > def.outputCapacity { return .outputFull }
-        if let source = recipe.source {
+        if let source = recipe.source, content.source(source)?.everywhere != true {
             guard let deposit = world.map.deposit(at: building.origin), deposit.source == source else { return .noSource }
             if let remaining = deposit.remaining, remaining < gatherAmount(recipe) { return .sourceDepleted(source) }
         }
@@ -95,6 +119,7 @@ enum Production {
             return input.role == .fuel ? .missingFuel(input.item) : .missingInput(input.item)
         }
         if recipe.power > 0, !world.isPowered(building.id) { return .noPower }
+        if def.waterUse != nil, !world.hasWater(building.id) { return .noWater }
         return nil
     }
 
@@ -104,10 +129,13 @@ enum Production {
     static func room(for item: ItemID, in building: Building, def: BuildingDef, content: ContentDatabase) -> Int {
         guard building.isBuilt else { return 0 }
         switch def.kind {
+        case _ where def.soilFeed == item:
+            return max(0, def.inputCapacity - building.input.count(of: item))
         case .processor:
             let needed = def.recipes.compactMap(content.recipe).contains { $0.inputs.contains { $0.item == item } }
             return needed ? max(0, def.inputCapacity - building.input.count(of: item)) : 0
         case .storage:
+            guard def.accepts.isEmpty || def.accepts.contains(item) else { return 0 }
             return max(0, def.inputCapacity - building.input.total)
         case .construction:
             return def.accepts.contains(item) ? remainingCapacity(of: building, def: def, rules: content.rules) : 0
@@ -144,5 +172,12 @@ enum Production {
     static func deliver(_ item: ItemID, _ count: Int, to i: Int, world: inout World, content: ContentDatabase) {
         world.buildings[i].input.add(item, count)
         world.buildings[i].rates.record(.received, item, count, tick: world.tick, rules: content.rules)
+    }
+}
+
+extension Building {
+    /// A field whose soil is worn out grows at half speed until it gets compost.
+    public func hasTiredSoil(_ def: BuildingDef, rules: GameRules) -> Bool {
+        Production.isSoilTired(self, def, rules)
     }
 }

@@ -71,6 +71,8 @@ After that, and in every new world, **milestones** take over the goal bar: share
 
 **Power and water**: a **Quarry** on grey rock cuts stone. A **Waterwheel** beside water (fill it with 12 planks) powers up to 4 machines within 6 tiles. A **Water Pump** beside water (8 bricks) needs that power and pushes water into **Pipes** (drag like roads; they run under roads and belts). End the pipe at a **Water Tower** (30 stone) and homes around it get water; a **Well** (10 stone) waters a few homes nearby with no pipes. Dry homes show a water-drop icon.
 
+**Food**: a **Wheat Field** grows on any land but needs water (pipe, well or tower). Harvests tire its soil; tired fields grow at half speed until you belt **compost** in from a **Compost Heap** (which rots wheat). A **Flour Mill** needs a waterwheel's power; a **Bakery** bakes flour into bread, burning logs and using water. Stock bread at a **Market Stall**.
+
 The **Splitter** shares one belt: belt into it, then lay two (or more) belts out; they take turns.
 
 New worlds are generated from their seed. Everything is unlocked, there is no goal, and for the first hour a tip appears when something becomes useful (tap it away; it also goes once you do the thing).

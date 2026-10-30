@@ -397,3 +397,31 @@ do {
         try shot("14_power_and_water", session: made, camera: view)
     }
 }
+
+// MARK: Food
+
+do {
+    let made = try GameSession.newWorld(content: content, options: WorldOptions(name: "Food", seed: 2026))
+    let s = made.startPoint!
+    func put(_ type: BuildingTypeID, near p: GridPoint) -> EntityID? {
+        for r in 0...10 { for dy in -r...r { for dx in -r...r where max(abs(dx), abs(dy)) == r {
+            let at = GridPoint(p.x + dx, p.y + dy)
+            if made.place(type, at: at) == .ok { return made.world.building(at: at)!.id }
+        } } }
+        return nil
+    }
+    let fieldA = put("wheat_field", near: GridPoint(s.x - 6, s.y - 2))!
+    let fieldB = put("wheat_field", near: GridPoint(s.x - 6, s.y + 2))!
+    let well = put("well", near: GridPoint(s.x - 3, s.y))!
+    made.stock(well, with: "stone", count: 10)
+    let bakery = put("bakery", near: GridPoint(s.x + 2, s.y - 1))!
+    made.stock(bakery, with: "flour", count: 8)
+    made.stock(bakery, with: "log", count: 4)
+    let stall = put("market_stall", near: GridPoint(s.x + 6, s.y - 1))!
+    let heap = put("compost_heap", near: GridPoint(s.x - 2, s.y + 4))!
+    _ = (fieldA, fieldB, heap)
+    let bakeryAt = made.world.building(bakery)!.origin, stallAt = made.world.building(stall)!.origin
+    print("bread belt: \(made.layBelt(from: bakeryAt, to: stallAt))")
+    made.advance(ticks: 900)
+    try shot("15_food", session: made, camera: Camera(mapWidth: 64, mapHeight: 64, focus: s, zoom: 2))
+}

@@ -17,6 +17,9 @@ public struct GameRules: Codable, Equatable, Sendable {
     public var truckCapacity: Int
     /// A truck moves one road tile every this many ticks.
     public var truckTicksPerTile: Int
+    /// A field's soil starts full at `soilMax`; below `soilTired` it grows at half speed.
+    public var soilMax: Int
+    public var soilTired: Int
     /// Rates, and the demand rule's "is supply steady?" check, look back this far.
     public var rateWindowTicks: Int { rateBucketTicks * rateBuckets }
 

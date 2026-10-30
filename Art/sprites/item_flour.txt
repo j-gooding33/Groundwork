@@ -1,0 +1,10 @@
+size: 8x8
+---
+........
+..AAAA..
+.AFFFFA.
+.AFFFFA.
+.AFFFFA.
+.AzzzzA.
+..AAAA..
+........
