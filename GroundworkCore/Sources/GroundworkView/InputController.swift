@@ -7,6 +7,10 @@ public enum Tool: Equatable, Sendable {
     case build(BuildingTypeID)
     /// Drag to lay a belt.
     case belt
+    /// Drag to lay road.
+    case road
+    /// Tap where a truck loads, then where it delivers.
+    case route
     case demolish
     case trace
 }
@@ -49,7 +53,7 @@ public struct InputController: Sendable {
     public init() {}
 
     /// Whether a one-finger drag should lay something instead of panning.
-    public var dragDraws: Bool { tool == .belt }
+    public var dragDraws: Bool { tool == .belt || tool == .road }
 
     /// Tapping a palette button: selects the tool, or puts it down if it was
     /// already selected.
@@ -112,6 +116,26 @@ public struct InputController: Sendable {
             }
             return layBelt(from: start, to: point, session: session)
 
+        case .road:
+            return Feedback(toast: "Drag to lay a road")
+
+        case .route:
+            guard let building = session.world.building(at: Self.snap(tile, session: session)) else {
+                return Feedback(toast: "Tap a building next to a road")
+            }
+            guard let start = dragStart, let source = session.world.building(at: start) else {
+                dragStart = building.origin
+                return Feedback(toast: "Now tap where the truck delivers", haptic: .light)
+            }
+            dragStart = nil
+            if source.id == building.id { return .none }
+            let before = session.world.trucks.count
+            let feedback = result(session.setTruckRoute(from: source.id, to: building.id), success: .light)
+            if feedback.toast == nil, session.world.trucks.count < before {
+                return Feedback(toast: "Truck route removed", haptic: .light)
+            }
+            return feedback
+
         case .demolish:
             if let building = session.world.building(at: tile) {
                 if selection == building.id { selection = nil }
@@ -119,6 +143,9 @@ public struct InputController: Sendable {
             }
             if session.world.belt(at: tile) != nil {
                 return result(session.removeBelt(at: tile), success: .light)
+            }
+            if session.world.hasRoad(tile) {
+                return result(session.removeRoad(at: tile), success: .light)
             }
             return .none
 
@@ -170,6 +197,11 @@ public struct InputController: Sendable {
     // MARK: Belt drags
 
     public mutating func dragBegan(_ tile: GridPoint, session: GameSession) {
+        if tool == .road {
+            dragStart = tile
+            ghost = session.previewRoad(from: tile, to: tile) ?? []
+            return
+        }
         guard tool == .belt else { return }
         let start = Self.snap(tile, session: session)
         dragStart = start
@@ -177,11 +209,21 @@ public struct InputController: Sendable {
     }
 
     public mutating func dragMoved(_ tile: GridPoint, session: GameSession) {
+        if tool == .road, let start = dragStart {
+            ghost = session.previewRoad(from: start, to: tile) ?? []
+            return
+        }
         guard tool == .belt, let start = dragStart else { return }
         ghost = session.previewBelt(from: start, to: Self.snap(tile, session: session)) ?? []
     }
 
     public mutating func dragEnded(_ tile: GridPoint, session: GameSession) -> Feedback {
+        if tool == .road, let start = dragStart {
+            dragStart = nil
+            ghost = []
+            guard start != tile else { return Feedback(toast: "Drag to lay a road") }
+            return result(session.layRoad(from: start, to: tile), success: .light)
+        }
         guard tool == .belt, let start = dragStart else { return .none }
         dragStart = nil
         ghost = []

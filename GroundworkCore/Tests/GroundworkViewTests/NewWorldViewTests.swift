@@ -29,7 +29,7 @@ final class NewWorldViewTests: XCTestCase {
         XCTAssertEqual(hud.goal?.text, "Share one belt with a Splitter", "The first milestone")
         XCTAssertEqual(hud.chapterTitle, "A · Hamlet")
         XCTAssertEqual(hud.tabs, ModeTab.allCases)
-        XCTAssertEqual(Set(hud.palette.map(\.title)).count, 9, "Every building the player places, plus belts")
+        XCTAssertEqual(Set(hud.palette.map(\.title)).count, 12, "Every building the player places, plus belt, road and truck")
     }
 
     func testTheTutorialEndsAfterChapterThree() throws {

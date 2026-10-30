@@ -160,9 +160,13 @@ enum LevelRunner {
             return [TutorialCondition.placed(type).key]
         case let .itemProduced(_, item, _):
             return [TutorialCondition.produced(item).key]
+        case .roadLaid:
+            return ["ui:road"]
+        case .truckRouteSet:
+            return ["ui:truck"]
         case let .itemDelivered(id, item, via):
             var keys = [TutorialCondition.delivered(item, qualifier: nil).key,
-                        TutorialCondition.delivered(item, qualifier: via == .hand ? "hand" : "belt").key]
+                        TutorialCondition.delivered(item, qualifier: via == .hand ? "hand" : via == .truck ? "truck" : "belt").key]
             if let type = world.building(id)?.type {
                 keys.append(TutorialCondition.delivered(item, qualifier: type.rawValue).key)
             }

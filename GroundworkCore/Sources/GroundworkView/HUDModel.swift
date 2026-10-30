@@ -153,6 +153,13 @@ public struct HUDModel: Equatable, Sendable {
                                         description: Self.beltDescription, isSelected: input.tool == .belt,
                                         badge: world.beltsAvailable.map(String.init)))
         }
+        // Roads and trucks, once everything is open (free build and new worlds).
+        if world.unlocked == nil {
+            palette.append(PaletteEntry(tool: .road, title: "Road", sprite: "road_ew",
+                                        description: Self.roadDescription, isSelected: input.tool == .road, badge: nil))
+            palette.append(PaletteEntry(tool: .route, title: "Truck", sprite: "vehicle_truck_h",
+                                        description: Self.truckDescription, isSelected: input.tool == .route, badge: nil))
+        }
         if let picked = palette.first(where: \.isSelected) {
             toolHint = "\(picked.title): \(picked.description)"
         }
@@ -198,6 +205,8 @@ public struct HUDModel: Equatable, Sendable {
     }
 
     public static let beltDescription = "Carries items. Drag from one building to another."
+    public static let roadDescription = "Drag to lay road. Trucks drive on it between buildings."
+    public static let truckDescription = "Tap where it loads, then where it delivers. Both need a road."
 
     /// Ticks a machine must wait for an input (or a used-up source) before
     /// the hint appears: 30 seconds. A full output is left alone, because in a
@@ -226,6 +235,13 @@ public struct HUDModel: Equatable, Sendable {
             if let seconds = rate.runsOutInSeconds {
                 lines.append(seconds < 5 ? "Out of \(plural) now" : "\(plural.capitalizedFirst) run out in \(seconds) s")
             }
+        }
+        for truck in session.world.trucks where truck.source == building.id || truck.target == building.id {
+            let outbound = truck.source == building.id
+            let other = session.world.building(outbound ? truck.target : truck.source)
+            let name = other.flatMap { content.building($0.type)?.name } ?? "?"
+            lines.append(truck.path.isEmpty ? "Truck to \(name): no road"
+                         : outbound ? "Truck takes goods to the \(name)" : "Truck brings goods from the \(name)")
         }
         let io = SceneBuilder.io(of: building.type, content: content)
         if !io.takes.isEmpty { lines.append("Takes " + io.takes.map(content.plural).joined(separator: ", ")) }

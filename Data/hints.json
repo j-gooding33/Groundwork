@@ -11,6 +11,7 @@
   {"id": "h_yard", "show": "placed:sawmill", "done": "placed:builders_yard", "text": "A Builder's Yard builds cottages from\nbricks and planks."},
   {"id": "h_steady", "show": "placed:builders_yard", "done": "placed:cottage", "text": "Belt bricks and planks to the yard. It\nstarts a cottage once both keep coming."},
   {"id": "h_rates", "show": "placed:cottage", "done": "ui:rates", "text": "Tap Rates to see how much each building\nmakes and uses a minute."},
+  {"id": "h_road", "show": "count:cottage:3", "done": "ui:truck", "text": "Far apart? Lay a Road and pick Truck:\ntap where it loads, then where it goes."},
   {"id": "h_undo", "show": "placed:sawmill", "done": "ui:undo", "text": "Put something in the wrong place?\nUndo is free."},
   {"id": "h_speed", "show": "count:cottage:2", "done": "ui:speed", "text": "Waiting on cottages? The speed button\nmakes time run faster."},
   {"id": "h_crate", "show": "count:cottage:3", "done": "placed:storage_crate", "text": "A Storage Crate holds spare items and\npasses them on when belted out."},

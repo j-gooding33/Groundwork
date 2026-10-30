@@ -124,6 +124,7 @@ enum BeltSystem {
                 queue.append(u)
             }
         }
+        for source in Roads.suppliers(of: building, in: world) where source != building.id { found.insert(source) }
         return found.sorted()
     }
 }

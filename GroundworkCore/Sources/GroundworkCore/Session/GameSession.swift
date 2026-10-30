@@ -49,6 +49,9 @@ public final class GameSession {
         case removed(Building)
         case beltLaid([GridPoint])
         case beltRemoved([BeltTile])
+        case roadLaid([GridPoint])
+        case roadRemoved([GridPoint])
+        case truckAdded(EntityID)
     }
 
     public init(content: ContentDatabase, map: TileMap, seed: UInt64) {
@@ -212,6 +215,60 @@ public final class GameSession {
         return .ok
     }
 
+    // MARK: Roads and trucks
+
+    /// Where a road dragged between two tiles would go, for the ghost preview.
+    public func previewRoad(from: GridPoint, to: GridPoint) -> [GridPoint]? {
+        Roads.plan(from: from, to: to, world: world)
+    }
+
+    /// Lays road between two tiles, around obstacles, joining existing road.
+    @discardableResult
+    public func layRoad(from: GridPoint, to: GridPoint) -> CommandResult {
+        command {
+            switch Roads.lay(from: from, to: to, world: &world, content: content) {
+            case let .success(points):
+                undoStack.append(.roadLaid(points))
+                events.append(.roadLaid(points))
+                return .ok
+            case let .failure(error):
+                return .rejected(error)
+            }
+        }
+    }
+
+    @discardableResult
+    public func removeRoad(at point: GridPoint) -> CommandResult {
+        command {
+            let removed = Roads.remove([point], world: &world, content: content)
+            guard !removed.isEmpty else { return .rejected(.unknown("There is no road there")) }
+            undoStack.append(.roadRemoved(removed))
+            events.append(.roadRemoved(removed))
+            return .ok
+        }
+    }
+
+    /// Sends a truck back and forth between two buildings joined by road.
+    /// Asking for the same route again takes that truck away.
+    @discardableResult
+    public func setTruckRoute(from source: EntityID, to target: EntityID) -> CommandResult {
+        command {
+            if let existing = world.trucks.first(where: { $0.source == source && $0.target == target }) {
+                world.trucks.removeAll { $0.id == existing.id }
+                events.append(.truckRouteRemoved(existing.id))
+                return .ok
+            }
+            switch Roads.setRoute(from: source, to: target, world: &world, content: content) {
+            case let .success(id):
+                undoStack.append(.truckAdded(id))
+                events.append(.truckRouteSet(id))
+                return .ok
+            case let .failure(error):
+                return .rejected(error)
+            }
+        }
+    }
+
     /// Picks items up into the player's hands. With no item given, takes what
     /// the hands already hold, or else the first thing available.
     @discardableResult
@@ -270,6 +327,21 @@ public final class GameSession {
                 return .rejected(error)
             }
             events.append(.beltLaid(tiles.map(\.point)))
+        case let .roadLaid(points):
+            let removed = Roads.remove(points, world: &world, content: content)
+            if removed.isEmpty { return undoNow() }
+            events.append(.roadRemoved(removed))
+        case let .roadRemoved(points):
+            let free = points.filter(world.isFree)
+            guard free.count == points.count else { return .rejected(.blocked("Something has been built where the road was")) }
+            world.roads = (world.roads + points).sorted()
+            world.index = WorldIndex(world: world, content: content)
+            Roads.rerouteTrucks(&world, content: content)
+            events.append(.roadLaid(points))
+        case let .truckAdded(id):
+            guard world.truck(id) != nil else { return undoNow() }
+            world.trucks.removeAll { $0.id == id }
+            events.append(.truckRouteRemoved(id))
         }
         return .ok
     }

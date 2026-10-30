@@ -63,8 +63,12 @@ public struct EffectPlanner: Sendable {
                 sound(.remove)
             case .beltLaid:
                 sound(.belt)
-            case .beltRemoved:
+            case .beltRemoved, .roadRemoved, .truckRouteRemoved:
                 sound(.remove)
+            case .roadLaid:
+                sound(.belt)
+            case .truckRouteSet:
+                sound(.place)
             case let .itemProduced(id, item, count):
                 effects.append(.squash(id))
                 let shown = floats[item, default: 0]

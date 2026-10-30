@@ -131,6 +131,10 @@ public struct SceneBuilder: Sendable {
                 for overlay in edgeOverlays(point, terrain: { Self.drawnTerrain(at: $0, world: world) }) {
                     sprites.append(Sprite(id: "e:\(x),\(y):\(overlay)", name: overlay, x: c.x, y: c.y, z: Layer.edges))
                 }
+                if world.hasRoad(point) {
+                    sprites.append(Sprite(id: "r:\(x),\(y)", name: Self.roadPiece(at: point, world: world),
+                                          x: c.x, y: c.y, z: Layer.edges + 0.5))
+                }
                 if let decoration = decoration(point, terrain: terrain, world: world) {
                     sprites.append(decoration)
                 }
@@ -198,7 +202,7 @@ public struct SceneBuilder: Sendable {
     }
 
     private func decoration(_ point: GridPoint, terrain: Terrain, world: World) -> Sprite? {
-        guard world.building(at: point) == nil, world.belt(at: point) == nil else { return nil }
+        guard world.building(at: point) == nil, world.belt(at: point) == nil, !world.hasRoad(point) else { return nil }
         let h = Self.hash(point)
         let base: String
         switch terrain {
@@ -232,7 +236,50 @@ public struct SceneBuilder: Sendable {
             sprites += buildingSprites(building, world: world, night: dayNight.isNight, time: time)
         }
         sprites += beltSprites(world, time: time)
+        sprites += truckSprites(world, time: time)
         sprites += Walkers.sprites(world: world, content: content, atlas: atlas, time: time)
+        return sprites
+    }
+
+    /// The road piece for a tile: which sides join other road (or a building
+    /// it serves), as "road_nesw" with the joined letters.
+    public static func roadPiece(at point: GridPoint, world: World) -> String {
+        let letters = zip("nesw", [Direction.north, .east, .south, .west]).compactMap { letter, d -> Character? in
+            let n = point.moved(d)
+            return world.hasRoad(n) ? letter : nil
+        }
+        return "road_" + (letters.isEmpty ? "o" : String(letters))
+    }
+
+    /// Trucks glide from tile to tile; at either end they wait facing the building.
+    func truckSprites(_ world: World, time: RenderTime) -> [Sprite] {
+        let ticksPerTile = Double(max(content.rules.truckTicksPerTile, 1))
+        var sprites: [Sprite] = []
+        for truck in world.trucks {
+            guard let here = truck.tile else { continue }
+            let moving = truck.phase == .outbound || truck.phase == .returning
+            let step = truck.phase == .returning ? -1 : 1
+            let nextIndex = truck.position + step
+            let next = moving && truck.path.indices.contains(nextIndex) ? truck.path[nextIndex] : here
+            let t = moving ? (Double(truck.progress) + time.fraction) / ticksPerTile : 0
+            let a = Camera.center(of: here, w: 1, h: 1, mapHeight: world.map.height)
+            let b = Camera.center(of: next, w: 1, h: 1, mapHeight: world.map.height)
+            // Which way it faces: towards where it is going, or along the road at a stop.
+            let other = next != here ? next
+                : truck.path.indices.contains(truck.position - step) ? truck.path[truck.position - step] : here
+            let dx = next != here ? next.x - here.x : here.x - other.x
+            let dy = next != here ? next.y - here.y : here.y - other.y
+            var sprite = Sprite(id: "truck:\(truck.id)", name: dx != 0 ? "vehicle_truck_h" : "vehicle_truck_v",
+                                x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t + 2,
+                                z: standingZ(row: here.y, map: world.map) + 0.05)
+            sprite.flipX = dx < 0
+            sprite.flipY = dy < 0
+            sprites.append(sprite)
+            if let cargo = truck.cargo {
+                sprites.append(Sprite(id: "truck:\(truck.id):cargo", name: "item_\(cargo.item)",
+                                      x: sprite.x - (dx != 0 ? 2 : 0), y: sprite.y + 3, z: sprite.z + 0.01))
+            }
+        }
         return sprites
     }
 
@@ -567,8 +614,8 @@ public struct SceneBuilder: Sendable {
             let c = Camera.center(of: point, w: 1, h: 1, mapHeight: mapHeight)
             let next = k + 1 < input.ghost.count ? input.ghost[k + 1] : nil
             let horizontal = next.map { $0.y == point.y } ?? (k > 0 && input.ghost[k - 1].y == point.y)
-            var sprite = Sprite(id: "ghost:\(k)", name: horizontal ? "belt_h" : "belt_v", x: c.x, y: c.y,
-                                z: Layer.overlay)
+            let name = input.tool == .road ? (horizontal ? "road_ew" : "road_ns") : (horizontal ? "belt_h" : "belt_v")
+            var sprite = Sprite(id: "ghost:\(k)", name: name, x: c.x, y: c.y, z: Layer.overlay)
             sprite.alpha = 0.55
             sprites.append(sprite)
         }

@@ -1,25 +1,74 @@
 {
   "startTitle": "Hamlet",
   "milestones": [
-    { "id": "m_splitter", "text": "Share one belt with a Splitter", "when": "placed:splitter",
-      "tip": "A Splitter shares a belt: belt logs in,\nthen lay two belts out to two buildings." },
-    { "id": "m_cottages_10", "text": "Grow to 10 cottages", "when": "count:cottage:10", "title": "Village",
-      "tip": "More cottages need more bricks and planks.\nAdd pits, kilns and a second lumber camp." },
-    { "id": "m_bricks_20", "text": "Make 20 bricks a minute", "when": "rate:brick:20",
-      "tip": "One kiln makes about 12 a minute.\nTap Rates to see where you are." },
-    { "id": "m_kilns_3", "text": "Run three brick kilns", "when": "count:brick_kiln:3",
-      "tip": "Each kiln needs 2 clay pits and some logs.\nSplit a log belt to feed two kilns." },
-    { "id": "m_planks_store", "text": "Store 50 planks in crates", "when": "stored:plank:50",
-      "tip": "Split the sawmill's belt: one way to the\nyard, one way to a Storage Crate." },
-    { "id": "m_planks_rate", "text": "Make 30 planks a minute", "when": "rate:plank:30",
-      "tip": "A sawmill makes about 30 if its logs keep\ncoming. Trace it if it slows down." },
-    { "id": "m_cottages_20", "text": "Grow to 20 cottages", "when": "count:cottage:20", "title": "Town",
-      "tip": "A second Builder's Yard builds homes in\nanother corner of the map." },
-    { "id": "m_yards_2", "text": "Run two builder's yards", "when": "count:builders_yard:2",
-      "tip": "Split your brick and plank belts so both\nyards get a share." },
-    { "id": "m_bricks_40", "text": "Make 40 bricks a minute", "when": "rate:brick:40",
-      "tip": "Four busy kilns. Look for a kiln that is\nwaiting and Trace it." },
-    { "id": "m_cottages_40", "text": "Grow to 40 cottages", "when": "count:cottage:40", "title": "Market Town",
-      "tip": "The whole map is yours. Keep every\nbelt moving." }
+    {
+      "id": "m_splitter",
+      "text": "Share one belt with a Splitter",
+      "when": "placed:splitter",
+      "tip": "A Splitter shares a belt: belt logs in,\nthen lay two belts out to two buildings."
+    },
+    {
+      "id": "m_cottages_10",
+      "text": "Grow to 10 cottages",
+      "when": "count:cottage:10",
+      "title": "Village",
+      "tip": "More cottages need more bricks and planks.\nAdd pits, kilns and a second lumber camp."
+    },
+    {
+      "id": "m_truck",
+      "text": "Deliver bricks by truck",
+      "when": "delivered:brick:truck",
+      "tip": "Lay a Road past a kiln and a yard, pick\nTruck, tap the kiln, then the yard."
+    },
+    {
+      "id": "m_bricks_20",
+      "text": "Make 20 bricks a minute",
+      "when": "rate:brick:20",
+      "tip": "One kiln makes about 12 a minute.\nTap Rates to see where you are."
+    },
+    {
+      "id": "m_kilns_3",
+      "text": "Run three brick kilns",
+      "when": "count:brick_kiln:3",
+      "tip": "Each kiln needs 2 clay pits and some logs.\nSplit a log belt to feed two kilns."
+    },
+    {
+      "id": "m_planks_store",
+      "text": "Store 50 planks in crates",
+      "when": "stored:plank:50",
+      "tip": "Split the sawmill's belt: one way to the\nyard, one way to a Storage Crate."
+    },
+    {
+      "id": "m_planks_rate",
+      "text": "Make 30 planks a minute",
+      "when": "rate:plank:30",
+      "tip": "A sawmill makes about 30 if its logs keep\ncoming. Trace it if it slows down."
+    },
+    {
+      "id": "m_cottages_20",
+      "text": "Grow to 20 cottages",
+      "when": "count:cottage:20",
+      "title": "Town",
+      "tip": "A second Builder's Yard builds homes in\nanother corner of the map."
+    },
+    {
+      "id": "m_yards_2",
+      "text": "Run two builder's yards",
+      "when": "count:builders_yard:2",
+      "tip": "Split your brick and plank belts so both\nyards get a share."
+    },
+    {
+      "id": "m_bricks_40",
+      "text": "Make 40 bricks a minute",
+      "when": "rate:brick:40",
+      "tip": "Four busy kilns. Look for a kiln that is\nwaiting and Trace it."
+    },
+    {
+      "id": "m_cottages_40",
+      "text": "Grow to 40 cottages",
+      "when": "count:cottage:40",
+      "title": "Market Town",
+      "tip": "The whole map is yours. Keep every\nbelt moving."
+    }
   ]
 }

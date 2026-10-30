@@ -1,0 +1,18 @@
+size: 16x16
+---
+..xyyyyyyyyzyx..
+..xyyyyyyzyyyx..
+..xyyyyzyyyyyx..
+..xyyzyyyyyyyx..
+..xzyyyyyyyyyx..
+..xyyyyyyyyyzx..
+..xyyyyyyyzyyx..
+..xyyyyyzyyyyx..
+..xyyyzyyyyyyx..
+..xyzyyyyyyyyx..
+..xyyyyyyyyyyx..
+..xyyyyyyyyzyx..
+..xyyyyyyzyyyx..
+..xxxxxxxxxxxx..
+................
+................

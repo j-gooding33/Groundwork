@@ -390,7 +390,7 @@ public struct ContentDatabase: Sendable {
             if item(id) == nil { problems.append("\(name) waits for unknown item '\(id)'") }
         case let .delivered(id, qualifier):
             if item(id) == nil { problems.append("\(name) waits for unknown item '\(id)'") }
-            if let qualifier, qualifier != "hand", qualifier != "belt",
+            if let qualifier, qualifier != "hand", qualifier != "belt", qualifier != "truck",
                building(BuildingTypeID(rawValue: qualifier)) == nil {
                 problems.append("\(name) has an unknown delivery qualifier '\(qualifier)'")
             }

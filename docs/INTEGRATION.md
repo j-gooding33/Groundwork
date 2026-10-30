@@ -67,6 +67,8 @@ Everyone starts with the tutorial: one handcrafted world, played in chapters. Bu
 
 After that, and in every new world, **milestones** take over the goal bar: share a belt with a Splitter, grow to 10 cottages (Village), make 20 bricks a minute, run three kilns, store 50 planks, and on to a Market Town. Each comes with a tip and a celebration.
 
+**Roads and trucks** (Free Build and new worlds): pick **Road** and drag to lay it; pieces join by themselves. Pick **Truck**, tap where it loads (a Depot, kiln, crate…) and then where it delivers; both need a road beside them. Tapping the same pair again removes the truck. Demolish removes road tiles.
+
 The **Splitter** shares one belt: belt into it, then lay two (or more) belts out; they take turns.
 
 New worlds are generated from their seed. Everything is unlocked, there is no goal, and for the first hour a tip appears when something becomes useful (tap it away; it also goes once you do the thing).

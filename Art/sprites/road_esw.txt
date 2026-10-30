@@ -1,0 +1,18 @@
+size: 16x16
+---
+................
+................
+xxxxxxxxxxxxxxxx
+yyyyyzyyyyyyyyyy
+yyyzyyyyyyyyyyzy
+yzyyyyyyyyyyzyyy
+yyyyyyyyyyzyyyyy
+yyyyyyyyzyyyyyyy
+yyyyyyzyyyyyyyyy
+yyyyzyyyyyyyyyyz
+yyzyyyyyyyyyyzyy
+zyyyyyyyyyyzyyyy
+yyyyyyyyyzyyyyyy
+xxyyyyyzyyyyyyxx
+..xyyzyyyyyyyx..
+..xzyyyyyyyyyx..

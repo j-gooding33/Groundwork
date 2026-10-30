@@ -151,6 +151,24 @@ The starter rules from the design, adapted for Linux: GroundworkCore uses only F
 ## Verification for Phase 0
 - `swift --version` prints 6.2.x and a scratch XCTest package passes `swift test`.
 
+## Beyond Prototype 1: the full design, phase by phase (owner's go-ahead, 2026-10-30)
+
+The owner asked for everything in DESIGN.md plus a government, offices, apartments and car factories. That is the design's milestones M2 to M6 (months of work), so it is built one phase at a time, each tested, committed and reported before the next. New worlds and Free Build get each phase's buildings; milestones and first-hour hints teach them.
+
+| Phase | Design levels | What it adds | Status |
+| --- | --- | --- | --- |
+| 1 | 4 (logistics) | Roads (drag to lay, auto-joining pieces), Depot, trucks on fixed routes (tap where to load, then where to deliver), trucks count as supply links for Trace | **Done** |
+| 2 | 2, 4 | Stone and quarry, waterwheel and mechanical power within 6 tiles, water pump, pipes, well, water tower; homes need water | Next |
+| 3 | 5 | Food: wheat field, flour mill, bakery, market stall; soil and compost | |
+| 4 | 6 | Citizens move in, needs and mood, jobs, walking and cars on roads, money, Town Hall with taxes and laws (policy switches with trade-offs), clinic, pub, park, Policies and Stats tabs | |
+| 5 | 7 | Coal and iron mines, smelter, steam engine, smoke and waste, landfill | |
+| 6 | 8 | Rail and stations, workshop and components (nails, gears), glassworks, terrace rows, freight roads | |
+| 7 | 9 | Electricity: power station, poles and grid with load colours; Copper Isle and the ferry | |
+| 8 | 10 | Data: sensors, cables, relay masts, Control Hub with player rules | |
+| 9 | 11 + owner | Construction Yard, cargo port, substation, apartment blocks, hospital, offices, car factory | |
+| 10 | 12 | Wind, solar, batteries, recycler, treatment plant, wellbeing index; Sun Isle; Sandbox | |
+| 11 | extras | Walk Mode, character creator, era visuals | |
+
 ## What's left (updated 2026-10-29)
 
 ### Done without a Mac

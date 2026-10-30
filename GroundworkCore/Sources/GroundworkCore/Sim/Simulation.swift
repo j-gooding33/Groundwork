@@ -11,6 +11,7 @@ public enum Simulation {
         regrowSources(&world, content: content)
         Production.step(&world, content: content, events: &events)
         BeltSystem.step(&world, content: content, events: &events)
+        Roads.step(&world, content: content, events: &events)
         DemandRule.step(&world, content: content, events: &events)
         updateStatuses(&world, content: content, events: &events)
     }

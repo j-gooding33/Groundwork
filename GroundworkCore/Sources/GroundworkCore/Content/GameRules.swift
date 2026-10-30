@@ -13,6 +13,10 @@ public struct GameRules: Codable, Equatable, Sendable {
     /// A machine must wait this long before it shows as blocked, so it does not
     /// flicker between crafts.
     public var blockGraceTicks: Int
+    /// Most items a truck carries per trip.
+    public var truckCapacity: Int
+    /// A truck moves one road tile every this many ticks.
+    public var truckTicksPerTile: Int
     /// Rates, and the demand rule's "is supply steady?" check, look back this far.
     public var rateWindowTicks: Int { rateBucketTicks * rateBuckets }
 
@@ -21,7 +25,7 @@ public struct GameRules: Codable, Equatable, Sendable {
         let positive: [(String, Int)] = [
             ("handCapacity", handCapacity), ("beltSlotsPerTile", beltSlotsPerTile),
             ("beltTicksPerSlot", beltTicksPerSlot), ("rateBucketTicks", rateBucketTicks),
-            ("rateBuckets", rateBuckets),
+            ("rateBuckets", rateBuckets), ("truckCapacity", truckCapacity), ("truckTicksPerTile", truckTicksPerTile),
         ]
         for (name, value) in positive where value <= 0 {
             problems.append("Rule '\(name)' must be above 0")

@@ -83,6 +83,7 @@ enum Commands {
     static func remove(_ id: EntityID, world: inout World, content: ContentDatabase) -> Result<Building, CommandError> {
         guard let i = world.buildingIndex(id) else { return .failure(.unknown("That building is gone")) }
         let removed = world.buildings.remove(at: i)
+        world.trucks.removeAll { $0.source == id || $0.target == id }
         world.index = WorldIndex(world: world, content: content)
         return .success(removed)
     }

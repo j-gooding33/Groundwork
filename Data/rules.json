@@ -4,5 +4,7 @@
   "beltTicksPerSlot": 2,
   "rateBucketTicks": 60,
   "rateBuckets": 10,
-  "blockGraceTicks": 20
+  "blockGraceTicks": 20,
+  "truckCapacity": 10,
+  "truckTicksPerTile": 3
 }

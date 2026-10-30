@@ -335,3 +335,26 @@ for (seed, water, forest) in [(UInt64(2026), Amount.normal, Amount.normal), (UIn
     let view = Camera(mapWidth: made.world.map.width, mapHeight: made.world.map.height, focus: made.startPoint, zoom: 1)
     try shot("12_new_world_seed_\(seed)", session: made, camera: view)
 }
+
+// MARK: Roads and trucks
+
+do {
+    let made = try GameSession.newWorld(content: content, options: WorldOptions(name: "Roads", seed: 2026))
+    let s = made.startPoint!
+    func spot(_ type: BuildingTypeID, near p: GridPoint) -> GridPoint? {
+        for r in 0...12 { for dy in -r...r { for dx in -r...r where max(abs(dx), abs(dy)) == r {
+            let at = GridPoint(p.x + dx, p.y + dy)
+            if made.place(type, at: at) == .ok { return at }
+        } } }
+        return nil
+    }
+    let depotAt = spot("depot", near: GridPoint(s.x - 6, s.y))!
+    let crateAt = spot("storage_crate", near: GridPoint(s.x + 7, s.y))!
+    let depot = made.world.building(at: depotAt)!.id
+    made.stock(depot, with: "brick", count: 60)
+    print("road: \(made.layRoad(from: GridPoint(depotAt.x, depotAt.y + 2), to: GridPoint(crateAt.x, crateAt.y + 1)))")
+    print("truck: \(made.setTruckRoute(from: depot, to: made.world.building(at: crateAt)!.id))")
+    made.advance(ticks: 25)
+    let view = Camera(mapWidth: 64, mapHeight: 64, focus: s, zoom: 2)
+    try shot("13_roads_and_trucks", session: made, camera: view)
+}

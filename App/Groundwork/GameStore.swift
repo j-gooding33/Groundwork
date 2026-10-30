@@ -283,7 +283,8 @@ final class GameStore {
 
     private static func changesStructure(_ event: GameEvent) -> Bool {
         switch event {
-        case .buildingPlaced, .buildingRemoved, .beltLaid, .beltRemoved, .chapterStarted: return true
+        case .buildingPlaced, .buildingRemoved, .beltLaid, .beltRemoved, .chapterStarted, .roadLaid, .roadRemoved:
+            return true
         default: return false
         }
     }
